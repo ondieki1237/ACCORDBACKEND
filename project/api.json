@@ -1,0 +1,194 @@
+{
+  "auth": [
+    {
+      "method": "POST",
+      "path": "/api/auth/register",
+      "desc": "Register new user",
+      "body": {
+        "employeeId": "string",
+        "firstName": "string",
+        "lastName": "string",
+        "email": "string",
+        "password": "string",
+        "role": "sales|manager|admin",
+        "region": "string",
+        "territory": "string",
+        "department": "string"
+      },
+      "response": {
+        "success": true,
+        "message": "User registered successfully",
+        "data": {
+          "user": {"_id": "...", "email": "...", "role": "sales"},
+          "tokens": {"accessToken": "...", "refreshToken": "..."}
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "desc": "Login user",
+      "body": {"email": "string", "password": "string"},
+      "response": {
+        "success": true,
+        "message": "Login successful",
+        "data": {
+          "user": {"_id": "...", "email": "...", "role": "sales"},
+          "tokens": {"accessToken": "...", "refreshToken": "..."}
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/refresh",
+      "desc": "Refresh access token",
+      "body": {"refreshToken": "string"},
+      "response": {
+        "success": true,
+        "data": {"tokens": {"accessToken": "...", "refreshToken": "..."}}
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "desc": "Logout user",
+      "body": {"refreshToken": "string"},
+      "response": {"success": true, "message": "Logout successful"}
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/forgot-password",
+      "desc": "Request password reset",
+      "body": {"email": "string"},
+      "response": {"success": true, "message": "Password reset email sent"}
+    },
+    {
+      "method": "PUT",
+      "path": "/api/auth/reset-password/:token",
+      "desc": "Reset password",
+      "body": {"password": "string"},
+      "response": {"success": true, "message": "Password reset successful"}
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "desc": "Get current user",
+      "response": {"success": true, "data": {"_id": "...", "email": "...", "role": "sales"}}
+    }
+  ],
+  "dashboard": [
+    {
+      "method": "GET",
+      "path": "/api/dashboard/overview",
+      "desc": "Get dashboard overview data",
+      "query": {"startDate": "string", "endDate": "string", "region": "string"},
+      "response": {"success": true, "data": {"visitStats": {}, "trailStats": {}, "orderStats": {}, "activeUsers": []}}
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard/heatmap",
+      "desc": "Get heatmap data",
+      "query": {"startDate": "string", "endDate": "string", "userId": "string"},
+      "response": {"success": true, "data": [{"lat": 0, "lng": 0, "intensity": 1}]}
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard/performance",
+      "desc": "Get user performance data",
+      "query": {"startDate": "string", "endDate": "string", "region": "string"},
+      "response": {"success": true, "data": [{"userId": "...", "visits": 10, "trails": 5}]}
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard/recent-activity",
+      "desc": "Get recent activity",
+      "query": {"limit": 20},
+      "response": {"success": true, "data": [{"type": "visit|order|trail", "id": "...", "user": {}, "timestamp": "..."}]}
+    }
+  ],
+  "trails": [
+    {
+      "method": "POST",
+      "path": "/api/trails",
+      "desc": "Create new trail",
+      "body": {"date": "string", "startTime": "string", "endTime": "string", "path": {"coordinates": [[0,0]]}, "stops": [], "deviceInfo": {}},
+      "response": {"success": true, "message": "Trail created successfully", "data": {"_id": "...", "totalDistance": 10.5}}
+    },
+    {
+      "method": "GET",
+      "path": "/api/trails",
+      "desc": "Get trails (with filters)",
+      "query": {"page": 1, "limit": 20, "startDate": "string", "endDate": "string", "userId": "string"},
+      "response": {"success": true, "data": {"docs": [{"_id": "...", "date": "..."}], "totalDocs": 1}}
+    },
+    {
+      "method": "GET",
+      "path": "/api/trails/:id",
+      "desc": "Get single trail",
+      "response": {"success": true, "data": {"_id": "...", "date": "..."}}
+    },
+    {
+      "method": "PUT",
+      "path": "/api/trails/:id",
+      "desc": "Update trail",
+      "body": {"date": "string", "endTime": "string"},
+      "response": {"success": true, "message": "Trail updated successfully", "data": {"_id": "..."}}
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/trails/:id",
+      "desc": "Delete trail",
+      "response": {"success": true, "message": "Trail deleted successfully"}
+    }
+  ],
+  "visits": [
+    {
+      "method": "POST",
+      "path": "/api/visits",
+      "desc": "Create new visit",
+      "body": {"date": "string", "startTime": "string", "endTime": "string", "client": {}, "contacts": [], "requestedEquipment": [], "notes": "string"},
+      "response": {"success": true, "message": "Visit recorded successfully", "data": {"_id": "...", "client": {}}}
+    },
+    {
+      "method": "GET",
+      "path": "/api/visits",
+      "desc": "Get visits (with filters)",
+      "query": {"page": 1, "limit": 20, "startDate": "string", "endDate": "string", "userId": "string", "clientType": "string", "visitOutcome": "string", "region": "string", "search": "string"},
+      "response": {"success": true, "data": {"docs": [{"_id": "...", "date": "..."}], "totalDocs": 1}}
+    },
+    {
+      "method": "GET",
+      "path": "/api/visits/:id",
+      "desc": "Get single visit",
+      "response": {"success": true, "data": {"_id": "...", "client": {}}}
+    },
+    {
+      "method": "PUT",
+      "path": "/api/visits/:id",
+      "desc": "Update visit",
+      "body": {"date": "string", "endTime": "string"},
+      "response": {"success": true, "message": "Visit updated successfully", "data": {"_id": "..."}}
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/visits/:id",
+      "desc": "Delete visit",
+      "response": {"success": true, "message": "Visit deleted successfully"}
+    },
+    {
+      "method": "POST",
+      "path": "/api/visits/:id/follow-up",
+      "desc": "Add follow-up action to visit",
+      "body": {"action": "string", "assignedTo": "string", "dueDate": "string", "priority": "string"},
+      "response": {"success": true, "message": "Follow-up action added successfully", "data": {"_id": "..."}}
+    },
+    {
+      "method": "GET",
+      "path": "/api/visits/analytics/summary",
+      "desc": "Get visits analytics summary",
+      "query": {"startDate": "string", "endDate": "string", "userId": "string"},
+      "response": {"success": true, "data": {"totalVisits": 10, "successfulVisits": 8, "totalContacts": 20, "totalPotentialValue": 10000, "averageDuration": 30, "successRate": 80}}
+    }
+  ],
+  "_note": "You may want to add endpoints for users, orders, and products for a complete API."
+}
