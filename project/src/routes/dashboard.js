@@ -156,7 +156,7 @@ router.get('/heatmap', authenticate, authorize('admin', 'manager'), validateDate
 
     // User filter
     if (userId) {
-      matchStage.userId = mongoose.Types.ObjectId(userId);
+      matchStage.userId = new mongoose.Types.ObjectId(userId);
     }
 
     const heatmapData = await Trail.aggregate([

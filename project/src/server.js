@@ -6,7 +6,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import dotenv from 'dotenv';
+import 'dotenv/config';
 
 import connectDB from './config/database.js';
 import logger from './utils/logger.js';
@@ -22,8 +22,6 @@ import reportRoutes from './routes/reports.js';
 import notificationRoutes from './routes/notifications.js';
 import adminRoutes from './routes/admin.js';
 import { initializeScheduledJobs } from './services/scheduledJobs.js';
-
-dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);

@@ -17,6 +17,12 @@ router.post('/', authenticate, validateVisit, async (req, res) => {
       userId: req.user._id
     };
 
+    // Auto-generate visitId if not provided
+    if (!visitData.visitId) {
+      // Example: VISIT + timestamp + random 3 digits
+      visitData.visitId = `VISIT${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    }
+
     // Calculate visit duration if endTime is provided
     if (visitData.startTime && visitData.endTime) {
       const start = new Date(visitData.startTime);
