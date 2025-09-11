@@ -53,18 +53,30 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/', limiter);
 
 
-// CORS setup to allow localhost:3000, 127.0.0.1:3000, and 5174
+// Clean, global CORS setup for local and production
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+];
+if (process.env.CLIENT_URL) allowedOrigins.push(process.env.CLIENT_URL);
+if (process.env.NODE_ENV === 'production' && process.env.PROD_CLIENT_URL) allowedOrigins.push(process.env.PROD_CLIENT_URL);
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:5174',
-    'http://127.0.0.1:5174',
-    '*'
-  ],
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
+
+// Handle preflight requests for all routes
+app.options('*', cors());
 
 // Socket.IO setup
 app.set('io', io);
