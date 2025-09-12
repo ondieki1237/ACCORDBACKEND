@@ -1,4 +1,5 @@
 import Visit from '../models/Visit.js';
+import Order from '../models/Order.js';
 import User from '../models/User.js';
 
 // Returns heatmap data: visits per sales person, grouped by location
@@ -92,6 +93,67 @@ export const getPerformance = async (req, res, next) => {
     ]);
 
     res.json({ success: true, data: performance });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getAdvancedAnalytics = async (req, res, next) => {
+  try {
+    // Example: aggregate total visits, orders, and users by region
+    const visitsByRegion = await Visit.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      { $unwind: "$user" },
+      {
+        $group: {
+          _id: "$user.region",
+          totalVisits: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const ordersByRegion = await Order.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      { $unwind: "$user" },
+      {
+        $group: {
+          _id: "$user.region",
+          totalOrders: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const usersByRegion = await User.aggregate([
+      {
+        $group: {
+          _id: "$region",
+          totalUsers: { $sum: 1 }
+        }
+      }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        visitsByRegion,
+        ordersByRegion,
+        usersByRegion
+      }
+    });
   } catch (err) {
     next(err);
   }

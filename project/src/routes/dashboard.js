@@ -7,7 +7,7 @@ import Order from '../models/Order.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validateDateRange } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
-import { getSalesHeatmap } from '../controllers/dashboardController.js';
+import { getSalesHeatmap, getPerformance, getAdvancedAnalytics } from '../controllers/dashboardController.js';
 
 const router = express.Router();
 
@@ -211,189 +211,7 @@ router.get('/heatmap', authenticate, authorize('admin', 'manager'), validateDate
 // @route   GET /api/dashboard/performance
 // @desc    Get sales performance metrics
 // @access  Private (Admin/Manager)
-router.get('/performance', authenticate, authorize('admin', 'manager'), validateDateRange, async (req, res) => {
-  try {
-    const { startDate, endDate, region } = req.query;
-
-    const defaultStartDate = new Date();
-    defaultStartDate.setDate(defaultStartDate.getDate() - 30);
-
-    const dateFilter = {
-      $gte: startDate ? new Date(startDate) : defaultStartDate,
-      $lte: endDate ? new Date(endDate) : new Date()
-    };
-
-    // Get user performance
-    const userPerformance = await User.aggregate([
-      {
-        $match: {
-          role: 'sales',
-          isActive: true,
-          ...(region && { region })
-        }
-      },
-      {
-        $lookup: {
-          from: 'visits',
-          localField: '_id',
-          foreignField: 'userId',
-          pipeline: [
-            { $match: { date: dateFilter } }
-          ],
-          as: 'visits'
-        }
-      },
-      {
-        $lookup: {
-          from: 'trails',
-          localField: '_id',
-          foreignField: 'userId',
-          pipeline: [
-            { $match: { date: dateFilter } }
-          ],
-          as: 'trails'
-        }
-      },
-      {
-        $lookup: {
-          from: 'orders',
-          localField: '_id',
-          foreignField: 'userId',
-          pipeline: [
-            { $match: { createdAt: dateFilter } }
-          ],
-          as: 'orders'
-        }
-      },
-      {
-        $project: {
-          firstName: 1,
-          lastName: 1,
-          employeeId: 1,
-          region: 1,
-          territory: 1,
-          targets: 1,
-          performance: {
-            totalVisits: { $size: '$visits' },
-            successfulVisits: {
-              $size: {
-                $filter: {
-                  input: '$visits',
-                  cond: { $eq: ['$$this.visitOutcome', 'successful'] }
-                }
-              }
-            },
-            totalContacts: {
-              $sum: {
-                $map: {
-                  input: '$visits',
-                  as: 'visit',
-                  in: { $size: '$$visit.contacts' }
-                }
-              }
-            },
-            totalDistance: {
-              $sum: '$trails.totalDistance'
-            },
-            totalOrders: { $size: '$orders' },
-            orderValue: {
-              $sum: '$orders.totalAmount'
-            },
-            potentialValue: {
-              $sum: '$visits.totalPotentialValue'
-            }
-          }
-        }
-      },
-      {
-        $addFields: {
-          'performance.successRate': {
-            $cond: [
-              { $eq: ['$performance.totalVisits', 0] },
-              0,
-              {
-                $multiply: [
-                  { $divide: ['$performance.successfulVisits', '$performance.totalVisits'] },
-                  100
-                ]
-              }
-            ]
-          },
-          'performance.conversionRate': {
-            $cond: [
-              { $eq: ['$performance.totalVisits', 0] },
-              0,
-              {
-                $multiply: [
-                  { $divide: ['$performance.totalOrders', '$performance.totalVisits'] },
-                  100
-                ]
-              }
-            ]
-          }
-        }
-      },
-      { $sort: { 'performance.orderValue': -1 } }
-    ]);
-
-    // Get regional performance
-    const regionalPerformance = await User.aggregate([
-      {
-        $match: {
-          role: 'sales',
-          isActive: true
-        }
-      },
-      {
-        $lookup: {
-          from: 'visits',
-          localField: '_id',
-          foreignField: 'userId',
-          pipeline: [
-            { $match: { date: dateFilter } }
-          ],
-          as: 'visits'
-        }
-      },
-      {
-        $lookup: {
-          from: 'orders',
-          localField: '_id',
-          foreignField: 'userId',
-          pipeline: [
-            { $match: { createdAt: dateFilter } }
-          ],
-          as: 'orders'
-        }
-      },
-      {
-        $group: {
-          _id: '$region',
-          totalUsers: { $sum: 1 },
-          totalVisits: { $sum: { $size: '$visits' } },
-          totalOrders: { $sum: { $size: '$orders' } },
-          totalOrderValue: { $sum: { $sum: '$orders.totalAmount' } },
-          totalPotentialValue: { $sum: { $sum: '$visits.totalPotentialValue' } }
-        }
-      },
-      { $sort: { totalOrderValue: -1 } }
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        userPerformance,
-        regionalPerformance
-      }
-    });
-  } catch (error) {
-    logger.error('Performance data error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to retrieve performance data'
-    });
-  }
-});
+router.get('/performance', authenticate, authorize('admin', 'manager'), getPerformance);
 
 // @route   GET /api/dashboard/recent-activity
 // @desc    Get recent activity feed
@@ -477,5 +295,10 @@ router.get('/recent-activity', authenticate, authorize('admin', 'manager'), asyn
 // @desc    Get sales heatmap data
 // @access  Private (Admin/Manager)
 router.get('/heatmap/sales', getSalesHeatmap);
+
+// @route   GET /api/dashboard/analytics
+// @desc    Get advanced analytics by region
+// @access  Private (Admin/Manager)
+router.get('/analytics', authenticate, authorize('admin', 'manager'), getAdvancedAnalytics);
 
 export default router;
