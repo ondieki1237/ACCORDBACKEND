@@ -12,7 +12,7 @@ import connectDB from './config/database.js';
 import logger from './utils/logger.js';
 import errorHandler from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.js';
-import userRoutes from './routes/users.js';
+import userRoutes from './routes/user.js';
 import trailRoutes from './routes/trails.js';
 import visitRoutes from './routes/visits.js';
 import dashboardRoutes from './routes/dashboard.js';
@@ -63,20 +63,15 @@ const allowedOrigins = [
 if (process.env.CLIENT_URL) allowedOrigins.push(process.env.CLIENT_URL);
 if (process.env.NODE_ENV === 'production' && process.env.PROD_CLIENT_URL) allowedOrigins.push(process.env.PROD_CLIENT_URL);
 
+// *** CORS MUST BE FIRST ***
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error('Not allowed by CORS'));
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// Handle preflight requests for all routes
-app.options('*', cors());
+app.options("*", cors());
 
 // Socket.IO setup
 app.set('io', io);

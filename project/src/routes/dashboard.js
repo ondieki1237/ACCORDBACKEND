@@ -7,6 +7,7 @@ import Order from '../models/Order.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validateDateRange } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
+import { getSalesHeatmap } from '../controllers/dashboardController.js';
 
 const router = express.Router();
 
@@ -471,5 +472,10 @@ router.get('/recent-activity', authenticate, authorize('admin', 'manager'), asyn
     });
   }
 });
+
+// @route   GET /api/dashboard/heatmap/sales
+// @desc    Get sales heatmap data
+// @access  Private (Admin/Manager)
+router.get('/heatmap/sales', getSalesHeatmap);
 
 export default router;
