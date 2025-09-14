@@ -140,72 +140,17 @@ router.get('/overview', authenticate, authorize('admin', 'manager'), validateDat
 });
 
 // @route   GET /api/dashboard/heatmap
-// @desc    Get heatmap data for trails
-// @access  Private (Admin/Manager)
-router.get('/heatmap', authenticate, authorize('admin', 'manager'), validateDateRange, async (req, res) => {
-  try {
-    const { startDate, endDate, userId } = req.query;
-
-    const matchStage = {};
-    
-    // Date range
-    if (startDate || endDate) {
-      matchStage.date = {};
-      if (startDate) matchStage.date.$gte = new Date(startDate);
-      if (endDate) matchStage.date.$lte = new Date(endDate);
-    }
-
-    // User filter
-    if (userId) {
-      matchStage.userId = new mongoose.Types.ObjectId(userId);
-    }
-
-    const heatmapData = await Trail.aggregate([
-      { $match: matchStage },
-      { $unwind: '$path.coordinates' },
-      {
-        $group: {
-          _id: {
-            lat: { $round: [{ $arrayElemAt: ['$path.coordinates', 1] }, 4] },
-            lng: { $round: [{ $arrayElemAt: ['$path.coordinates', 0] }, 4] }
-          },
-          intensity: { $sum: 1 },
-          users: { $addToSet: '$userId' }
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          lat: '$_id.lat',
-          lng: '$_id.lng',
-          intensity: 1,
-          userCount: { $size: '$users' }
-        }
-      },
-      { $sort: { intensity: -1 } },
-      { $limit: 10000 } // Limit to prevent overwhelming the client
-    ]);
-
-    // Get user trails for individual tracking
-    const userTrails = await Trail.find(matchStage)
-      .populate('userId', 'firstName lastName employeeId')
-      .select('userId date path totalDistance totalDuration')
-      .sort({ date: -1 });
-
-    res.json({
-      success: true,
-      data: {
-        heatmap: heatmapData,
-        userTrails
-      }
-    });
-  } catch (error) {
-    logger.error('Heatmap data error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to retrieve heatmap data'
-    });
-  }
+// @desc    Get static heatmap data (for demo/testing)
+// @access  Public or Private (as needed)
+router.get('/heatmap', (req, res) => {
+  const heatmapData = [
+    { lat: -1.2921, lng: 36.8219, intensity: 10 }, // Nairobi
+    { lat: -4.0435, lng: 39.6682, intensity: 15 }, // Mombasa
+    { lat: 0.5167, lng: 35.2833, intensity: 8 },   // Eldoret
+    { lat: -0.0917, lng: 34.7680, intensity: 12 }, // Kisumu
+    { lat: -0.4167, lng: 36.9500, intensity: 6 },  // Nyeri
+  ];
+  res.json(heatmapData);
 });
 
 // @route   GET /api/dashboard/performance
@@ -300,5 +245,35 @@ router.get('/heatmap/sales', getSalesHeatmap);
 // @desc    Get advanced analytics by region
 // @access  Private (Admin/Manager)
 router.get('/analytics', authenticate, authorize('admin', 'manager'), getAdvancedAnalytics);
+
+// @route   GET /api/dashboard/heatmap/live
+// @desc    Get live heatmap data from trails
+// @access  Private (Admin/Manager)
+router.get('/heatmap/live', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    // Fetch all trails with user info
+    const trails = await Trail.find({})
+      .populate('userId', 'firstName lastName employeeId region')
+      .select('userId path.coordinates');
+
+    // Build response: one object per trail
+    const trailData = trails.map(trail => ({
+      user: {
+        id: trail.userId?._id,
+        employeeId: trail.userId?.employeeId,
+        name: `${trail.userId?.firstName || ''} ${trail.userId?.lastName || ''}`.trim(),
+        region: trail.userId?.region
+      },
+      path: (trail.path?.coordinates || []).map(coord => ({
+        lat: Number(coord[1]),
+        lng: Number(coord[0])
+      }))
+    }));
+
+    res.json({ success: true, data: trailData });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch heatmap data' });
+  }
+});
 
 export default router;
