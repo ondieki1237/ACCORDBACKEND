@@ -291,6 +291,34 @@ router.get('/my-trails', authenticate, async (req, res) => {
   }
 });
 
+// @route   GET /api/dashboard/all-trails
+// @desc    Get all trails (admin only)
+// @access  Private (Admin)
+router.get('/all-trails', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const trails = await Trail.find({})
+      .populate('userId', 'firstName lastName employeeId region')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: trails });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch all trails' });
+  }
+});
+
+// @route   GET /api/dashboard/my-visits
+// @desc    Get all visits for the currently logged-in user
+// @access  Private (Sales/Admin/Manager)
+router.get('/my-visits', authenticate, async (req, res) => {
+  try {
+    const visits = await Visit.find({ userId: req.user._id })
+      .sort({ createdAt: -1 });
+    res.json({ success: true, data: visits });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch user visits' });
+  }
+});
+
 // @route   GET /api/health
 // @desc    Health check endpoint
 // @access  Public
