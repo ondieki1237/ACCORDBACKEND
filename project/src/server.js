@@ -52,24 +52,8 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/', limiter);
 
-
-// Clean, global CORS setup for local and production
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-];
-if (process.env.CLIENT_URL) allowedOrigins.push(process.env.CLIENT_URL);
-if (process.env.NODE_ENV === 'production' && process.env.PROD_CLIENT_URL) allowedOrigins.push(process.env.PROD_CLIENT_URL);
-
-// *** CORS MUST BE FIRST ***
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+// Allow all CORS
+app.use(cors());
 
 app.options("*", cors());
 
