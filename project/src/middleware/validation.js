@@ -43,7 +43,7 @@ export const validateVisit = [
   body('startTime').isISO8601().withMessage('Valid start time is required'),
   body('client.name').notEmpty().trim().withMessage('Client name is required'),
   body('client.type').isIn(['hospital', 'clinic', 'dispensary', 'pharmacy', 'laboratory', 'other']).withMessage('Invalid client type'),
-  body('client.location.coordinates').isArray({ min: 2, max: 2 }).withMessage('Location coordinates required'),
+  body('client.location').notEmpty().isString().withMessage('Client location is required'),
   body('visitPurpose').isIn(['routine_visit', 'follow_up', 'demo', 'service', 'complaint', 'order', 'other']).withMessage('Invalid visit purpose'),
   body('contacts').optional().isArray().withMessage('Contacts must be an array'),
   body('contacts.*.name').optional().notEmpty().withMessage('Contact name is required'),

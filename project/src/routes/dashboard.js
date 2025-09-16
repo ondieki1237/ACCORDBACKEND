@@ -276,4 +276,26 @@ router.get('/heatmap/live', authenticate, authorize('admin', 'manager'), async (
   }
 });
 
+// @route   GET /api/dashboard/my-trails
+// @desc    Get all trails for the currently logged-in user
+// @access  Private (Sales/Admin/Manager)
+router.get('/my-trails', authenticate, async (req, res) => {
+  try {
+    const trails = await Trail.find({ userId: req.user._id })
+      .select('path.coordinates totalDistance totalDuration createdAt')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: trails });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch user trails' });
+  }
+});
+
+// @route   GET /api/health
+// @desc    Health check endpoint
+// @access  Public
+router.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 export default router;

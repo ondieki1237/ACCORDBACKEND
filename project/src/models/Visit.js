@@ -2,26 +2,10 @@ import mongoose from 'mongoose';
 import mongoosePaginate from 'mongoose-paginate-v2';
 
 const contactSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  role: {
-    type: String,
-    required: true,
-    enum: ['doctor', 'nurse', 'lab_technician', 'pharmacist', 'administrator', 'procurement', 'other'],
-    lowercase: true
-  },
-  phone: {
-    type: String,
-    trim: true
-  },
-  email: {
-    type: String,
-    lowercase: true,
-    trim: true
-  },
+  name: { type: String, required: true, trim: true },
+  role: { type: String, required: true, enum: ['doctor', 'nurse', 'lab_technician', 'pharmacist', 'administrator', 'procurement', 'other'], lowercase: true },
+  phone: { type: String, trim: true },
+  email: { type: String, lowercase: true, trim: true },
   department: {
     type: String,
     trim: true
@@ -155,56 +139,9 @@ const visitSchema = new mongoose.Schema({
   endTime: Date,
   duration: Number, // in minutes
   client: {
-    type: {
-      type: String,
-      required: true,
-      enum: ['hospital', 'clinic', 'dispensary', 'pharmacy', 'laboratory', 'other'],
-      lowercase: true
-    },
-    name: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    code: {
-      type: String,
-      trim: true
-    },
-    location: {
-      type: {
-        type: String,
-        enum: ['Point'],
-        default: 'Point'
-      },
-      coordinates: [Number] // [longitude, latitude]
-    },
-    address: {
-      type: String,
-      trim: true
-    },
-    county: {
-      type: String,
-      trim: true
-    },
-    subCounty: {
-      type: String,
-      trim: true
-    },
-    ward: {
-      type: String,
-      trim: true
-    },
-    phone: String,
-    email: String,
-    website: String,
-    registrationNumber: String,
-    category: {
-      type: String,
-      enum: ['public', 'private', 'faith_based', 'ngo'],
-      default: 'public'
-    },
-    bedCapacity: Number,
-    staffCount: Number
+    name: { type: String, required: true },
+    type: { type: String, enum: ['hospital', 'clinic', 'dispensary', 'pharmacy', 'laboratory', 'other'], required: true },
+    location: { type: String, required: true } // <-- Already a string, keep as is
   },
   contacts: [contactSchema],
   existingEquipment: [equipmentSchema],
@@ -287,9 +224,9 @@ const visitSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Remove the 2dsphere index on client.location
+// visitSchema.index({ 'client.location': '2dsphere' }); // <-- REMOVE or COMMENT OUT this line
 
-// Create indexes
-visitSchema.index({ 'client.location': '2dsphere' });
 visitSchema.index({ userId: 1, date: -1 });
 visitSchema.index({ 'client.type': 1 });
 visitSchema.index({ visitOutcome: 1 });
