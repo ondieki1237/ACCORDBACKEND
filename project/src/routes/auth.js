@@ -326,13 +326,19 @@ router.put('/reset-password/:token', async (req, res) => {
 });
 
 // @route   GET /api/auth/me
-// @desc    Get current user
+// @desc    Get current authenticated user
 // @access  Private
-router.get('/me', authenticate, (req, res) => {
-  res.json({
-    success: true,
-    data: req.user
-  });
+router.get('/me', authenticate, async (req, res) => {
+  try {
+    // Optionally, fetch fresh user data from DB:
+    const user = await User.findById(req.user._id).select('-password');
+    res.json({
+      success: true,
+      data: user
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch user info' });
+  }
 });
 
 export default router;

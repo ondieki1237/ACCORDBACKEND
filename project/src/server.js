@@ -21,6 +21,8 @@ import orderRoutes from './routes/orders.js';
 import reportRoutes from './routes/reports.js';
 import notificationRoutes from './routes/notifications.js';
 import adminRoutes from './routes/admin.js';
+import quotationRoutes from './routes/quotation.js';
+import salesRoutes from './routes/sales.js';
 import { initializeScheduledJobs } from './services/scheduledJobs.js';
 
 const app = express();
@@ -71,6 +73,8 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/quotation', quotationRoutes);
+app.use('/api/sales', salesRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
