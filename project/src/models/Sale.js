@@ -8,4 +8,4 @@ const SaleSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-export default mongoose.model('Sale', SaleSchema);
+export default mongoose.model('Sale', SaleSchema, 'sales');
