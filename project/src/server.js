@@ -24,6 +24,7 @@ import adminRoutes from './routes/admin.js';
 import quotationRoutes from './routes/quotation.js';
 import salesRoutes from './routes/sales.js';
 import { initializeScheduledJobs } from './services/scheduledJobs.js';
+import kmhfrRoutes from './routes/kmhfr.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -75,6 +76,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/quotation', quotationRoutes);
 app.use('/api/sales', salesRoutes);
+app.use('/api', kmhfrRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -90,7 +92,7 @@ app.get('/api/health', (req, res) => {
 app.use(errorHandler);
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: 'Route not found'

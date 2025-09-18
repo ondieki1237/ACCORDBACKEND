@@ -1,0 +1,172 @@
+{
+  "info": {
+    "name": "api_collection",
+    "description": "Postman collection to test all available API endpoints in the ACCORDBACKEND project.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/health"
+      }
+    },
+    {
+      "name": "App Status",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/status"
+      }
+    },
+    {
+      "name": "Facilities - Search",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities/search?name=Hospital&county=Nairobi&limit=5&page=1"
+      }
+    },
+    {
+      "name": "Facilities - List",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities?limit=5&page=1"
+      }
+    },
+    {
+      "name": "Facility Detail",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities/1/"
+      }
+    },
+    {
+      "name": "Facility Report (JSON)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities/1/report?format=json"
+      }
+    },
+    {
+      "name": "Facility Report (PDF)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities/1/report?format=pdf"
+      }
+    },
+    {
+      "name": "Facility Services",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities/1/services"
+      }
+    },
+    {
+      "name": "Facility Infrastructure",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities/1/infrastructure"
+      }
+    },
+    {
+      "name": "Facility Types",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities/facility_types"
+      }
+    },
+    {
+      "name": "Facility Services Catalog",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities/services"
+      }
+    },
+    {
+      "name": "Counties",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/common/counties"
+      }
+    },
+    {
+      "name": "Wards by County",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/common/wards?county=Nairobi"
+      }
+    },
+    {
+      "name": "Constituencies",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/common/constituencies?county=Nairobi"
+      }
+    },
+    {
+      "name": "Facility Contacts",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities/1/contacts"
+      }
+    },
+    {
+      "name": "Infrastructure Catalog",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities/infrastructure"
+      }
+    },
+    {
+      "name": "Export Facilities (CSV)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities/export?format=csv"
+      }
+    },
+    {
+      "name": "Export Facilities (Excel)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities/export?format=excel"
+      }
+    },
+    {
+      "name": "Authentication (Login)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"your_username\",\n  \"password\": \"your_password\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Invalid Facility ID Test",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities/invalid-id-test-000"
+      }
+    },
+    {
+      "name": "Not Found UUID Test",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/facilities/00000000-0000-0000-0000-000000000000"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    }
+  ]
+}
