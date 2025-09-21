@@ -18,13 +18,14 @@ import visitRoutes from './routes/visits.js';
 import dashboardRoutes from './routes/dashboard.js';
 import equipmentRoutes from './routes/equipment.js';
 import orderRoutes from './routes/orders.js';
-import reportRoutes from './routes/reports.js';
+import reportsRoutes from './routes/reports.js';
 import notificationRoutes from './routes/notifications.js';
 import adminRoutes from './routes/admin.js';
 import quotationRoutes from './routes/quotation.js';
 import salesRoutes from './routes/sales.js';
 import { initializeScheduledJobs } from './services/scheduledJobs.js';
 import kmhfrRoutes from './routes/kmhfr.js';
+import followUpRoutes from './routes/follow-ups.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -71,12 +72,13 @@ app.use('/api/visits', visitRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/equipment', equipmentRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/reports', reportRoutes);
+app.use('/api/reports', reportsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/quotation', quotationRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api', kmhfrRoutes);
+app.use('/api/follow-ups', followUpRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -115,5 +117,8 @@ process.on('unhandledRejection', (err) => {
     process.exit(1);
   });
 });
+
+// Serve uploaded files statically
+app.use('/uploads', express.static('uploads'));
 
 export default app;
