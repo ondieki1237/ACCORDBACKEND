@@ -1,7 +1,7 @@
 import express from 'express';
-import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import PDFDocument from 'pdfkit'; // npm install pdfkit
 import { authenticate, authorize } from '../middleware/auth.js';
 import logger from '../utils/logger.js';
 import Report from '../models/Report.js';
@@ -9,72 +9,132 @@ import cloudinary from '../utils/cloudinary.js';
 
 const router = express.Router();
 
-// temp upload dir (will be removed after upload to Cloudinary)
-const UPLOAD_DIR = path.join(process.cwd(), 'tmp', 'reports');
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+// Helper to generate PDF from report content
+const generatePDF = (content) => {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument();
+    const buffers = [];
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, `report-${unique}${path.extname(file.originalname)}`);
-  }
-});
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', () => {
+      const pdfBuffer = Buffer.concat(buffers);
+      resolve(pdfBuffer);
+    });
+    doc.on('error', reject);
 
-const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype !== 'application/pdf') return cb(new Error('Only PDF allowed'), false);
-    cb(null, true);
-  },
-  limits: { fileSize: Number(process.env.MAX_FILE_SIZE || 10 * 1024 * 1024) }
-});
+    // Add metadata
+    const { metadata, sections } = content;
+    doc.fontSize(20).text('Weekly Report', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(12).text(`Author: ${metadata.author}`);
+    doc.text(`Week: ${metadata.weekRange}`);
+    doc.text(`Submitted: ${new Date(metadata.submittedAt).toLocaleString()}`);
+    doc.moveDown();
 
-// helper to remove temp file
-const safeUnlink = (p) => {
-  fs.unlink(p, (err) => {
-    if (err) logger?.error?.('Failed to remove temp file', err);
+    // Add sections
+    sections.forEach(section => {
+      doc.fontSize(14).text(section.title, { underline: true });
+      doc.moveDown(0.5);
+      doc.fontSize(10).text(section.content);
+      doc.moveDown();
+    });
+
+    doc.end();
   });
 };
 
 // @route   POST /api/reports
-// @desc    Upload a weekly report (PDF)
+// @desc    Create a new report (draft or final submission)
 // @access  Private
-router.post('/', authenticate, upload.single('report'), async (req, res) => {
+router.post('/', authenticate, async (req, res) => {
   try {
-    const { weekStart, weekEnd } = req.body;
-    if (!req.file || !weekStart || !weekEnd) {
-      if (req.file) safeUnlink(req.file.path);
-      return res.status(400).json({ success: false, message: 'File, weekStart and weekEnd are required.' });
+    const { weekStart, weekEnd, content, isDraft = false } = req.body;
+
+    if (!weekStart || !weekEnd || !content) {
+      return res.status(400).json({ success: false, message: 'weekStart, weekEnd, and content are required.' });
     }
 
-    const localPath = req.file.path;
-
-    // Upload with resource_type: 'auto' so Cloudinary can choose best delivery type
-    const uploadResult = await cloudinary.uploader.upload(localPath, {
-      resource_type: 'auto',
-      folder: 'reports',
-      type: 'upload' // ensure public upload
-    });
-
-    safeUnlink(localPath);
-
-    const report = new Report({
+    const reportData = {
       userId: req.user._id,
-      fileName: req.file.originalname,
-      fileUrl: uploadResult.secure_url,
-      filePublicId: uploadResult.public_id,
       weekStart: new Date(weekStart),
-      weekEnd: new Date(weekEnd)
-    });
+      weekEnd: new Date(weekEnd),
+      content,
+      isDraft,
+      lastEdited: new Date()
+    };
 
+    if (!isDraft) {
+      // Generate PDF and upload to Cloudinary
+      const pdfBuffer = await generatePDF(content);
+      const tempPath = path.join(process.cwd(), 'tmp', `report-${Date.now()}.pdf`);
+      fs.writeFileSync(tempPath, pdfBuffer);
+
+      const uploadResult = await cloudinary.uploader.upload(tempPath, {
+        resource_type: 'auto',
+        folder: 'reports',
+        type: 'upload'
+      });
+
+      fs.unlinkSync(tempPath); // Clean up temp file
+
+      reportData.fileUrl = uploadResult.secure_url;
+      reportData.filePublicId = uploadResult.public_id;
+      reportData.fileName = `report-${weekStart}-${weekEnd}.pdf`;
+    }
+
+    const report = new Report(reportData);
     await report.save();
 
-    res.status(201).json({ success: true, message: 'Report uploaded successfully.', data: report });
+    res.status(201).json({
+      success: true,
+      message: isDraft ? 'Draft saved successfully.' : 'Report submitted successfully.',
+      data: report
+    });
   } catch (error) {
-    if (req.file && req.file.path && fs.existsSync(req.file.path)) safeUnlink(req.file.path);
-    logger.error('Upload report error:', error);
-    res.status(500).json({ success: false, message: 'Failed to upload report.' });
+    logger.error('Create report error:', error);
+    res.status(500).json({ success: false, message: 'Failed to create report.' });
+  }
+});
+
+// @route   POST /api/reports/draft
+// @desc    Save a draft report
+// @access  Private
+router.post('/draft', authenticate, async (req, res) => {
+  try {
+    const { weekStart, weekEnd, content } = req.body;
+
+    if (!weekStart || !weekEnd || !content) {
+      return res.status(400).json({ success: false, message: 'weekStart, weekEnd, and content are required.' });
+    }
+
+    // Find existing draft or create new
+    let report = await Report.findOne({
+      userId: req.user._id,
+      weekStart: new Date(weekStart),
+      weekEnd: new Date(weekEnd),
+      isDraft: true
+    });
+
+    if (report) {
+      report.content = content;
+      report.lastEdited = new Date();
+      await report.save();
+    } else {
+      report = new Report({
+        userId: req.user._id,
+        weekStart: new Date(weekStart),
+        weekEnd: new Date(weekEnd),
+        content,
+        isDraft: true,
+        lastEdited: new Date()
+      });
+      await report.save();
+    }
+
+    res.status(200).json({ success: true, message: 'Draft saved successfully.', data: report });
+  } catch (error) {
+    logger.error('Save draft error:', error);
+    res.status(500).json({ success: false, message: 'Failed to save draft.' });
   }
 });
 
@@ -96,10 +156,11 @@ router.get('/my', authenticate, async (req, res) => {
 // @access  Private (admin)
 router.get('/', authenticate, authorize('admin'), async (req, res) => {
   try {
-    const { status, userId } = req.query;
+    const { status, userId, isDraft } = req.query;
     const q = {};
     if (status) q.status = status;
     if (userId) q.userId = userId;
+    if (isDraft !== undefined) q.isDraft = isDraft === 'true';
 
     const reports = await Report.find(q).populate('userId', 'firstName lastName email').sort({ submittedAt: -1 });
     res.json({ success: true, data: reports });

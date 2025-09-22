@@ -1,15 +1,46 @@
 import mongoose from 'mongoose';
 
-const ReportSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  fileName: { type: String, required: true },
-  fileUrl: { type: String, required: true },          // Cloudinary URL
-  filePublicId: { type: String },                     // Cloudinary public_id
-  weekStart: { type: Date, required: true },
-  weekEnd: { type: Date, required: true },
-  submittedAt: { type: Date, default: Date.now },
-  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
-  adminNotes: { type: String }
+const reportSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  // New fields for structured reports
+  content: {
+    type: Object, // { metadata: {...}, sections: [...] }
+    required: true
+  },
+  isDraft: {
+    type: Boolean,
+    default: false
+  },
+  lastEdited: {
+    type: Date,
+    default: Date.now
+  },
+  // Legacy fields (for backward compatibility with old PDF uploads)
+  fileName: String,
+  fileUrl: String,
+  filePublicId: String,
+  weekStart: {
+    type: Date,
+    required: true
+  },
+  weekEnd: {
+    type: Date,
+    required: true
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
+  adminNotes: String,
+  submittedAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-export default mongoose.model('Report', ReportSchema, 'reports');
+export default mongoose.model('Report', reportSchema);
