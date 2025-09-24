@@ -3,7 +3,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import 'dotenv/config';
@@ -26,6 +25,8 @@ import salesRoutes from './routes/sales.js';
 import { initializeScheduledJobs } from './services/scheduledJobs.js';
 import kmhfrRoutes from './routes/kmhfr.js';
 import followUpRoutes from './routes/follow-ups.js';
+import communicationsRoutes from './routes/communications.js';
+import { generalLimiter } from './middleware/rateLimiters.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -39,22 +40,13 @@ const io = new Server(httpServer, {
 // Connect to MongoDB
 connectDB();
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: (process.env.RATE_LIMIT_WINDOW || 15) * 60 * 1000, // 15 minutes
-  max: process.env.RATE_LIMIT_MAX || 100,
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 // Middleware
 app.use(helmet());
 app.use(compression());
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use('/api/', limiter);
+app.use('/api/', generalLimiter);
 
 // Allow all CORS
 app.use(cors());
@@ -79,6 +71,7 @@ app.use('/api/quotation', quotationRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api', kmhfrRoutes);
 app.use('/api/follow-ups', followUpRoutes);
+app.use('/api/communications', communicationsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
