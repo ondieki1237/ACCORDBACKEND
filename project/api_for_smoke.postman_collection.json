@@ -1,0 +1,282 @@
+{
+  "info": {
+    "name": "ACCORDBACKEND - Smoke Tests",
+    "description": "Basic Postman tests for auth, communications (group & personal), admin visits summary, and quotation request.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "accord-smoke-001"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "token", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "otherId", "value": "" },
+    { "key": "communicationId", "value": "" },
+    { "key": "visitId", "value": "" },
+    { "key": "quotationId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 - Auth - Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "if(json && json.data && json.data.token){",
+              "  pm.environment.set('token', json.data.token);",
+              "  pm.environment.set('userId', json.data.user && json.data.user._id ? json.data.user._id : '');",
+              "}",
+              "pm.test('token set', () => pm.expect(pm.environment.get('token')).to.be.ok);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Communications - List Users",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/communications/users", "host": ["{{baseUrl}}"], "path": ["api","communications","users"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test('returns array', () => pm.expect(json.data).to.be.an('array'));",
+              "if (json.data && json.data.length) pm.environment.set('otherId', json.data[0]._id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Communications - Create Group Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"type\": \"group\", \"subject\": \"Smoke Test Group\", \"content\": \"Hello group from Postman\" }"
+        },
+        "url": { "raw": "{{baseUrl}}/api/communications", "host": ["{{baseUrl}}"], "path": ["api","communications"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 201', () => pm.response.to.have.status(201));",
+              "const json = pm.response.json();",
+              "pm.test('has id and type group', () => {",
+              "  pm.expect(json.data).to.have.property('_id');",
+              "  pm.expect(json.data.type).to.eql('group');",
+              "});",
+              "pm.environment.set('communicationId', json.data._id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Communications - Get Group Feed",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": { "raw": "{{baseUrl}}/api/communications/group", "host": ["{{baseUrl}}"], "path": ["api","communications","group"], "query": [ { "key": "limit", "value": "20" } ] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test('data array', () => pm.expect(json.data).to.be.an('array'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Communications - Create Personal Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"type\": \"personal\", \"recipients\": [ \"{{otherId}}\" ], \"subject\": \"PM from Postman\", \"content\": \"Hello user\" }"
+        },
+        "url": { "raw": "{{baseUrl}}/api/communications", "host": ["{{baseUrl}}"], "path": ["api","communications"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 201', () => pm.response.to.have.status(201));",
+              "const json = pm.response.json();",
+              "pm.test('personal message', () => pm.expect(json.data.type).to.eql('personal'));",
+              "pm.environment.set('personalCommunicationId', json.data._id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Communications - My Inbox",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": { "raw": "{{baseUrl}}/api/communications/my", "host": ["{{baseUrl}}"], "path": ["api","communications","my"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test('data array', () => pm.expect(json.data).to.be.an('array'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Communications - Personal Conversation with otherId",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": { "raw": "{{baseUrl}}/api/communications/personal/{{otherId}}", "host": ["{{baseUrl}}"], "path": ["api","communications","personal","{{otherId}}"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test('conversation', () => pm.expect(json.data).to.be.an('array'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Communications - Mark Read",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": { "raw": "{{baseUrl}}/api/communications/{{communicationId}}/read", "host": ["{{baseUrl}}"], "path": ["api","communications","{{communicationId}}","read"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test('readBy contains user', () => {",
+              "  pm.expect(json.data.readBy).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - Admin - Visits Summary",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": { "raw": "{{baseUrl}}/api/admin/visits/summary?limit=50", "host": ["{{baseUrl}}"], "path": ["api","admin","visits","summary"], "query": [{ "key": "limit", "value": "50" }] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test('array', () => pm.expect(json.data).to.be.an('array'));",
+              "if(json.data && json.data.length) pm.environment.set('visitUserId', json.data[0].userId);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - Admin - Get Visits For User",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": { "raw": "{{baseUrl}}/api/admin/visits/user/{{visitUserId}}?page=1&limit=10", "host": ["{{baseUrl}}"], "path": ["api","admin","visits","user","{{visitUserId}}"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "10" }] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test('docs array', () => pm.expect(json.data).to.be.an('array'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 - Quotation - Create Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"contact\": { \"name\": \"Seth Test\", \"email\": \"seth@example.com\", \"phone\": \"+123456789\" },\n  \"items\": [{ \"sku\": \"EQ-1001\", \"name\": \"O2 Concentrator\", \"quantity\": 1, \"details\": \"Model X\" }],\n  \"notes\": \"Need asap\",\n  \"expectedBy\": \"2025-10-05T00:00:00.000Z\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/quotation/request", "host": ["{{baseUrl}}"], "path": ["api","quotation","request"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 201', () => pm.response.to.have.status(201));",
+              "const json = pm.response.json();",
+              "pm.test('has id', () => pm.expect(json.data).to.have.property('_id'));",
+              "pm.environment.set('quotationId', json.data._id);"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
