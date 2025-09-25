@@ -28,6 +28,8 @@ import kmhfrRoutes from './routes/kmhfr.js';
 import followUpRoutes from './routes/follow-ups.js';
 import communicationsRoutes from './routes/communications.js';
 import { generalLimiter } from './middleware/rateLimiters.js';
+import adminUsersRoutes from './routes/admin/users.js';
+import adminAnalyticsRoutes from './routes/admin/analytics.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -74,6 +76,8 @@ app.use('/api/sales', salesRoutes);
 app.use('/api', kmhfrRoutes);
 app.use('/api/follow-ups', followUpRoutes);
 app.use('/api/communications', communicationsRoutes);
+app.use('/api/admin/users', adminUsersRoutes);
+app.use('/api/admin/analytics', adminAnalyticsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
