@@ -3,6 +3,7 @@
     "leaflet": "^1.9.4",
     "leaflet.heat": "^0.2.0",
     "mongoose-paginate-v2": "^1.9.1",
+    "multer": "^2.0.2",
     "react-leaflet": "^4.2.1"
   }
 }
