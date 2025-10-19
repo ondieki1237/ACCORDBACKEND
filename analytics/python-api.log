@@ -1,0 +1,12 @@
+2025-10-19 16:14:37,215 - __main__ - INFO - Starting Analytics API Server on port 5001
+2025-10-19 16:14:37,215 - __main__ - INFO - Connecting to MongoDB...
+2025-10-19 16:14:37,776 - __main__ - INFO - ✓ MongoDB connection successful
+✓ Connected to MongoDB: accord_medical
+ * Serving Flask app 'api_server'
+ * Debug mode: off
+2025-10-19 16:14:37,778 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.0.109:5001
+2025-10-19 16:14:37,778 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-19 16:14:38,064 - werkzeug - INFO - 127.0.0.1 - - [19/Oct/2025 16:14:38] "GET /health HTTP/1.1" 200 -

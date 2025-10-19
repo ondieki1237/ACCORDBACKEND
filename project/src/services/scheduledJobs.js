@@ -1,9 +1,15 @@
 import cron from 'node-cron';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import path from 'path';
+import { existsSync } from 'fs';
 import User from '../models/User.js';
 import Visit from '../models/Visit.js';
 import Trail from '../models/Trail.js';
 import { sendEmail } from './emailService.js';
 import logger from '../utils/logger.js';
+
+const execAsync = promisify(exec);
 
 export const initializeScheduledJobs = () => {
   // Daily report at 6 PM
@@ -28,6 +34,18 @@ export const initializeScheduledJobs = () => {
   cron.schedule('0 10 * * *', async () => {
     logger.info('Running follow-up reminders job');
     await sendFollowUpReminders();
+  });
+
+  // Generate analytics every Monday at 8 AM
+  cron.schedule('0 8 * * 1', async () => {
+    logger.info('Running weekly analytics generation');
+    await generateWeeklyAnalytics();
+  });
+
+  // Generate analytics on 1st of month at 7 AM
+  cron.schedule('0 7 1 * *', async () => {
+    logger.info('Running monthly analytics generation');
+    await generateMonthlyAnalytics();
   });
 
   logger.info('Scheduled jobs initialized');
@@ -165,5 +183,88 @@ const sendFollowUpReminders = async () => {
     }
   } catch (error) {
     logger.error('Follow-up reminder error:', error);
+  }
+};
+/**
+ * Generate weekly analytics (last 7 days)
+ */
+const generateWeeklyAnalytics = async () => {
+  try {
+    logger.info('Starting weekly analytics generation...');
+    const analyticsPath = path.join(process.cwd(), '..', 'analytics');
+    const pythonPath = path.join(analyticsPath, 'venv', 'bin', 'python');
+    const scriptPath = path.join(analyticsPath, 'main.py');
+
+    // Check if Python environment exists
+    if (!existsSync(pythonPath)) {
+      logger.warn('Python environment not found. Skipping analytics generation.');
+      return;
+    }
+
+    // Run analytics for last 7 days
+    const { stdout, stderr } = await execAsync(
+      `cd ${analyticsPath} && ${pythonPath} ${scriptPath} 7`,
+      { maxBuffer: 10 * 1024 * 1024 }
+    );
+
+    if (stderr) {
+      logger.warn('Analytics stderr:', stderr);
+    }
+
+    logger.info('Weekly analytics generated successfully');
+  } catch (error) {
+    logger.error('Weekly analytics generation error:', error);
+  }
+};
+
+/**
+ * Generate monthly analytics (last 30 days)
+ */
+const generateMonthlyAnalytics = async () => {
+  try {
+    logger.info('Starting monthly analytics generation...');
+    const analyticsPath = path.join(process.cwd(), '..', 'analytics');
+    const pythonPath = path.join(analyticsPath, 'venv', 'bin', 'python');
+    const scriptPath = path.join(analyticsPath, 'main.py');
+
+    // Check if Python environment exists
+    if (!existsSync(pythonPath)) {
+      logger.warn('Python environment not found. Skipping analytics generation.');
+      return;
+    }
+
+    // Run analytics for last 30 days
+    const { stdout, stderr } = await execAsync(
+      `cd ${analyticsPath} && ${pythonPath} ${scriptPath} 30`,
+      { maxBuffer: 10 * 1024 * 1024 }
+    );
+
+    if (stderr) {
+      logger.warn('Analytics stderr:', stderr);
+    }
+
+    logger.info('Monthly analytics generated successfully');
+
+    // Send email to admins
+    const adminUsers = await User.find({ role: { $in: ['admin', 'manager'] }, isActive: true });
+    for (const admin of adminUsers) {
+      try {
+        await sendEmail({
+          to: admin.email,
+          subject: 'Monthly Analytics Report Available',
+          html: `
+            <h2>Monthly Analytics Report</h2>
+            <p>Hello ${admin.firstName},</p>
+            <p>The monthly analytics report has been generated.</p>
+            <p><a href="${process.env.CLIENT_URL}/analytics">View Analytics Dashboard</a></p>
+            <p>Best regards,<br>ACCORD Medical Team</p>
+          `
+        });
+      } catch (emailError) {
+        logger.error(`Failed to send analytics email to ${admin.email}:`, emailError);
+      }
+    }
+  } catch (error) {
+    logger.error('Monthly analytics generation error:', error);
   }
 };

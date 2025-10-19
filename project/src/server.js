@@ -31,6 +31,8 @@ import { generalLimiter } from './middleware/rateLimiters.js';
 import adminUsersRoutes from './routes/admin/users.js';
 import adminAnalyticsRoutes from './routes/admin/analytics.js';
 import engineeringServicesRoutes from './routes/engineeringServices.js';
+import analyticsRoutes from './routes/analytics.js';
+import liveAnalyticsRoutes from './routes/liveAnalytics.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -80,6 +82,8 @@ app.use('/api/communications', communicationsRoutes);
 app.use('/api/admin/users', adminUsersRoutes);
 app.use('/api/admin/analytics', adminAnalyticsRoutes);
 app.use('/api/engineering-services', engineeringServicesRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/analytics/live', liveAnalyticsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

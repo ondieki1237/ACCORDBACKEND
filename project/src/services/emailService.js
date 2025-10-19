@@ -54,6 +54,17 @@ export const sendEmail = async ({ to, subject, template, data }) => {
           <p>Best regards,<br>Accord Medical Team</p>
         `;
         break;
+
+      case 'analytics':
+        html = `
+          <h2>${data.reportType || 'Analytics'} Report Available</h2>
+          <p>Hello ${data.firstName},</p>
+          <p>Your ${data.reportType || 'analytics'} report has been generated and is ready for review.</p>
+          <p><a href="${data.dashboardUrl}" style="background-color: #2E86AB; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;">View Analytics Dashboard</a></p>
+          <p>Report Date: ${data.date}</p>
+          <p>Best regards,<br>Accord Medical Team</p>
+        `;
+        break;
         
       default:
         html = '<p>Default email template</p>';
