@@ -37,7 +37,7 @@ export const trackLocation = async (req, res, next) => {
     }
 
     // Convert timestamp (ms) to Date objects
-    const processedLocations = locations.map(loc => ({
+    const rawLocations = locations.map(loc => ({
       latitude: loc.latitude,
       longitude: loc.longitude,
       accuracy: loc.accuracy,
@@ -46,6 +46,99 @@ export const trackLocation = async (req, res, next) => {
       heading: loc.heading,
       altitude: loc.altitude
     }));
+
+    // --- Compression settings ---
+    // Default: collapse points within 2 meters for at least 5 minutes
+    const DISTANCE_THRESHOLD_METERS = Number(process.env.LOCATION_CLUSTER_DISTANCE_METERS) || 2;
+    const TIME_THRESHOLD_MS = (Number(process.env.LOCATION_CLUSTER_TIME_SECONDS) || 300) * 1000;
+
+    // Allow client to override thresholds for sync requests (optional)
+    const clientDistance = req.body.clusterDistanceMeters !== undefined ? Number(req.body.clusterDistanceMeters) : undefined;
+    const clientTime = req.body.clusterTimeSeconds !== undefined ? Number(req.body.clusterTimeSeconds) : undefined;
+    const distanceThreshold = !isNaN(clientDistance) ? clientDistance : DISTANCE_THRESHOLD_METERS;
+    const timeThresholdMs = !isNaN(clientTime) ? clientTime * 1000 : TIME_THRESHOLD_MS;
+
+    // Helper: Haversine distance between two lat/lon in meters
+    const haversine = (lat1, lon1, lat2, lon2) => {
+      const toRad = v => (v * Math.PI) / 180;
+      const R = 6371000; // meters
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    };
+
+    // Sort by timestamp ascending to build clusters
+    const sorted = rawLocations.slice().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    const compressed = [];
+
+    // Build clusters of consecutive points within distanceThreshold
+    let cluster = null; // { points: [], centroidLat, centroidLon, startTs, endTs }
+
+    const finalizeCluster = (c) => {
+      if (!c) return;
+      const durationMs = c.endTs - c.startTs;
+      if (c.points.length >= 2 && durationMs >= timeThresholdMs) {
+        // Collapse to a single aggregated point
+        const avgAccuracy = c.points.reduce((s, p) => s + (p.accuracy || 0), 0) / c.points.length || undefined;
+        compressed.push({
+          latitude: c.centroidLat,
+          longitude: c.centroidLon,
+          accuracy: avgAccuracy,
+          // use end timestamp to indicate when user left stationary state
+          timestamp: new Date(c.endTs),
+          aggregated: true,
+          count: c.points.length,
+          durationMs
+        });
+      } else {
+        // Not long enough to collapse; emit all original points
+        for (const p of c.points) compressed.push(p);
+      }
+    };
+
+    for (const p of sorted) {
+      if (!cluster) {
+        cluster = {
+          points: [p],
+          centroidLat: p.latitude,
+          centroidLon: p.longitude,
+          startTs: p.timestamp.getTime(),
+          endTs: p.timestamp.getTime()
+        };
+        continue;
+      }
+
+      const dist = haversine(cluster.centroidLat, cluster.centroidLon, p.latitude, p.longitude);
+      if (dist <= distanceThreshold) {
+        // add to cluster and update centroid (weighted average)
+        cluster.points.push(p);
+        cluster.endTs = Math.max(cluster.endTs, p.timestamp.getTime());
+        // incremental centroid update
+        const n = cluster.points.length;
+        cluster.centroidLat = ((cluster.centroidLat * (n - 1)) + p.latitude) / n;
+        cluster.centroidLon = ((cluster.centroidLon * (n - 1)) + p.longitude) / n;
+      } else {
+        // finalize current cluster and start a new one
+        finalizeCluster(cluster);
+        cluster = {
+          points: [p],
+          centroidLat: p.latitude,
+          centroidLon: p.longitude,
+          startTs: p.timestamp.getTime(),
+          endTs: p.timestamp.getTime()
+        };
+      }
+    }
+
+    // finalize last cluster
+    finalizeCluster(cluster);
+
+    const processedLocations = compressed;
 
     const processedDeviceInfo = deviceInfo ? {
       userAgent: deviceInfo.userAgent,
