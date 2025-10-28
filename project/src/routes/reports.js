@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import PDFDocument from 'pdfkit'; // npm install pdfkit
 import { authenticate, authorize } from '../middleware/auth.js';
 import logger from '../utils/logger.js';
@@ -22,21 +23,34 @@ const generatePDF = (content) => {
     });
     doc.on('error', reject);
 
-    // Add metadata
-    const { metadata, sections } = content;
+    // Add metadata (defensive)
+    const metadata = (content && content.metadata) ? content.metadata : {};
+    const sections = (content && Array.isArray(content.sections)) ? content.sections : [];
+
     doc.fontSize(20).text('Weekly Report', { align: 'center' });
     doc.moveDown();
-    doc.fontSize(12).text(`Author: ${metadata.author}`);
-    doc.text(`Week: ${metadata.weekRange}`);
-    doc.text(`Submitted: ${new Date(metadata.submittedAt).toLocaleString()}`);
+    doc.fontSize(12).text(`Author: ${metadata.author || 'Unknown'}`);
+    doc.text(`Week: ${metadata.weekRange || ''}`);
+    // submittedAt may be missing
+    try {
+      const submitted = metadata.submittedAt ? new Date(metadata.submittedAt) : new Date();
+      doc.text(`Submitted: ${submitted.toLocaleString()}`);
+    } catch (e) {
+      doc.text(`Submitted: ${String(metadata.submittedAt)}`);
+    }
     doc.moveDown();
 
-    // Add sections
+    // Add sections (defensive)
     sections.forEach(section => {
-      doc.fontSize(14).text(section.title, { underline: true });
-      doc.moveDown(0.5);
-      doc.fontSize(10).text(section.content);
-      doc.moveDown();
+      try {
+        doc.fontSize(14).text(section.title || 'Section', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(10).text(section.content || '');
+        doc.moveDown();
+      } catch (e) {
+        // ignore problematic section content but continue
+        logger && logger.warn && logger.warn('PDF section render error', e);
+      }
     });
 
     doc.end();
@@ -66,7 +80,14 @@ router.post('/', authenticate, async (req, res) => {
     if (!isDraft) {
       // Generate PDF and upload to Cloudinary
       const pdfBuffer = await generatePDF(content);
-      const tempPath = path.join(process.cwd(), 'tmp', `report-${Date.now()}.pdf`);
+      const tempDir = path.join(process.cwd(), 'tmp');
+      try {
+        fs.mkdirSync(tempDir, { recursive: true });
+      } catch (e) {
+        // if mkdir fails, fallback to OS tmpdir
+        logger && logger.warn && logger.warn('Failed to create tmp dir, falling back to OS tmpdir', e);
+      }
+      const tempPath = path.join(fs.existsSync(tempDir) ? tempDir : os.tmpdir(), `report-${Date.now()}.pdf`);
       fs.writeFileSync(tempPath, pdfBuffer);
 
       const uploadResult = await cloudinary.uploader.upload(tempPath, {
