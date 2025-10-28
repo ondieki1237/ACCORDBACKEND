@@ -33,6 +33,8 @@ import adminAnalyticsRoutes from './routes/admin/analytics.js';
 import engineeringServicesRoutes from './routes/engineeringServices.js';
 import plannerRoutes from './routes/planner.js';
 import adminPlannersRoutes from './routes/admin/planners.js';
+import locationRoutes from './routes/location.js';
+import adminLocationRoutes from './routes/admin/location.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -84,6 +86,8 @@ app.use('/api/admin/analytics', adminAnalyticsRoutes);
 app.use('/api/engineering-services', engineeringServicesRoutes);
 app.use('/api/planner', plannerRoutes);
 app.use('/api/admin/planners', adminPlannersRoutes);
+app.use('/api/location', locationRoutes);
+app.use('/api/admin/location', adminLocationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
