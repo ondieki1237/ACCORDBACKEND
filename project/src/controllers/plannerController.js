@@ -83,7 +83,7 @@ export const getMyPlanners = async (req, res, next) => {
 // Admin: get all planners (with optional filters)
 export const adminGetAllPlanners = async (req, res, next) => {
   try {
-    const { page = 1, limit = 50, userId, from, to } = req.query;
+    const { page = 1, limit = 50, userId, from, to, sortBy = 'date', order = 'desc' } = req.query;
     const q = {};
 
     if (userId) q.userId = userId;
@@ -91,14 +91,35 @@ export const adminGetAllPlanners = async (req, res, next) => {
     if (from) q.weekCreatedAt.$gte = new Date(from);
     if (to) q.weekCreatedAt.$lte = new Date(to);
 
-    const planners = await Planner.find(q)
-      .populate('userId', 'firstName lastName email employeeId')
-      .sort({ weekCreatedAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit))
-      .lean();
+    const pageNum = Number(page);
+    const lim = Number(limit);
+    const sortOrder = String(order).toLowerCase() === 'asc' ? 1 : -1;
 
+    let planners = [];
     const total = await Planner.countDocuments(q);
+
+    if (String(sortBy).toLowerCase() === 'name') {
+      // Aggregate so we can sort by populated user name in the DB
+      const agg = [
+        { $match: q },
+        { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
+        { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+        { $sort: { 'user.firstName': sortOrder, 'user.lastName': sortOrder, weekCreatedAt: -1 } },
+        { $skip: (pageNum - 1) * lim },
+        { $limit: lim },
+        { $project: { userId: '$user', days: 1, notes: 1, weekCreatedAt: 1, createdAt: 1, updatedAt: 1 } }
+      ];
+
+      planners = await Planner.aggregate(agg);
+    } else {
+      // sort by date (weekCreatedAt) by default
+      planners = await Planner.find(q)
+        .populate('userId', 'firstName lastName email employeeId')
+        .sort({ weekCreatedAt: sortOrder })
+        .skip((pageNum - 1) * lim)
+        .limit(lim)
+        .lean();
+    }
 
     // Defensive removal of weekend entries in admin output as well
     const cleanedAdmin = planners.map(p => ({
@@ -110,7 +131,7 @@ export const adminGetAllPlanners = async (req, res, next) => {
       }) : []
     }));
 
-    res.json({ success: true, data: cleanedAdmin, meta: { page: Number(page), limit: Number(limit), totalDocs: total } });
+    res.json({ success: true, data: cleanedAdmin, meta: { page: pageNum, limit: lim, totalDocs: total, totalPages: Math.ceil(total / lim) } });
   } catch (err) {
     logger.error('adminGetAllPlanners error:', err);
     next(err);
