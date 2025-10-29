@@ -10,34 +10,47 @@ const engineeringServiceSchema = new mongoose.Schema({
   date: {
     type: Date,
     required: true,
+    default: Date.now
   },
   facility: {
     name: { type: String, required: true, trim: true },
-    location: { type: String, required: true, trim: true },
+    location: { type: String, trim: true }
   },
   serviceType: {
     type: String,
-    enum: ['installation', 'maintenance', 'repair', 'inspection', 'other'],
+    enum: ['installation', 'maintenance', 'service', 'repair', 'inspection', 'other'],
+    required: true,
     default: 'maintenance',
   },
   machineDetails: { type: String, trim: true },
   conditionBefore: { type: String, trim: true },
   conditionAfter: { type: String, trim: true },
-  otherPersonnel: { type: String, trim: true },
+  otherPersonnel: [{ type: String }],
   nextServiceDate: Date,
   engineerInCharge: {
+    _id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
     name: { type: String, trim: true },
-    phone: { type: String, trim: true },
+    phone: { type: String, trim: true }
   },
   status: {
     type: String,
-    enum: ['recorded', 'scheduled', 'completed', 'cancelled'],
-    default: 'recorded',
+    enum: ['pending', 'assigned', 'in-progress', 'completed', 'cancelled'],
+    default: 'pending',
   },
+  scheduledDate: Date,
+  notes: { type: String, trim: true },
   syncedAt: Date,
   metadata: {
     ip: String,
     userAgent: String,
+    assignedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    assignedAt: Date
   }
 }, {
   timestamps: true
