@@ -3,7 +3,7 @@ import mongoosePaginate from 'mongoose-paginate-v2';
 
 const contactSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
-  role: { type: String, required: true, enum: ['doctor', 'nurse', 'lab_technician', 'pharmacist', 'administrator', 'procurement', 'other'], lowercase: true },
+  role: { type: String, required: true, enum: ['doctor', 'nurse', 'admin', 'procurement', 'it_manager', 'ceo', 'other'], lowercase: true },
   phone: { type: String, trim: true },
   email: { type: String, lowercase: true, trim: true },
   department: {
@@ -140,8 +140,8 @@ const visitSchema = new mongoose.Schema({
   duration: Number, // in minutes
   client: {
     name: { type: String, required: true },
-    type: { type: String, enum: ['hospital', 'clinic', 'dispensary', 'pharmacy', 'laboratory', 'other'], required: true },
-    location: { type: String, required: true } // <-- Already a string, keep as is
+    type: { type: String, enum: ['hospital', 'clinic', 'pharmacy', 'lab', 'imaging_center', 'other'], required: true },
+    location: { type: String, required: true }
   },
   contacts: [contactSchema],
   existingEquipment: [equipmentSchema],
@@ -149,12 +149,11 @@ const visitSchema = new mongoose.Schema({
   visitPurpose: {
     type: String,
     required: true,
-    enum: ['routine_visit', 'follow_up', 'demo', 'service', 'complaint', 'order', 'other']
+    enum: ['demo', 'followup', 'installation', 'maintenance', 'consultation', 'sales', 'other']
   },
   visitOutcome: {
     type: String,
-    enum: ['successful', 'partial', 'no_access', 'rescheduled', 'cancelled'],
-    default: 'successful'
+    enum: ['successful', 'pending', 'followup_required', 'no_interest']
   },
   totalPotentialValue: {
     type: Number,

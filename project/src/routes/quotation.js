@@ -2,18 +2,24 @@ import express from 'express';
 import Request from '../models/Request.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { sendQuotationResponseEmail } from '../utils/email.js';
+import { sendEmail } from '../services/emailService.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
 // @route   POST /api/quotation
 // @desc    Submit a quotation request
-// @access  Public or Private (choose as needed)
+// @access  Private
 router.post('/', authenticate, async (req, res) => {
   try {
     const { hospital, location, equipmentRequired, urgency, contactName, contactEmail, contactPhone } = req.body;
 
-    if (!hospital || !location || !equipmentRequired || !urgency || !contactName || !contactEmail || !contactPhone) {
-      return res.status(400).json({ success: false, message: 'All fields are required.' });
+    if (!hospital || !location || !equipmentRequired || !urgency || !contactName || !contactPhone) {
+      return res.status(400).json({ success: false, message: 'Required fields: hospital, location, equipmentRequired, urgency, contactName, contactPhone' });
+    }
+
+    if (!['low', 'medium', 'high'].includes(urgency)) {
+      return res.status(400).json({ success: false, message: 'Invalid urgency level. Must be: low, medium, or high' });
     }
 
     const request = new Request({
@@ -22,15 +28,61 @@ router.post('/', authenticate, async (req, res) => {
       equipmentRequired,
       urgency,
       contactName,
-      contactEmail,
+      contactEmail: contactEmail || '',
       contactPhone,
-      userId: req.user._id // <-- Save userId
+      userId: req.user._id,
+      status: 'pending',
+      responded: false
     });
 
     await request.save();
 
-    res.status(201).json({ success: true, message: 'Quotation request submitted successfully.' });
+    // Send notification to admin and notification emails
+    const notificationEmails = [];
+    if (process.env.ADMIN_EMAIL) {
+      notificationEmails.push(process.env.ADMIN_EMAIL);
+    }
+    if (process.env.HR_EMAIL) {
+      notificationEmails.push(process.env.HR_EMAIL);
+    }
+    if (process.env.NOTIFICATION_EMAILS) {
+      const additionalEmails = process.env.NOTIFICATION_EMAILS.split(',').map(e => e.trim());
+      notificationEmails.push(...additionalEmails);
+    }
+
+    if (notificationEmails.length > 0) {
+      try {
+        // Remove duplicates
+        const uniqueEmails = [...new Set(notificationEmails)];
+        
+        await sendEmail({
+          to: uniqueEmails.join(','),
+          subject: `New Quotation Request - ${hospital} (${urgency} priority)`,
+          template: 'newQuotation',
+          data: {
+            hospital,
+            location,
+            equipmentRequired,
+            urgency,
+            contactName,
+            contactPhone,
+            requesterName: `${req.user.firstName} ${req.user.lastName}`,
+            quotationUrl: `${process.env.APP_URL || 'http://localhost:5000'}/admin/quotations/${request._id}`
+          }
+        });
+      } catch (emailError) {
+        logger.error('Failed to send quotation notification email:', emailError);
+        // Don't fail the API if email fails
+      }
+    }
+
+    res.status(201).json({ 
+      success: true, 
+      message: 'Quotation request submitted successfully.',
+      data: request
+    });
   } catch (err) {
+    logger.error('Quotation submission error:', err);
     res.status(500).json({ success: false, message: 'Failed to submit quotation request.' });
   }
 });
