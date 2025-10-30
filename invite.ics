@@ -1,0 +1,54 @@
+BEGIN:VCALENDAR
+PRODID:-//Google Inc//Google Calendar 70.9054//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VTIMEZONE
+TZID:Africa/Nairobi
+X-LIC-LOCATION:Africa/Nairobi
+BEGIN:STANDARD
+TZOFFSETFROM:+0300
+TZOFFSETTO:+0300
+TZNAME:GMT+3
+DTSTART:19700101T000000
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+DTSTART;TZID=Africa/Nairobi:20251031T080000
+DTEND;TZID=Africa/Nairobi:20251031T160000
+DTSTAMP:20251030T093350Z
+ORGANIZER;CN=GDG Nairobi:mailto:gdgnairobi1@gmail.com
+UID:49aq2vlvckeofhti01jtnku67d@google.com
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=bellarinseth@gmail.com;X-NUM-GUESTS=0:mailto:bellarinseth@gmail.com
+X-GOOGLE-CONFERENCE:https://meet.google.com/cjk-juce-wvm
+X-MICROSOFT-CDO-OWNERAPPTID:1755701841
+CREATED:20251030T093334Z
+DESCRIPTION:<p>Hello\,</p><p>You are receiving this because you are confirm
+ ed as an attendee for <strong>DevFest Nairobi Day One: Hands-On Workshops &
+ amp\; Codelabs</strong>.</p><p><strong>Date &amp\; Time:</strong>  Friday\,
+  October 31\, 2025 ⋅ 8:00 AM – 4:00 PM (GMT+3)</p><p><strong>Venue:</strong
+ >  Simba Corporation Aspire Center\, Westlands\, Waiyaki Way\, Nairobi\, 00
+ 100View on Google Maps</p><p><strong>Full Agenda:</strong>  Explore the ses
+ sions and codelabs here:<a href="https://gdg.community.dev/events/details/g
+ oogle-gdg-nairobi-presents-devfest-nairobi-day-one-hands-on-workshops-amp-c
+ odelabs/">https://gdg.community.dev/events/details/google-gdg-nairobi-prese
+ nts-devfest-nairobi-day-one-hands-on-workshops-amp-codelabs/</a></p><p>Park
+ ing will be available at the venue at no cost. Upon arrival\, kindly indica
+ te that you are attending DevFest Nairobi.</p><p>Please confirm your attend
+ ance by accepting the attached calendar invite.</p><p>If you have any quest
+ ions\, feel free to reach out to the organising team.</p><p>Cheers\,<br>GDG
+  Nairobi Team</p>\n\n-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:
+ ~:~:~:~:~:~:~:~:~:~:~:~:~::~:~::-\nJoin with Google Meet: https://meet.goog
+ le.com/cjk-juce-wvm\n\nLearn more about Meet at: https://support.google.com
+ /a/users/answer/9282720\n\nPlease do not edit this section.\n-::~:~::~:~:~:
+ ~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~::~:~::-
+LAST-MODIFIED:20251030T093349Z
+LOCATION:Simba Corporation Aspire Center Westlands\, PRM2+FXQ\, Waiyaki Wy\
+ , Nairobi\, Kenya\; https://meet.google.com/cjk-juce-wvm
+SEQUENCE:0
+STATUS:CONFIRMED
+SUMMARY:DevFest Nairobi Day One: Hands-On Workshops & Codelabs
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR

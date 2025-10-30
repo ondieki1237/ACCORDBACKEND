@@ -1,6 +1,8 @@
 import express from 'express';
 import { authenticate, authorize } from '../../middleware/auth.js';
 import Report from '../../models/Report.js';
+import Visit from '../../models/Visit.js';
+import Request from '../../models/Request.js';
 import logger from '../../utils/logger.js';
 
 const router = express.Router();
@@ -56,7 +58,7 @@ router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) =>
 });
 
 // @route   GET /api/admin/reports/:id
-// @desc    Get single report by ID (Admin)
+// @desc    Get single report with full details including visits and quotations data
 // @access  Private (Admin/Manager)
 router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
@@ -71,9 +73,95 @@ router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
       });
     }
 
+    // Fetch all visits for this user within the report's week range
+    const visits = await Visit.find({
+      userId: report.userId._id,
+      date: {
+        $gte: report.weekStart,
+        $lte: report.weekEnd
+      }
+    })
+    .populate('userId', 'firstName lastName email employeeId')
+    .populate('followUpActions.assignedTo', 'firstName lastName email')
+    .sort({ date: 1 })
+    .lean();
+
+    // Fetch all quotation requests for this user within the report's week range
+    const quotations = await Request.find({
+      userId: report.userId._id,
+      createdAt: {
+        $gte: report.weekStart,
+        $lte: report.weekEnd
+      }
+    })
+    .populate('userId', 'firstName lastName email employeeId')
+    .populate('response.respondedBy', 'firstName lastName email')
+    .sort({ createdAt: 1 })
+    .lean();
+
+    // Calculate summary statistics
+    const visitStats = {
+      total: visits.length,
+      byOutcome: {
+        successful: visits.filter(v => v.visitOutcome === 'successful').length,
+        pending: visits.filter(v => v.visitOutcome === 'pending').length,
+        followup_required: visits.filter(v => v.visitOutcome === 'followup_required').length,
+        no_interest: visits.filter(v => v.visitOutcome === 'no_interest').length
+      },
+      byPurpose: {
+        demo: visits.filter(v => v.visitPurpose === 'demo').length,
+        followup: visits.filter(v => v.visitPurpose === 'followup').length,
+        installation: visits.filter(v => v.visitPurpose === 'installation').length,
+        maintenance: visits.filter(v => v.visitPurpose === 'maintenance').length,
+        consultation: visits.filter(v => v.visitPurpose === 'consultation').length,
+        sales: visits.filter(v => v.visitPurpose === 'sales').length,
+        other: visits.filter(v => v.visitPurpose === 'other').length
+      },
+      totalPotentialValue: visits.reduce((sum, v) => sum + (v.totalPotentialValue || 0), 0)
+    };
+
+    const quotationStats = {
+      total: quotations.length,
+      byStatus: {
+        pending: quotations.filter(q => q.status === 'pending').length,
+        in_progress: quotations.filter(q => q.status === 'in_progress').length,
+        responded: quotations.filter(q => q.status === 'responded').length,
+        completed: quotations.filter(q => q.status === 'completed').length,
+        rejected: quotations.filter(q => q.status === 'rejected').length
+      },
+      byUrgency: {
+        low: quotations.filter(q => q.urgency === 'low').length,
+        medium: quotations.filter(q => q.urgency === 'medium').length,
+        high: quotations.filter(q => q.urgency === 'high').length
+      }
+    };
+
+    // Combine all data for frontend PDF generation
+    const responseData = {
+      report: report.toObject(),
+      visits,
+      quotations,
+      statistics: {
+        visits: visitStats,
+        quotations: quotationStats
+      },
+      meta: {
+        totalVisits: visits.length,
+        totalQuotations: quotations.length,
+        weekRange: report.weekRange,
+        submittedAt: report.createdAt,
+        salesRep: {
+          name: `${report.userId.firstName} ${report.userId.lastName}`,
+          email: report.userId.email,
+          employeeId: report.userId.employeeId,
+          phone: report.userId.phone
+        }
+      }
+    };
+
     res.json({
       success: true,
-      data: report
+      data: responseData
     });
 
   } catch (error) {
@@ -131,6 +219,99 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
     res.status(500).json({
       success: false,
       message: 'Failed to update report'
+    });
+  }
+});
+
+// @route   POST /api/admin/reports/bulk
+// @desc    Get multiple reports with full details (for bulk PDF generation)
+// @access  Private (Admin/Manager)
+router.post('/bulk', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const { reportIds } = req.body;
+
+    if (!reportIds || !Array.isArray(reportIds) || reportIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'reportIds array is required'
+      });
+    }
+
+    // Limit to 50 reports at a time to prevent overload
+    if (reportIds.length > 50) {
+      return res.status(400).json({
+        success: false,
+        message: 'Maximum 50 reports can be fetched at once'
+      });
+    }
+
+    const reports = await Report.find({ _id: { $in: reportIds } })
+      .populate('userId', 'firstName lastName email phone employeeId')
+      .populate('reviewedBy', 'firstName lastName email')
+      .lean();
+
+    if (reports.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No reports found'
+      });
+    }
+
+    // Fetch all visits and quotations for all reports
+    const bulkData = await Promise.all(reports.map(async (report) => {
+      const visits = await Visit.find({
+        userId: report.userId._id,
+        date: {
+          $gte: report.weekStart,
+          $lte: report.weekEnd
+        }
+      })
+      .populate('userId', 'firstName lastName email employeeId')
+      .populate('followUpActions.assignedTo', 'firstName lastName email')
+      .sort({ date: 1 })
+      .lean();
+
+      const quotations = await Request.find({
+        userId: report.userId._id,
+        createdAt: {
+          $gte: report.weekStart,
+          $lte: report.weekEnd
+        }
+      })
+      .populate('userId', 'firstName lastName email employeeId')
+      .populate('response.respondedBy', 'firstName lastName email')
+      .sort({ createdAt: 1 })
+      .lean();
+
+      return {
+        report,
+        visits,
+        quotations,
+        meta: {
+          totalVisits: visits.length,
+          totalQuotations: quotations.length,
+          weekRange: report.weekRange,
+          submittedAt: report.createdAt,
+          salesRep: {
+            name: `${report.userId.firstName} ${report.userId.lastName}`,
+            email: report.userId.email,
+            employeeId: report.userId.employeeId,
+            phone: report.userId.phone
+          }
+        }
+      };
+    }));
+
+    res.json({
+      success: true,
+      data: bulkData
+    });
+
+  } catch (error) {
+    logger.error('Bulk fetch reports error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch reports'
     });
   }
 });
