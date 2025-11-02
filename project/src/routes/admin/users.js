@@ -62,9 +62,9 @@ router.post('/', async (req, res) => {
       password,
       role: role.toLowerCase(),
       region,
-      territory: territory || '',
-      department: department || '',
-      phone: phone || ''
+      ...(territory && { territory }),
+      ...(department && { department }),
+      ...(phone && { phone })
     });
 
     await user.save();

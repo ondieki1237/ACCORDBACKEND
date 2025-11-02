@@ -62,7 +62,7 @@ router.post('/register', validateRegistration, async (req, res) => {
       role: userRole,
       region,
       territory,
-      department: department || '' // Department is optional now
+      ...(department && { department }) // Only include department if it's not empty
     });
 
     await user.save();
