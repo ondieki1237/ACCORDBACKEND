@@ -160,10 +160,6 @@ const visitSchema = new mongoose.Schema({
     type: String,
     enum: ['successful', 'pending', 'followup_required', 'no_interest']
   },
-  totalPotentialValue: {
-    type: Number,
-    default: 0
-  },
   competitorActivity: {
     type: String,
     trim: true
