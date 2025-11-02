@@ -32,13 +32,13 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['admin', 'manager', 'sales'],
+    enum: ['admin', 'manager', 'sales', 'engineer'],
     default: 'sales'
   },
   department: {
     type: String,
-    enum: ['sales', 'marketing', 'technical', 'management'],
-    default: 'sales'
+    enum: ['sales', 'marketing', 'technical', 'management', 'engineering'],
+    required: false
   },
   phone: {
     type: String,

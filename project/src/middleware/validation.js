@@ -18,8 +18,9 @@ export const validateRegistration = [
   body('lastName').notEmpty().trim().withMessage('Last name is required'),
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('role').optional().isIn(['admin', 'manager', 'sales']).withMessage('Invalid role'),
+  body('role').optional().isIn(['admin', 'manager', 'sales', 'engineer']).withMessage('Invalid role'),
   body('region').notEmpty().trim().withMessage('Region is required'),
+  body('department').optional().trim(),
   validate
 ];
 

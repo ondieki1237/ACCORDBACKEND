@@ -24,11 +24,22 @@ const generateTokens = (userId) => {
 };
 
 // @route   POST /api/auth/register
-// @desc    Register new user
-// @access  Public (admin only in production)
+// @desc    Register new user (PUBLIC - Sales/Engineer only)
+// @access  Public
 router.post('/register', validateRegistration, async (req, res) => {
   try {
     const { employeeId, firstName, lastName, email, password, role, region, territory, department } = req.body;
+
+    // PUBLIC REGISTRATION: Only allow 'sales' and 'engineer' roles
+    const allowedPublicRoles = ['sales', 'engineer'];
+    const userRole = role && allowedPublicRoles.includes(role.toLowerCase()) ? role.toLowerCase() : 'sales';
+
+    if (role && !allowedPublicRoles.includes(role.toLowerCase())) {
+      return res.status(403).json({
+        success: false,
+        message: 'Public registration only allows Sales and Engineer roles. Contact admin for other roles.'
+      });
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({
@@ -48,10 +59,10 @@ router.post('/register', validateRegistration, async (req, res) => {
       lastName,
       email,
       password,
-      role: role || 'sales',
+      role: userRole,
       region,
       territory,
-      department: department || 'sales'
+      department: department || '' // Department is optional now
     });
 
     await user.save();

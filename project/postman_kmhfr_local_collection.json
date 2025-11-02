@@ -1,394 +1,785 @@
-{
-  "info": {
-    "name": "KMHFR Local API - Postman Collection (Express on :5000)",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Elaborate Postman collection to test a local Express backend that wraps KMHFR data. Base URL defaults to {{baseUrl}}. Replace placeholders in the environment file before running requests."
-  },
-  "item": [
-    {
-      "name": "Health / Basic",
-      "description": "Health checks and app-level endpoints",
-      "item": [
-        {
-          "name": "GET - Health (ping)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/health",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "health"
-              ]
-            },
-            "description": "Simple health endpoint for the Express app. Optional."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 200 or 204\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200,204]);",
-                  "});",
-                  "",
-                  "if (pm.response.code === 200) {",
-                  "    pm.test('Response is JSON when code 200', function(){",
-                  "        pm.response.to.have.header('Content-Type');",
-                  "        pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-                  "    });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        },
-        {
-          "name": "GET - App Status (/api/status)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/status",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "status"
-              ]
-            },
-            "description": "Another common status endpoint. Useful if implemented."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Body not empty', function () { pm.expect(pm.response.text()).to.not.equal(''); });"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Facilities - Search & Listing",
-      "item": [
-        {
-          "name": "GET - Search (proxy) - /api/facilities/search",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/facilities/search?name={{name}}&county={{county}}&limit={{limit}}&page={{page}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "facilities",
-                "search"
-              ],
-              "query": [
-                {
-                  "key": "name",
-                  "value": "{{name}}"
-                },
-                {
-                  "key": "county",
-                  "value": "{{county}}"
-                },
-                {
-                  "key": "limit",
-                  "value": "{{limit}}"
-                },
-                {
-                  "key": "page",
-                  "value": "{{page}}"
-                }
-              ]
-            },
-            "description": "Search facilities by name/county (the Express wrapper). Provide variables in environment."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Has JSON body or results array', function() {",
-                  "    var ok=false;",
-                  "    try{ var j = pm.response.json();",
-                  "         ok = Array.isArray(j) || Array.isArray(j.results) || (typeof j.count !== 'undefined');",
-                  "    } catch(e) { ok=false; }",
-                  "    pm.expect(ok).to.be.true;",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        },
-        {
-          "name": "GET - List facilities (/api/facilities)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/facilities?limit=10&page=1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "facilities"
-              ],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "10"
-                },
-                {
-                  "key": "page",
-                  "value": "1"
-                }
-              ]
-            },
-            "description": "List facilities. Tests check for array or paginated results."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Response returns facilities list', function(){",
-                  "    var j = pm.response.json();",
-                  "    pm.expect(Array.isArray(j) || Array.isArray(j.results)).to.be.true;",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        },
-        {
-          "name": "GET - Filter by county & ward (/api/facilities)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/facilities?county={{countyId}}&ward={{wardId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "facilities"
-              ],
-              "query": [
-                {
-                  "key": "county",
-                  "value": "{{countyId}}"
-                },
-                {
-                  "key": "ward",
-                  "value": "{{wardId}}"
-                }
-              ]
-            },
-            "description": "Filter facilities by countyId and wardId. Use the common endpoints to fetch valid county/ward ids."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Either array or object with results', function(){",
-                  "  var j = pm.response.json();",
-                  "  pm.expect(Array.isArray(j) || Array.isArray(j.results)).to.be.true;",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Facility - Details & Report",
-      "item": [
-        {
-          "name": "GET - Facility detail (/api/facilities/:id)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/facilities/{{facilityId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "facilities",
-                "{{facilityId}}"
-              ]
-            },
-            "description": "Get full facility detail by id (UUID or numeric id depending on your implementation). Replace {{facilityId}} in environment."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 200', function(){ pm.response.to.have.status(200); });",
-                  "pm.test('Has id and name fields (if JSON)', function(){",
-                  "   try {",
-                  "     var j = pm.response.json();",
-                  "     pm.expect(j).to.have.property('id');",
-                  "     pm.expect(j).to.have.property('name');",
-                  "   } catch(e) { pm.fail('Response was not JSON or missing fields'); }",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        },
-        {
-          "name": "GET - Facility report (JSON) (/api/facilities/:id/report)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/facilities/{{facilityId}}/report?format=json",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "facilities",
-                "{{facilityId}}",
-                "report"
-              ],
-              "query": [
-                {
-                  "key": "format",
-                  "value": "json"
-                }
-              ]
-            },
-            "description": "Get structured readiness/equipment report as JSON."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
-                  "pm.test('Report contains facility object', function(){",
-                  "  var j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('facility');",
-                  "  pm.expect(j).to.have.property('summary');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        },
-        {
-          "name": "GET - Facility report (PDF) (/api/facilities/:id/report.pdf)",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/pdf"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/facilities/{{facilityId}}/report?format=pdf",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "facilities",
-                "{{facilityId}}",
-                "report"
-              ],
-              "query": [
-                {
-                  "key": "format",
-                  "value": "pdf"
-                }
-              ]
-            },
-            "description": "Request a PDF stream. Postman will download the response when 'Send and Download' is used."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 200 or 201', function(){ pm.expect(pm.response.code).to.be.oneOf([200,201]); });",
-                  "pm.test('Content-Type PDF', function(){",
-                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('pdf');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        },
-        {
-          "name": "GET - Facility Services (/api/facilities/:id/services)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/facilities/{{facilityId}}/services",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "facilities",
-                "{{facilityId}}",
-                "services"
-              ]
-            },
-            "description": "List services (if your wrapper exposes this)."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 200', function(){ pm.response.to.have.status(200); });",
-                  "pm.test('Response is array or object', function(){",
-                  "  var j = pm.response.json();",
-                  "  pm.expect(Array.isArray(j) || typeof j === 'object').to.be.true;",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        },
-        {
-          "name": "GET - Facility Infrastructure (/api/facilities/:id/infrastructure)",
+{{
+
+	"info": {  "info": {
+
+		"_postman_id": "kmhfr-accord-2025",    "name": "KMHFR Local API - Postman Collection (Express on :5000)",
+
+		"name": "KMHFR API - Accord Medical Backend",    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+
+		"description": "Complete KMHFR endpoints collection with pre-filled sample data for testing",    "description": "Elaborate Postman collection to test a local Express backend that wraps KMHFR data. Base URL defaults to {{baseUrl}}. Replace placeholders in the environment file before running requests."
+
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"  },
+
+	},  "item": [
+
+	"item": [    {
+
+		{      "name": "Health / Basic",
+
+			"name": "Health & Status",      "description": "Health checks and app-level endpoints",
+
+			"item": [      "item": [
+
+				{        {
+
+					"name": "Health Check",          "name": "GET - Health (ping)",
+
+					"request": {          "request": {
+
+						"method": "GET",            "method": "GET",
+
+						"header": [],            "header": [],
+
+						"url": {            "url": {
+
+							"raw": "{{baseUrl}}/api/kmhfr/health",              "raw": "{{baseUrl}}/api/health",
+
+							"host": ["{{baseUrl}}"],              "host": [
+
+							"path": ["api", "kmhfr", "health"]                "{{baseUrl}}"
+
+						}              ],
+
+					}              "path": [
+
+				},                "api",
+
+				{                "health"
+
+					"name": "App Status",              ]
+
+					"request": {            },
+
+						"method": "GET",            "description": "Simple health endpoint for the Express app. Optional."
+
+						"header": [],          },
+
+						"url": {          "event": [
+
+							"raw": "{{baseUrl}}/api/kmhfr/status",            {
+
+							"host": ["{{baseUrl}}"],              "listen": "test",
+
+							"path": ["api", "kmhfr", "status"]              "script": {
+
+						}                "exec": [
+
+					}                  "pm.test(\"Status is 200 or 204\", function () {",
+
+				}                  "    pm.expect(pm.response.code).to.be.oneOf([200,204]);",
+
+			]                  "});",
+
+		},                  "",
+
+		{                  "if (pm.response.code === 200) {",
+
+			"name": "Facilities",                  "    pm.test('Response is JSON when code 200', function(){",
+
+			"item": [                  "        pm.response.to.have.header('Content-Type');",
+
+				{                  "        pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+
+					"name": "Search Facilities",                  "    });",
+
+					"request": {                  "}"
+
+						"method": "GET",                ],
+
+						"header": [],                "type": "text/javascript"
+
+						"url": {              }
+
+							"raw": "{{baseUrl}}/api/kmhfr/facilities/search?name=Nairobi Hospital&county=Nairobi&limit=10&page=1",            }
+
+							"host": ["{{baseUrl}}"],          ]
+
+							"path": ["api", "kmhfr", "facilities", "search"],        },
+
+							"query": [        {
+
+								{          "name": "GET - App Status (/api/status)",
+
+									"key": "name",          "request": {
+
+									"value": "Nairobi Hospital",            "method": "GET",
+
+									"description": "Facility name to search"            "header": [],
+
+								},            "url": {
+
+								{              "raw": "{{baseUrl}}/api/status",
+
+									"key": "county",              "host": [
+
+									"value": "Nairobi",                "{{baseUrl}}"
+
+									"description": "County name"              ],
+
+								},              "path": [
+
+								{                "api",
+
+									"key": "limit",                "status"
+
+									"value": "10",              ]
+
+									"description": "Results per page"            },
+
+								},            "description": "Another common status endpoint. Useful if implemented."
+
+								{          },
+
+									"key": "page",          "event": [
+
+									"value": "1",            {
+
+									"description": "Page number"              "listen": "test",
+
+								}              "script": {
+
+							]                "exec": [
+
+						}                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+
+					}                  "pm.test('Body not empty', function () { pm.expect(pm.response.text()).to.not.equal(''); });"
+
+				},                ],
+
+				{                "type": "text/javascript"
+
+					"name": "List All Facilities",              }
+
+					"request": {            }
+
+						"method": "GET",          ]
+
+						"header": [],        }
+
+						"url": {      ]
+
+							"raw": "{{baseUrl}}/api/kmhfr/facilities?limit=20&page=1&county=Nairobi",    },
+
+							"host": ["{{baseUrl}}"],    {
+
+							"path": ["api", "kmhfr", "facilities"],      "name": "Facilities - Search & Listing",
+
+							"query": [      "item": [
+
+								{        {
+
+									"key": "limit",          "name": "GET - Search (proxy) - /api/facilities/search",
+
+									"value": "20"          "request": {
+
+								},            "method": "GET",
+
+								{            "header": [],
+
+									"key": "page",            "url": {
+
+									"value": "1"              "raw": "{{baseUrl}}/api/facilities/search?name={{name}}&county={{county}}&limit={{limit}}&page={{page}}",
+
+								},              "host": [
+
+								{                "{{baseUrl}}"
+
+									"key": "county",              ],
+
+									"value": "Nairobi",              "path": [
+
+									"description": "Optional: filter by county"                "api",
+
+								},                "facilities",
+
+								{                "search"
+
+									"key": "ward",              ],
+
+									"value": "",              "query": [
+
+									"description": "Optional: filter by ward",                {
+
+									"disabled": true                  "key": "name",
+
+								}                  "value": "{{name}}"
+
+							]                },
+
+						}                {
+
+					}                  "key": "county",
+
+				},                  "value": "{{county}}"
+
+				{                },
+
+					"name": "Get Facility Details",                {
+
+					"request": {                  "key": "limit",
+
+						"method": "GET",                  "value": "{{limit}}"
+
+						"header": [],                },
+
+						"url": {                {
+
+							"raw": "{{baseUrl}}/api/kmhfr/facilities/{{facilityId}}",                  "key": "page",
+
+							"host": ["{{baseUrl}}"],                  "value": "{{page}}"
+
+							"path": ["api", "kmhfr", "facilities", "{{facilityId}}"]                }
+
+						}              ]
+
+					}            },
+
+				},            "description": "Search facilities by name/county (the Express wrapper). Provide variables in environment."
+
+				{          },
+
+					"name": "Get Facility Report (JSON)",          "event": [
+
+					"request": {            {
+
+						"method": "GET",              "listen": "test",
+
+						"header": [],              "script": {
+
+						"url": {                "exec": [
+
+							"raw": "{{baseUrl}}/api/kmhfr/facilities/{{facilityId}}/report?format=json",                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+
+							"host": ["{{baseUrl}}"],                  "pm.test('Has JSON body or results array', function() {",
+
+							"path": ["api", "kmhfr", "facilities", "{{facilityId}}", "report"],                  "    var ok=false;",
+
+							"query": [                  "    try{ var j = pm.response.json();",
+
+								{                  "         ok = Array.isArray(j) || Array.isArray(j.results) || (typeof j.count !== 'undefined');",
+
+									"key": "format",                  "    } catch(e) { ok=false; }",
+
+									"value": "json"                  "    pm.expect(ok).to.be.true;",
+
+								}                  "});"
+
+							]                ],
+
+						}                "type": "text/javascript"
+
+					}              }
+
+				},            }
+
+				{          ]
+
+					"name": "Get Facility Report (PDF)",        },
+
+					"request": {        {
+
+						"method": "GET",          "name": "GET - List facilities (/api/facilities)",
+
+						"header": [],          "request": {
+
+						"url": {            "method": "GET",
+
+							"raw": "{{baseUrl}}/api/kmhfr/facilities/{{facilityId}}/report?format=pdf",            "header": [],
+
+							"host": ["{{baseUrl}}"],            "url": {
+
+							"path": ["api", "kmhfr", "facilities", "{{facilityId}}", "report"],              "raw": "{{baseUrl}}/api/facilities?limit=10&page=1",
+
+							"query": [              "host": [
+
+								{                "{{baseUrl}}"
+
+									"key": "format",              ],
+
+									"value": "pdf"              "path": [
+
+								}                "api",
+
+							]                "facilities"
+
+						}              ],
+
+					}              "query": [
+
+				},                {
+
+				{                  "key": "limit",
+
+					"name": "Get Facility Services",                  "value": "10"
+
+					"request": {                },
+
+						"method": "GET",                {
+
+						"header": [],                  "key": "page",
+
+						"url": {                  "value": "1"
+
+							"raw": "{{baseUrl}}/api/kmhfr/facilities/{{facilityId}}/services",                }
+
+							"host": ["{{baseUrl}}"],              ]
+
+							"path": ["api", "kmhfr", "facilities", "{{facilityId}}", "services"]            },
+
+						}            "description": "List facilities. Tests check for array or paginated results."
+
+					}          },
+
+				},          "event": [
+
+				{            {
+
+					"name": "Get Facility Infrastructure",              "listen": "test",
+
+					"request": {              "script": {
+
+						"method": "GET",                "exec": [
+
+						"header": [],                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+
+						"url": {                  "pm.test('Response returns facilities list', function(){",
+
+							"raw": "{{baseUrl}}/api/kmhfr/facilities/{{facilityId}}/infrastructure",                  "    var j = pm.response.json();",
+
+							"host": ["{{baseUrl}}"],                  "    pm.expect(Array.isArray(j) || Array.isArray(j.results)).to.be.true;",
+
+							"path": ["api", "kmhfr", "facilities", "{{facilityId}}", "infrastructure"]                  "});"
+
+						}                ],
+
+					}                "type": "text/javascript"
+
+				},              }
+
+				{            }
+
+					"name": "Get Facility Contacts",          ]
+
+					"request": {        },
+
+						"method": "GET",        {
+
+						"header": [],          "name": "GET - Filter by county & ward (/api/facilities)",
+
+						"url": {          "request": {
+
+							"raw": "{{baseUrl}}/api/kmhfr/facilities/{{facilityId}}/contacts",            "method": "GET",
+
+							"host": ["{{baseUrl}}"],            "header": [],
+
+							"path": ["api", "kmhfr", "facilities", "{{facilityId}}", "contacts"]            "url": {
+
+						}              "raw": "{{baseUrl}}/api/facilities?county={{countyId}}&ward={{wardId}}",
+
+					}              "host": [
+
+				}                "{{baseUrl}}"
+
+			]              ],
+
+		},              "path": [
+
+		{                "api",
+
+			"name": "Metadata & Catalogs",                "facilities"
+
+			"item": [              ],
+
+				{              "query": [
+
+					"name": "Get All Counties",                {
+
+					"request": {                  "key": "county",
+
+						"method": "GET",                  "value": "{{countyId}}"
+
+						"header": [],                },
+
+						"url": {                {
+
+							"raw": "{{baseUrl}}/api/kmhfr/common/counties",                  "key": "ward",
+
+							"host": ["{{baseUrl}}"],                  "value": "{{wardId}}"
+
+							"path": ["api", "kmhfr", "common", "counties"]                }
+
+						}              ]
+
+					}            },
+
+				},            "description": "Filter facilities by countyId and wardId. Use the common endpoints to fetch valid county/ward ids."
+
+				{          },
+
+					"name": "Get Wards by County",          "event": [
+
+					"request": {            {
+
+						"method": "GET",              "listen": "test",
+
+						"header": [],              "script": {
+
+						"url": {                "exec": [
+
+							"raw": "{{baseUrl}}/api/kmhfr/common/wards?county=Nairobi",                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+
+							"host": ["{{baseUrl}}"],                  "pm.test('Either array or object with results', function(){",
+
+							"path": ["api", "kmhfr", "common", "wards"],                  "  var j = pm.response.json();",
+
+							"query": [                  "  pm.expect(Array.isArray(j) || Array.isArray(j.results)).to.be.true;",
+
+								{                  "});"
+
+									"key": "county",                ],
+
+									"value": "Nairobi",                "type": "text/javascript"
+
+									"description": "County name or code"              }
+
+								}            }
+
+							]          ]
+
+						}        }
+
+					}      ]
+
+				},    },
+
+				{    {
+
+					"name": "Get Constituencies",      "name": "Facility - Details & Report",
+
+					"request": {      "item": [
+
+						"method": "GET",        {
+
+						"header": [],          "name": "GET - Facility detail (/api/facilities/:id)",
+
+						"url": {          "request": {
+
+							"raw": "{{baseUrl}}/api/kmhfr/common/constituencies?county=Nairobi",            "method": "GET",
+
+							"host": ["{{baseUrl}}"],            "header": [],
+
+							"path": ["api", "kmhfr", "common", "constituencies"],            "url": {
+
+							"query": [              "raw": "{{baseUrl}}/api/facilities/{{facilityId}}",
+
+								{              "host": [
+
+									"key": "county",                "{{baseUrl}}"
+
+									"value": "Nairobi",              ],
+
+									"description": "Optional county filter"              "path": [
+
+								}                "api",
+
+							]                "facilities",
+
+						}                "{{facilityId}}"
+
+					}              ]
+
+				},            },
+
+				{            "description": "Get full facility detail by id (UUID or numeric id depending on your implementation). Replace {{facilityId}} in environment."
+
+					"name": "Get Facility Types",          },
+
+					"request": {          "event": [
+
+						"method": "GET",            {
+
+						"header": [],              "listen": "test",
+
+						"url": {              "script": {
+
+							"raw": "{{baseUrl}}/api/kmhfr/facilities/facility_types",                "exec": [
+
+							"host": ["{{baseUrl}}"],                  "pm.test('Status 200', function(){ pm.response.to.have.status(200); });",
+
+							"path": ["api", "kmhfr", "facilities", "facility_types"]                  "pm.test('Has id and name fields (if JSON)', function(){",
+
+						}                  "   try {",
+
+					}                  "     var j = pm.response.json();",
+
+				},                  "     pm.expect(j).to.have.property('id');",
+
+				{                  "     pm.expect(j).to.have.property('name');",
+
+					"name": "Get Services Catalog",                  "   } catch(e) { pm.fail('Response was not JSON or missing fields'); }",
+
+					"request": {                  "});"
+
+						"method": "GET",                ],
+
+						"header": [],                "type": "text/javascript"
+
+						"url": {              }
+
+							"raw": "{{baseUrl}}/api/kmhfr/facilities/services",            }
+
+							"host": ["{{baseUrl}}"],          ]
+
+							"path": ["api", "kmhfr", "facilities", "services"]        },
+
+						}        {
+
+					}          "name": "GET - Facility report (JSON) (/api/facilities/:id/report)",
+
+				},          "request": {
+
+				{            "method": "GET",
+
+					"name": "Get Infrastructure Catalog",            "header": [],
+
+					"request": {            "url": {
+
+						"method": "GET",              "raw": "{{baseUrl}}/api/facilities/{{facilityId}}/report?format=json",
+
+						"header": [],              "host": [
+
+						"url": {                "{{baseUrl}}"
+
+							"raw": "{{baseUrl}}/api/kmhfr/facilities/infrastructure",              ],
+
+							"host": ["{{baseUrl}}"],              "path": [
+
+							"path": ["api", "kmhfr", "facilities", "infrastructure"]                "api",
+
+						}                "facilities",
+
+					}                "{{facilityId}}",
+
+				}                "report"
+
+			]              ],
+
+		},              "query": [
+
+		{                {
+
+			"name": "Export & Reports",                  "key": "format",
+
+			"item": [                  "value": "json"
+
+				{                }
+
+					"name": "Export Facilities (CSV)",              ]
+
+					"request": {            },
+
+						"method": "GET",            "description": "Get structured readiness/equipment report as JSON."
+
+						"header": [],          },
+
+						"url": {          "event": [
+
+							"raw": "{{baseUrl}}/api/kmhfr/facilities/export?format=csv",            {
+
+							"host": ["{{baseUrl}}"],              "listen": "test",
+
+							"path": ["api", "kmhfr", "facilities", "export"],              "script": {
+
+							"query": [                "exec": [
+
+								{                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+
+									"key": "format",                  "pm.test('Report contains facility object', function(){",
+
+									"value": "csv"                  "  var j = pm.response.json();",
+
+								}                  "  pm.expect(j).to.have.property('facility');",
+
+							]                  "  pm.expect(j).to.have.property('summary');",
+
+						}                  "});"
+
+					}                ],
+
+				},                "type": "text/javascript"
+
+				{              }
+
+					"name": "Export Facilities (Excel)",            }
+
+					"request": {          ]
+
+						"method": "GET",        },
+
+						"header": [],        {
+
+						"url": {          "name": "GET - Facility report (PDF) (/api/facilities/:id/report.pdf)",
+
+							"raw": "{{baseUrl}}/api/kmhfr/facilities/export?format=excel",          "request": {
+
+							"host": ["{{baseUrl}}"],            "method": "GET",
+
+							"path": ["api", "kmhfr", "facilities", "export"],            "header": [
+
+							"query": [              {
+
+								{                "key": "Accept",
+
+									"key": "format",                "value": "application/pdf"
+
+									"value": "excel"              }
+
+								}            ],
+
+							]            "url": {
+
+						}              "raw": "{{baseUrl}}/api/facilities/{{facilityId}}/report?format=pdf",
+
+					}              "host": [
+
+				}                "{{baseUrl}}"
+
+			]              ],
+
+		},              "path": [
+
+		{                "api",
+
+			"name": "Authentication",                "facilities",
+
+			"item": [                "{{facilityId}}",
+
+				{                "report"
+
+					"name": "Login",              ],
+
+					"request": {              "query": [
+
+						"method": "POST",                {
+
+						"header": [                  "key": "format",
+
+							{                  "value": "pdf"
+
+								"key": "Content-Type",                }
+
+								"value": "application/json"              ]
+
+							}            },
+
+						],            "description": "Request a PDF stream. Postman will download the response when 'Send and Download' is used."
+
+						"body": {          },
+
+							"mode": "raw",          "event": [
+
+							"raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password123\"\n}"            {
+
+						},              "listen": "test",
+
+						"url": {              "script": {
+
+							"raw": "{{baseUrl}}/api/kmhfr/auth/login",                "exec": [
+
+							"host": ["{{baseUrl}}"],                  "pm.test('Status 200 or 201', function(){ pm.expect(pm.response.code).to.be.oneOf([200,201]); });",
+
+							"path": ["api", "kmhfr", "auth", "login"]                  "pm.test('Content-Type PDF', function(){",
+
+						}                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('pdf');",
+
+					}                  "});"
+
+				}                ],
+
+			]                "type": "text/javascript"
+
+		}              }
+
+	],            }
+
+	"variable": [          ]
+
+		{        },
+
+			"key": "baseUrl",        {
+
+			"value": "http://localhost:4500",          "name": "GET - Facility Services (/api/facilities/:id/services)",
+
+			"type": "default"          "request": {
+
+		},            "method": "GET",
+
+		{            "header": [],
+
+			"key": "prodUrl",            "url": {
+
+			"value": "https://app.codewithseth.co.ke",              "raw": "{{baseUrl}}/api/facilities/{{facilityId}}/services",
+
+			"type": "default"              "host": [
+
+		},                "{{baseUrl}}"
+
+		{              ],
+
+			"key": "facilityId",              "path": [
+
+			"value": "replace-with-actual-uuid",                "api",
+
+			"type": "default",                "facilities",
+
+			"description": "Replace with actual facility UUID from search results"                "{{facilityId}}",
+
+		},                "services"
+
+		{              ]
+
+			"key": "name",            },
+
+			"value": "Nairobi Hospital",            "description": "List services (if your wrapper exposes this)."
+
+			"type": "default"          },
+
+		},          "event": [
+
+		{            {
+
+			"key": "county",              "listen": "test",
+
+			"value": "Nairobi",              "script": {
+
+			"type": "default"                "exec": [
+
+		},                  "pm.test('Status 200', function(){ pm.response.to.have.status(200); });",
+
+		{                  "pm.test('Response is array or object', function(){",
+
+			"key": "limit",                  "  var j = pm.response.json();",
+
+			"value": "10",                  "  pm.expect(Array.isArray(j) || typeof j === 'object').to.be.true;",
+
+			"type": "default"                  "});"
+
+		},                ],
+
+		{                "type": "text/javascript"
+
+			"key": "page",              }
+
+			"value": "1",            }
+
+			"type": "default"          ]
+
+		}        },
+
+	]        {
+
+}          "name": "GET - Facility Infrastructure (/api/facilities/:id/infrastructure)",
+
           "request": {
             "method": "GET",
             "header": [],

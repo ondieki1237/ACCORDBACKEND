@@ -1,0 +1,266 @@
+{
+  "info": {
+    "name": "KMHFR API - Postman Collection (Wrapper)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection to test the KMHFR wrapper endpoints exposed by this backend. Set the environment variable {{baseUrl}} to your API base (e.g., https://app.codewithseth.co.ke or http://localhost:5000)."
+  },
+  "item": [
+    {
+      "name": "Health / Basic",
+      "description": "Health checks and app-level endpoints",
+      "item": [
+        {
+          "name": "GET - Health (ping)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": "Simple health endpoint for the Express app. Optional."
+          }
+        },
+        {
+          "name": "GET - App Status (/api/status)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "status"
+              ]
+            },
+            "description": "Another common status endpoint. Useful if implemented."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Facilities - Search & Listing",
+      "item": [
+        {
+          "name": "GET - Search (proxy) - /api/facilities/search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/facilities/search?name={{name}}&county={{county}}&limit={{limit}}&page={{page}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "facilities",
+                "search"
+              ]
+            },
+            "description": "Search facilities by name/county (the Express wrapper). Provide variables in environment."
+          }
+        },
+        {
+          "name": "GET - List facilities (/api/facilities)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/facilities?limit=10&page=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "facilities"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "List facilities."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Facility - Details & Report",
+      "item": [
+        {
+          "name": "GET - Facility detail (/api/facilities/:id)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/facilities/{{facilityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "facilities",
+                "{{facilityId}}"
+              ]
+            },
+            "description": "Get full facility detail by id. Replace {{facilityId}} in environment."
+          }
+        },
+        {
+          "name": "GET - Facility report (JSON) (/api/facilities/:id/report)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/facilities/{{facilityId}}/report?format=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "facilities",
+                "{{facilityId}}",
+                "report"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "json"
+                }
+              ]
+            },
+            "description": "Get structured readiness/equipment report as JSON."
+          }
+        },
+        {
+          "name": "GET - Facility report (PDF) (/api/facilities/:id/report)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/pdf"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/facilities/{{facilityId}}/report?format=pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "facilities",
+                "{{facilityId}}",
+                "report"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "pdf"
+                }
+              ]
+            },
+            "description": "Request a PDF stream. Use 'Send and Download' to save." 
+          }
+        }
+      ]
+    },
+    {
+      "name": "Common / Metadata Endpoints",
+      "item": [
+        {
+          "name": "GET - Counties (/api/common/counties)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/common/counties",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "common",
+                "counties"
+              ]
+            },
+            "description": "List of counties. Use returned IDs for filters."
+          }
+        },
+        {
+          "name": "GET - Wards by county (/api/common/wards?county={{countyId}})",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/common/wards?county={{countyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "common",
+                "wards"
+              ],
+              "query": [
+                {
+                  "key": "county",
+                  "value": "{{countyId}}"
+                }
+              ]
+            },
+            "description": "Get wards filtered by county (if supported)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth / Admin (if implemented)",
+      "item": [
+        {
+          "name": "POST - Auth Login (/api/auth/login)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login to get token. If your wrapper uses a different path, update accordingly."
+          }
+        }
+      ]
+    }
+  ]
+}

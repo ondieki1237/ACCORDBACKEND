@@ -37,6 +37,7 @@ import plannerRoutes from './routes/planner.js';
 import adminPlannersRoutes from './routes/admin/planners.js';
 import locationRoutes from './routes/location.js';
 import adminLocationRoutes from './routes/admin/location.js';
+import appRoutes from './routes/app.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -66,6 +67,9 @@ app.options("*", cors());
 // Socket.IO setup
 app.set('io', io);
 
+// Serve static files for app downloads
+app.use('/downloads', express.static('downloads'));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -92,6 +96,7 @@ app.use('/api/planner', plannerRoutes);
 app.use('/api/admin/planners', adminPlannersRoutes);
 app.use('/api/location', locationRoutes);
 app.use('/api/admin/location', adminLocationRoutes);
+app.use('/api/app', appRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

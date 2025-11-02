@@ -1,5 +1,6 @@
 import express from 'express';
 import axios from 'axios';
+import countiesFallback from '../data/counties.js';
 
 const router = express.Router();
 const KMHFR_BASE = 'https://kmhfr.vercel.app/api';
@@ -131,10 +132,14 @@ router.get('/facilities/services', async (req, res) => {
 router.get('/common/counties', async (req, res) => {
   try {
     const url = `${KMHFR_BASE}/common/counties/`;
-    const response = await axios.get(url);
-    res.json(response.data);
+    const response = await axios.get(url, { timeout: 5000 });
+    // Ensure response has expected shape
+    if (!response || !response.data) throw new Error('Invalid response from KMHFR service');
+    return res.json(response.data);
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to fetch counties', error: err.message });
+    // Log and return local fallback so admin UI remains usable
+    console.error('KMHFR /common/counties fetch failed:', err.message);
+    return res.json({ success: true, data: countiesFallback, note: 'served from local fallback due to external service error' });
   }
 });
 
