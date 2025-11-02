@@ -3,7 +3,7 @@ import mongoosePaginate from 'mongoose-paginate-v2';
 
 const contactSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
-  role: { type: String, required: true, enum: ['doctor', 'nurse', 'admin', 'procurement', 'it_manager', 'ceo', 'other'], lowercase: true },
+  role: { type: String, required: true, enum: ['doctor', 'nurse', 'admin', 'procurement', 'it_manager', 'ceo', 'pharmacist', 'other'], lowercase: true },
   phone: { type: String, trim: true },
   email: { type: String, lowercase: true, trim: true },
   department: {
@@ -154,11 +154,11 @@ const visitSchema = new mongoose.Schema({
   visitPurpose: {
     type: String,
     required: true,
-    enum: ['demo', 'followup', 'installation', 'maintenance', 'consultation', 'sales', 'other']
+    enum: ['demo', 'followup', 'installation', 'maintenance', 'consultation', 'sales', 'complaint', 'other']
   },
   visitOutcome: {
     type: String,
-    enum: ['successful', 'pending', 'followup_required', 'no_interest']
+    enum: ['successful', 'pending', 'followup_required', 'no_interest', 'no_access']
   },
   competitorActivity: {
     type: String,

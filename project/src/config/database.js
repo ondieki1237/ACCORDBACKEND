@@ -30,7 +30,7 @@ const createIndexes = async () => {
     
     // Visit indexes
     await mongoose.connection.collection('visits').createIndex({ userId: 1, date: -1 });
-    await mongoose.connection.collection('visits').createIndex({ 'client.location': '2dsphere' });
+    // Removed 2dsphere index - client.location is now a string, not coordinates
     await mongoose.connection.collection('visits').createIndex({ 'client.type': 1 });
     
     // Order indexes

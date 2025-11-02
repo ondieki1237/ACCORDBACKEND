@@ -44,13 +44,13 @@ export const validateVisit = [
   body('startTime').isISO8601().withMessage('Valid start time is required'),
   body('client.name').notEmpty().trim().withMessage('Client name is required'),
   body('client.type').isIn(['hospital', 'clinic', 'pharmacy', 'lab', 'imaging_center', 'other']).withMessage('Invalid client type'),
-  body('client.level').optional().isIn(['1', '2', '3', '4', '5', '6', 'not_applicable']).withMessage('Invalid facility level'),
+  body('client.level').optional().customSanitizer(value => String(value)).isIn(['1', '2', '3', '4', '5', '6', 'not_applicable']).withMessage('Invalid facility level'),
   body('client.location').notEmpty().isString().withMessage('Client location is required'),
-  body('visitPurpose').isIn(['demo', 'followup', 'installation', 'maintenance', 'consultation', 'sales', 'other']).withMessage('Invalid visit purpose'),
-  body('visitOutcome').optional().isIn(['successful', 'pending', 'followup_required', 'no_interest']).withMessage('Invalid visit outcome'),
+  body('visitPurpose').isIn(['demo', 'followup', 'installation', 'maintenance', 'consultation', 'sales', 'complaint', 'other']).withMessage('Invalid visit purpose'),
+  body('visitOutcome').optional().isIn(['successful', 'pending', 'followup_required', 'no_interest', 'no_access']).withMessage('Invalid visit outcome'),
   body('contacts').optional().isArray().withMessage('Contacts must be an array'),
   body('contacts.*.name').optional().notEmpty().withMessage('Contact name is required'),
-  body('contacts.*.role').optional().isIn(['doctor', 'nurse', 'admin', 'procurement', 'it_manager', 'ceo', 'other']).withMessage('Invalid contact role'),
+  body('contacts.*.role').optional().isIn(['doctor', 'nurse', 'admin', 'procurement', 'it_manager', 'ceo', 'pharmacist', 'other']).withMessage('Invalid contact role'),
   body('customData').optional().isString().withMessage('Custom data must be a string'),
   validate
 ];
