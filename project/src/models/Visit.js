@@ -141,6 +141,11 @@ const visitSchema = new mongoose.Schema({
   client: {
     name: { type: String, required: true },
     type: { type: String, enum: ['hospital', 'clinic', 'pharmacy', 'lab', 'imaging_center', 'other'], required: true },
+    level: { 
+      type: String, 
+      enum: ['1', '2', '3', '4', '5', '6', 'not_applicable'],
+      trim: true
+    },
     location: { type: String, required: true }
   },
   contacts: [contactSchema],
@@ -168,6 +173,10 @@ const visitSchema = new mongoose.Schema({
     trim: true
   },
   notes: {
+    type: String,
+    trim: true
+  },
+  customData: {
     type: String,
     trim: true
   },
