@@ -125,7 +125,7 @@ const visitSchema = new mongoose.Schema({
   visitId: {
     type: String,
     unique: true,
-    required: true
+    required: false
   },
   date: {
     type: Date,
@@ -239,21 +239,24 @@ visitSchema.index({ userId: 1, date: -1 });
 visitSchema.index({ 'client.type': 1 });
 visitSchema.index({ visitOutcome: 1 });
 
-// Add pagination plugin
-visitSchema.plugin(mongoosePaginate);
-
 // Pre-save middleware to generate visitId
 visitSchema.pre('save', async function(next) {
   if (!this.visitId) {
-    const date = new Date(this.date);
-    const dateString = date.toISOString().slice(0, 10).replace(/-/g, '');
-    const userIdShort = this.userId.toString().slice(-6);
-    const random = Math.random().toString(36).substr(2, 4);
-    this.visitId = `V${dateString}${userIdShort}${random}`.toUpperCase();
+    try {
+      const date = new Date(this.date || new Date());
+      const dateString = date.toISOString().slice(0, 10).replace(/-/g, '');
+      const userIdShort = this.userId ? this.userId.toString().slice(-6) : '000000';
+      const random = Math.random().toString(36).substr(2, 4).toUpperCase();
+      this.visitId = `V${dateString}${userIdShort}${random}`.toUpperCase();
+    } catch (error) {
+      // Fallback visitId generation
+      this.visitId = `V${Date.now()}${Math.floor(Math.random() * 10000)}`;
+    }
   }
   next();
 });
 
+// Add pagination plugin
 visitSchema.plugin(mongoosePaginate);
 
 export default mongoose.model('Visit', visitSchema);

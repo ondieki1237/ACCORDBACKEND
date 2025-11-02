@@ -43,12 +43,15 @@ export const validateVisit = [
   body('date').isISO8601().withMessage('Valid date is required'),
   body('startTime').isISO8601().withMessage('Valid start time is required'),
   body('client.name').notEmpty().trim().withMessage('Client name is required'),
-  body('client.type').isIn(['hospital', 'clinic', 'dispensary', 'pharmacy', 'laboratory', 'other']).withMessage('Invalid client type'),
+  body('client.type').isIn(['hospital', 'clinic', 'pharmacy', 'lab', 'imaging_center', 'other']).withMessage('Invalid client type'),
+  body('client.level').optional().isIn(['1', '2', '3', '4', '5', '6', 'not_applicable']).withMessage('Invalid facility level'),
   body('client.location').notEmpty().isString().withMessage('Client location is required'),
-  body('visitPurpose').isIn(['routine_visit', 'follow_up', 'demo', 'service', 'complaint', 'order', 'other']).withMessage('Invalid visit purpose'),
+  body('visitPurpose').isIn(['demo', 'followup', 'installation', 'maintenance', 'consultation', 'sales', 'other']).withMessage('Invalid visit purpose'),
+  body('visitOutcome').optional().isIn(['successful', 'pending', 'followup_required', 'no_interest']).withMessage('Invalid visit outcome'),
   body('contacts').optional().isArray().withMessage('Contacts must be an array'),
   body('contacts.*.name').optional().notEmpty().withMessage('Contact name is required'),
-  body('contacts.*.role').optional().isIn(['doctor', 'nurse', 'lab_technician', 'pharmacist', 'administrator', 'procurement', 'other']).withMessage('Invalid contact role'),
+  body('contacts.*.role').optional().isIn(['doctor', 'nurse', 'admin', 'procurement', 'it_manager', 'ceo', 'other']).withMessage('Invalid contact role'),
+  body('customData').optional().isString().withMessage('Custom data must be a string'),
   validate
 ];
 
