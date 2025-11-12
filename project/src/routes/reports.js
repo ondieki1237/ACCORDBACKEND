@@ -13,10 +13,11 @@ import { sendEmail } from '../services/emailService.js';
 
 const router = express.Router();
 
-// Helper to generate PDF from report content
+// Helper to generate a compact, one-page PDF from report content
 const generatePDF = (report) => {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument();
+    // A4 single page, compact margins
+    const doc = new PDFDocument({ size: 'A4', margins: { top: 48, bottom: 48, left: 48, right: 48 } });
     const buffers = [];
 
     doc.on('data', buffers.push.bind(buffers));
@@ -26,54 +27,77 @@ const generatePDF = (report) => {
     });
     doc.on('error', reject);
 
-    // Determine which structure to use
-    let sections = [];
-    let metadata = {};
-    
-    // Priority 1: Root-level sections (new structure)
-    if (report.sections && Array.isArray(report.sections) && report.sections.length > 0) {
-      sections = report.sections;
-      metadata = {
-        weekRange: report.weekRange || '',
-        author: report.userId?.firstName ? `${report.userId.firstName} ${report.userId.lastName}` : 'Unknown',
-        submittedAt: report.createdAt || new Date()
-      };
-    }
-    // Priority 2: Nested content structure (current structure)
-    else if (report.content) {
-      metadata = report.content.metadata || {};
-      sections = report.content.sections || [];
-    }
-    // Priority 3: Legacy structure
-    else {
-      sections = [];
-      metadata = {};
-    }
+    // Prefer root-level sections, then nested content, then empty
+    const sections = (report.sections && Array.isArray(report.sections) && report.sections.length > 0)
+      ? report.sections
+      : (report.content && Array.isArray(report.content.sections)) ? report.content.sections : [];
 
-    doc.fontSize(20).text('Weekly Report', { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Author: ${metadata.author || 'Unknown'}`);
-    doc.text(`Week: ${metadata.weekRange || report.weekRange || ''}`);
-    
+    // Try to derive author and dates
+    const author = report.userId?.firstName ? `${report.userId.firstName} ${report.userId.lastName}` : (report.userId?.name || 'Unknown');
+    // Use explicit weekStart/weekEnd if available, otherwise weekRange
+    let weekRangeStr = report.weekRange || '';
     try {
-      const submitted = metadata.submittedAt ? new Date(metadata.submittedAt) : new Date();
-      doc.text(`Submitted: ${submitted.toLocaleString()}`);
+      if (!weekRangeStr && report.weekStart && report.weekEnd) {
+        const start = new Date(report.weekStart);
+        const end = new Date(report.weekEnd);
+        const opts = { year: 'numeric', month: 'short', day: 'numeric' };
+        weekRangeStr = `${start.toLocaleDateString(undefined, opts)} - ${end.toLocaleDateString(undefined, opts)}`;
+      }
     } catch (e) {
-      doc.text(`Submitted: ${String(metadata.submittedAt)}`);
+      // ignore formatting errors
     }
-    doc.moveDown();
 
-    // Add sections
-    sections.forEach(section => {
+    const submittedAt = report.createdAt ? new Date(report.createdAt) : (report.lastEdited ? new Date(report.lastEdited) : new Date());
+
+    // Header
+    doc.font('Helvetica-Bold').fontSize(18).text('Weekly Report', { align: 'center' });
+    doc.moveDown(0.5);
+
+    doc.font('Helvetica').fontSize(10);
+    doc.text(`Author: ${author}`);
+    if (weekRangeStr) doc.text(`Week: ${weekRangeStr}`);
+    doc.text(`Submitted: ${submittedAt.toLocaleString()}`);
+    doc.moveDown(0.8);
+
+    // Summary / key info area - flatten sections into concise blocks
+    // We'll render up to 5 short sections to keep everything on one page.
+    const maxSections = 5;
+    const rendered = sections.slice(0, maxSections).map(s => {
+      const title = s.title || (s.id ? s.id : 'Section');
+      const content = (s.content || s.text || '')
+        .replace(/\r?\n/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      // Truncate each section to ~600 chars to avoid multi-page output
+      const snippet = content.length > 600 ? content.slice(0, 597) + '...' : content;
+      return { title, snippet };
+    });
+
+    // If there are no sections, try to show a brief auto-summary
+    if (rendered.length === 0) {
+      const visitsCount = Array.isArray(report.visits) ? report.visits.length : undefined;
+      const summaryLines = [];
+      if (report.content && report.content.summary) summaryLines.push((report.content.summary || '').replace(/\s+/g, ' ').slice(0, 800));
+      if (typeof visitsCount === 'number') summaryLines.push(`Visits reported: ${visitsCount}`);
+      if (summaryLines.length === 0) summaryLines.push((report.notes || '') .toString().slice(0, 800));
+      rendered.push({ title: 'Summary', snippet: summaryLines.join(' - ') });
+    }
+
+    // Render each small block with compact styling
+    rendered.forEach(block => {
       try {
-        doc.fontSize(14).text(section.title || 'Section', { underline: true });
-        doc.moveDown(0.5);
-        doc.fontSize(10).text(section.content || '');
-        doc.moveDown();
+        doc.font('Helvetica-Bold').fontSize(11).fillColor('#111').text(block.title, { continued: false });
+        doc.moveDown(0.1);
+        doc.font('Helvetica').fontSize(9).fillColor('#333').text(block.snippet, { paragraphGap: 6, lineGap: 2 });
+        doc.moveDown(0.4);
       } catch (e) {
-        logger && logger.warn && logger.warn('PDF section render error', e);
+        // ignore rendering errors for individual sections
       }
     });
+
+    // Footer small note
+    doc.moveDown(0.8);
+    doc.fontSize(8).fillColor('#666').text('Generated by ACCORD - concise weekly report (one-page).', { align: 'center' });
 
     doc.end();
   });
@@ -147,35 +171,47 @@ router.post('/', authenticate, async (req, res) => {
     }
 
     if (!isDraft) {
-      // Generate PDF - pass the entire report data
-      const pdfBuffer = await generatePDF({ 
-        ...reportData, 
-        userId: req.user,
-        createdAt: new Date()
-      });
-      
-      const tempDir = path.join(process.cwd(), 'tmp');
-      try {
-        fs.mkdirSync(tempDir, { recursive: true });
-      } catch (e) {
-        logger && logger.warn && logger.warn('Failed to create tmp dir, falling back to OS tmpdir', e);
+      // Optionally generate and upload PDF to Cloudinary.
+      // If UPLOAD_REPORTS_TO_CLOUDINARY is set to 'false', skip PDF generation/upload
+      // and only save the report data to the database. This is useful for local
+      // workflows where you want reports persisted in DB and not uploaded.
+      const uploadEnabled = process.env.UPLOAD_REPORTS_TO_CLOUDINARY !== 'false';
+
+      if (uploadEnabled) {
+        // Generate PDF - pass the entire report data
+        const pdfBuffer = await generatePDF({ 
+          ...reportData, 
+          userId: req.user,
+          createdAt: new Date()
+        });
+        
+        const tempDir = path.join(process.cwd(), 'tmp');
+        try {
+          fs.mkdirSync(tempDir, { recursive: true });
+        } catch (e) {
+          logger && logger.warn && logger.warn('Failed to create tmp dir, falling back to OS tmpdir', e);
+        }
+        const tempPath = path.join(fs.existsSync(tempDir) ? tempDir : os.tmpdir(), `report-${Date.now()}.pdf`);
+        fs.writeFileSync(tempPath, pdfBuffer);
+
+        const uploadResult = await cloudinary.uploader.upload(tempPath, {
+          resource_type: 'auto',
+          folder: 'reports',
+          type: 'upload'
+        });
+
+        try { fs.unlinkSync(tempPath); } catch (e) { /* ignore cleanup errors */ }
+
+        reportData.fileUrl = uploadResult.secure_url;
+        reportData.pdfUrl = uploadResult.secure_url;
+        reportData.filePublicId = uploadResult.public_id;
+        reportData.fileName = `report-${weekStart}-${weekEnd}.pdf`;
+        reportData.filePath = tempPath;
+      } else {
+        // Upload disabled: do not generate or upload PDF. Report metadata will be
+        // persisted and can be rendered/downloaded later from the admin dashboard.
+        logger && logger.info && logger.info('Report upload to Cloudinary disabled by UPLOAD_REPORTS_TO_CLOUDINARY=false');
       }
-      const tempPath = path.join(fs.existsSync(tempDir) ? tempDir : os.tmpdir(), `report-${Date.now()}.pdf`);
-      fs.writeFileSync(tempPath, pdfBuffer);
-
-      const uploadResult = await cloudinary.uploader.upload(tempPath, {
-        resource_type: 'auto',
-        folder: 'reports',
-        type: 'upload'
-      });
-
-      fs.unlinkSync(tempPath); // Clean up temp file
-
-      reportData.fileUrl = uploadResult.secure_url;
-      reportData.pdfUrl = uploadResult.secure_url;
-      reportData.filePublicId = uploadResult.public_id;
-      reportData.fileName = `report-${weekStart}-${weekEnd}.pdf`;
-      reportData.filePath = tempPath;
     }
 
     const report = new Report(reportData);
