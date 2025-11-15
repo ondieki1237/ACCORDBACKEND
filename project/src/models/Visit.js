@@ -220,6 +220,11 @@ const visitSchema = new mongoose.Schema({
       default: 'pending'
     }
   }],
+  // References to follow-up visit records attached to this visit
+  followUpVisits: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'FollowUpVisit'
+  }],
   syncedAt: {
     type: Date,
     default: Date.now

@@ -660,3 +660,25 @@ The frontend implementation includes:
 ## Version History
 
 - **v1.0** (2024-01-15): Initial API specification
+
+## Implementation status (code added)
+
+I implemented the Follow-up Visits backend feature and wired it into the API.
+
+Files added/updated:
+
+- `project/src/models/FollowUpVisit.js` — Mongoose model implementing the `FollowUpVisit` schema described above (conditional validation, indexes).
+- `project/src/models/Visit.js` — (updated) added `followUpVisits` array (references to `FollowUpVisit`) so follow-ups are attached to the visit record.
+- `project/src/routes/follow-up-visits.js` — CRUD endpoints for follow-up visits mounted at `/api/follow-up-visits`:
+  - POST `/api/follow-up-visits` — create a follow-up and attach it to a visit (updates `visit.followUpVisits` and `visit.isFollowUpRequired`)
+  - GET `/api/follow-up-visits` — list follow-up visits (user-scoped or admin)
+  - GET `/api/follow-up-visits/:id` — get a single follow-up visit
+  - PUT `/api/follow-up-visits/:id` — update (owner or admin)
+  - DELETE `/api/follow-up-visits/:id` — delete (owner or admin) and remove reference from visit
+
+Notes and next steps:
+- Conditional validation is performed both in the Mongoose model and in the route handlers for clearer error messages.
+- The route updates `Visit.isFollowUpRequired` based on the follow-up's `needAnotherFollowUp` flag.
+- Consider adding unit/integration tests (jest + supertest) for these endpoints.
+- Consider sending notifications (email/push) when follow-ups are created or when `needAnotherFollowUp` is true.
+
