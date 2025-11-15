@@ -815,6 +815,29 @@ I implemented the Leads backend feature and added admin routes. Files added to t
   - PUT `/api/admin/leads/:id` — update any lead
   - DELETE `/api/admin/leads/:id` — delete any lead
 
+Status history (new)
+--------------------
+
+When a lead's `leadStatus` changes (either from the sales rep UI or via the admin panel), the backend now records the transition in a `statusHistory` array on the lead document. Each history entry has the following shape:
+
+```json
+{
+  "from": "contacted",
+  "to": "won",
+  "changedBy": "<userId>",
+  "changedAt": "2025-11-15T10:30:00.000Z",
+  "note": "Optional note about the change"
+}
+```
+
+This preserves the timeline of the conversation so admins can see previous states and when/how they changed (for example: "2 days ago the conversation was at 'contacted'"). An optional `statusChangeNote` may be provided when calling the update endpoint to record contextual information about the transition.
+
+Implementation details:
+- The `Lead` model includes a `statusHistory` array (see `project/src/models/Lead.js`).
+- Both user and admin update endpoints push a statusHistory entry when `leadStatus` differs from the previous value. The updater's user id and timestamp are recorded.
+- The current `leadStatus` field continues to represent the latest status.
+
+
 These routes are wired in the server bootstrap at `project/src/server.js` so the endpoints are available when the server runs.
 
 Notes / Safety

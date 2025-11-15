@@ -46,8 +46,21 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
   try {
     const lead = await Lead.findById(req.params.id);
     if (!lead) return res.status(404).json({ success: false, error: 'Lead not found' });
+    // Record status change history when admin updates leadStatus
+    if (req.body.leadStatus && req.body.leadStatus !== lead.leadStatus) {
+      lead.statusHistory = lead.statusHistory || [];
+      lead.statusHistory.push({
+        from: lead.leadStatus,
+        to: req.body.leadStatus,
+        changedBy: req.user._id,
+        changedAt: new Date(),
+        note: req.body.statusChangeNote || undefined
+      });
+    }
+
     Object.assign(lead, req.body);
     await lead.save();
+
     res.json({ success: true, message: 'Lead updated successfully', data: lead });
   } catch (error) {
     logger.error('Admin update lead error:', error);

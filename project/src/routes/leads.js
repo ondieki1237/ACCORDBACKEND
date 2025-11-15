@@ -86,6 +86,18 @@ router.put('/:id', authenticate, async (req, res) => {
     const isAdmin = ['admin', 'manager'].includes(req.user.role);
     if (!isOwner && !isAdmin) return res.status(403).json({ success: false, error: 'Access denied' });
 
+    // If leadStatus is being updated, record the transition in statusHistory
+    if (req.body.leadStatus && req.body.leadStatus !== lead.leadStatus) {
+      lead.statusHistory = lead.statusHistory || [];
+      lead.statusHistory.push({
+        from: lead.leadStatus,
+        to: req.body.leadStatus,
+        changedBy: req.user._id,
+        changedAt: new Date(),
+        note: req.body.statusChangeNote || undefined
+      });
+    }
+
     Object.assign(lead, req.body);
     await lead.save();
 

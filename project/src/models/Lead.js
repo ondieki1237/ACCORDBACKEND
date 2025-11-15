@@ -52,6 +52,14 @@ const leadSchema = new mongoose.Schema({
     enum: ['new', 'contacted', 'qualified', 'proposal-sent', 'negotiation', 'won', 'lost'],
     default: 'new'
   },
+  // History of status changes so we can track timeline of the conversation
+  statusHistory: [{
+    from: { type: String, trim: true },
+    to: { type: String, trim: true },
+    changedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    changedAt: { type: Date, default: Date.now },
+    note: { type: String, trim: true }
+  }],
 
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true }
 }, {
