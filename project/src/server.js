@@ -38,6 +38,8 @@ import adminPlannersRoutes from './routes/admin/planners.js';
 import locationRoutes from './routes/location.js';
 import adminLocationRoutes from './routes/admin/location.js';
 import appRoutes from './routes/app.js';
+import leadsRoutes from './routes/leads.js';
+import adminLeadsRoutes from './routes/admin/leads.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -97,6 +99,9 @@ app.use('/api/admin/planners', adminPlannersRoutes);
 app.use('/api/location', locationRoutes);
 app.use('/api/admin/location', adminLocationRoutes);
 app.use('/api/app', appRoutes);
+// Leads feature
+app.use('/api/leads', leadsRoutes);
+app.use('/api/admin/leads', adminLeadsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
