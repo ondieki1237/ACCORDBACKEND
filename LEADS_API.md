@@ -811,9 +811,81 @@ I implemented the Leads backend feature and added admin routes. Files added to t
   - DELETE `/api/leads/:id` — delete a lead (owner or admin/manager)
 - `project/src/routes/admin/leads.js` — Admin/Manager endpoints:
   - GET `/api/admin/leads` — list all leads (filters & pagination)
-  - GET `/api/admin/leads/:id` — get any lead
+  - GET `/api/admin/leads/:id` — get any lead (includes populated statusHistory with changedBy user details)
+  - GET `/api/admin/leads/:id/history` — get complete timeline of lead (creation + all status changes with user info and notes)
   - PUT `/api/admin/leads/:id` — update any lead
   - DELETE `/api/admin/leads/:id` — delete any lead
+  - GET `/api/admin/leads/check` — diagnostic endpoint returning total count, sample leads, counts by creator and status
+  - GET `/api/admin/leads/count` — count leads matching filters
+  - GET `/api/admin/leads/raw` — raw lead documents matching filters (no pagination)
+
+Admin Lead History Endpoint
+----------------------------
+
+**GET `/api/admin/leads/:id/history`** (Admin/Manager only)
+
+Returns a complete timeline of a lead, showing:
+- When it was created and by whom
+- All status changes (from → to) with timestamp, user, and optional notes
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "leadId": "673862a1f8e7b2c3d4e5f678",
+    "facilityName": "Nairobi General Hospital",
+    "currentStatus": "qualified",
+    "timeline": [
+      {
+        "event": "created",
+        "status": "new",
+        "timestamp": "2025-11-01T08:00:00.000Z",
+        "user": {
+          "id": "67385f9a1234abcd5678efgh",
+          "name": "Jane Smith",
+          "email": "jane@accordmedical.co.ke",
+          "employeeId": "SAL001",
+          "role": "sales"
+        },
+        "note": "Lead created"
+      },
+      {
+        "event": "status_changed",
+        "from": "new",
+        "to": "contacted",
+        "timestamp": "2025-11-10T10:00:00.000Z",
+        "user": {
+          "id": "67385f9a1234abcd5678efgh",
+          "name": "Jane Smith",
+          "email": "jane@accordmedical.co.ke",
+          "employeeId": "SAL001",
+          "role": "sales"
+        },
+        "note": "Initial contact made via phone"
+      },
+      {
+        "event": "status_changed",
+        "from": "contacted",
+        "to": "qualified",
+        "timestamp": "2025-11-12T14:30:00.000Z",
+        "user": {
+          "id": "67385f9a1234abcd5678efgh",
+          "name": "Jane Smith",
+          "email": "jane@accordmedical.co.ke",
+          "employeeId": "SAL001",
+          "role": "sales"
+        },
+        "note": "Budget confirmed. Decision maker identified."
+      }
+    ]
+  }
+}
+```
+
+The timeline is sorted chronologically (oldest first) so you can see the progression from creation to the current state.
+
+Use case: Admin dashboard can display this timeline to understand the lead's journey, see which sales rep handled it at each stage, and review their notes/comments about each status change.
 
 Status history (new)
 --------------------

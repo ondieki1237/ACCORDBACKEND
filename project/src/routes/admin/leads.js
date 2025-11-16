@@ -139,11 +139,83 @@ router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
       return res.status(400).json({ success: false, error: 'Invalid lead id' });
     }
 
-    const lead = await Lead.findById(req.params.id).populate('createdBy', 'firstName lastName email');
+    const lead = await Lead.findById(req.params.id)
+      .populate('createdBy', 'firstName lastName email employeeId role')
+      .populate('statusHistory.changedBy', 'firstName lastName email employeeId role');
     if (!lead) return res.status(404).json({ success: false, error: 'Lead not found' });
     res.json({ success: true, data: lead });
   } catch (error) {
     logger.error('Admin get lead error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin: get status history timeline for a lead
+router.get('/:id/history', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid lead id' });
+    }
+
+    const lead = await Lead.findById(req.params.id)
+      .select('facilityName leadStatus statusHistory createdBy createdAt')
+      .populate('createdBy', 'firstName lastName email employeeId role')
+      .populate('statusHistory.changedBy', 'firstName lastName email employeeId role');
+    
+    if (!lead) return res.status(404).json({ success: false, error: 'Lead not found' });
+
+    // Build timeline: creation + all status changes
+    const timeline = [];
+    
+    // Add creation event
+    timeline.push({
+      event: 'created',
+      status: 'new',
+      timestamp: lead.createdAt,
+      user: lead.createdBy ? {
+        id: lead.createdBy._id,
+        name: `${lead.createdBy.firstName} ${lead.createdBy.lastName}`,
+        email: lead.createdBy.email,
+        employeeId: lead.createdBy.employeeId,
+        role: lead.createdBy.role
+      } : null,
+      note: 'Lead created'
+    });
+
+    // Add all status change events
+    if (lead.statusHistory && lead.statusHistory.length > 0) {
+      lead.statusHistory.forEach(change => {
+        timeline.push({
+          event: 'status_changed',
+          from: change.from,
+          to: change.to,
+          timestamp: change.changedAt,
+          user: change.changedBy ? {
+            id: change.changedBy._id,
+            name: `${change.changedBy.firstName} ${change.changedBy.lastName}`,
+            email: change.changedBy.email,
+            employeeId: change.changedBy.employeeId,
+            role: change.changedBy.role
+          } : null,
+          note: change.note || null
+        });
+      });
+    }
+
+    // Sort by timestamp (oldest first)
+    timeline.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    res.json({ 
+      success: true, 
+      data: {
+        leadId: lead._id,
+        facilityName: lead.facilityName,
+        currentStatus: lead.leadStatus,
+        timeline
+      }
+    });
+  } catch (error) {
+    logger.error('Admin get lead history error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

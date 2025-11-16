@@ -6,6 +6,39 @@ import logger from '../utils/logger.js';
 
 const router = express.Router();
 
+// DEBUG ONLY: Create test leads for current user (remove in production)
+router.post('/seed-test', authenticate, async (req, res) => {
+  try {
+    const testLeads = [];
+    for (let i = 1; i <= 10; i++) {
+      testLeads.push({
+        facilityName: `Test Facility ${i}`,
+        facilityType: 'hospital',
+        location: 'Nairobi',
+        contactPerson: {
+          name: `Contact ${i}`,
+          phone: `+25471234567${i}`,
+          email: `contact${i}@test.org`
+        },
+        equipmentOfInterest: {
+          name: `Equipment ${i}`,
+          category: 'Medical Imaging'
+        },
+        leadStatus: 'new',
+        leadSource: 'field-visit',
+        createdBy: req.user._id
+      });
+    }
+    
+    const result = await Lead.insertMany(testLeads);
+    logger.info('Created test leads for user', { userId: req.user._id, count: result.length });
+    res.json({ success: true, message: `Created ${result.length} test leads`, data: { count: result.length } });
+  } catch (error) {
+    logger.error('Seed test leads error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Create a new lead
 router.post('/', authenticate, async (req, res) => {
   try {
@@ -52,7 +85,25 @@ router.get('/', authenticate, async (req, res) => {
       sort: { createdAt: -1 }
     };
 
+    // Debug logging
+    logger.info('GET /api/leads - User requesting leads', { 
+      userId: req.user._id.toString(), 
+      userEmail: req.user.email,
+      userRole: req.user.role,
+      query,
+      page,
+      limit 
+    });
+
     const results = await Lead.paginate(query, options);
+    
+    logger.info('GET /api/leads - Query results', {
+      totalDocs: results.totalDocs,
+      docsReturned: results.docs.length,
+      page: results.page,
+      totalPages: results.totalPages
+    });
+
     res.json({ success: true, data: results });
   } catch (error) {
     logger.error('Get leads error:', error);
