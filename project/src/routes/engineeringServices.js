@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticate, authorize } from '../middleware/auth.js';
+import mongoose from 'mongoose';
 import { 
   createEngineeringService, 
   getEngineeringServices, 

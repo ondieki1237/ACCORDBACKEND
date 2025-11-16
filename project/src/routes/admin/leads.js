@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Lead from '../../models/Lead.js';
 import { authenticate, authorize } from '../../middleware/auth.js';
 import logger from '../../utils/logger.js';
@@ -32,6 +33,10 @@ router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) =>
 // Admin: get single lead by id
 router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid lead id' });
+    }
+
     const lead = await Lead.findById(req.params.id).populate('createdBy', 'firstName lastName email');
     if (!lead) return res.status(404).json({ success: false, error: 'Lead not found' });
     res.json({ success: true, data: lead });
@@ -44,6 +49,10 @@ router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
 // Admin: update lead status or any field
 router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid lead id' });
+    }
+
     const lead = await Lead.findById(req.params.id);
     if (!lead) return res.status(404).json({ success: false, error: 'Lead not found' });
     // Record status change history when admin updates leadStatus
@@ -71,6 +80,10 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
 // Admin: delete lead
 router.delete('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid lead id' });
+    }
+
     const lead = await Lead.findById(req.params.id);
     if (!lead) return res.status(404).json({ success: false, error: 'Lead not found' });
     await Lead.findByIdAndDelete(req.params.id);

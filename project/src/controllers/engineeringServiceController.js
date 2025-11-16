@@ -1,6 +1,7 @@
 import EngineeringService from '../models/EngineeringService.js';
 import User from '../models/User.js';
 import logger from '../utils/logger.js';
+import mongoose from 'mongoose';
 
 export const createEngineeringService = async (req, res, next) => {
   try {
@@ -39,6 +40,7 @@ export const createEngineeringService = async (req, res, next) => {
       userId: req.user._id,
       date: date ? new Date(date) : new Date(),
       facility,
+      machineId: req.body.machineId || undefined,
       serviceType,
       engineerInCharge,
       machineDetails,
@@ -110,7 +112,8 @@ export const getEngineeringServices = async (req, res, next) => {
       sort: { createdAt: -1 },
       populate: [
         { path: 'userId', select: 'firstName lastName email employeeId role' },
-        { path: 'engineerInCharge._id', select: 'firstName lastName email employeeId phone' }
+        { path: 'engineerInCharge._id', select: 'firstName lastName email employeeId phone' },
+        { path: 'machineId', select: 'model manufacturer serialNumber facility installedDate' }
       ]
     };
 
@@ -138,7 +141,8 @@ export const getEngineeringServiceById = async (req, res, next) => {
   try {
     const service = await EngineeringService.findById(req.params.id)
       .populate('userId', 'firstName lastName email employeeId role')
-      .populate('engineerInCharge._id', 'firstName lastName email employeeId phone');
+      .populate('engineerInCharge._id', 'firstName lastName email employeeId phone')
+      .populate('machineId', 'model manufacturer serialNumber facility installedDate lastServicedAt nextServiceDue');
       
     if (!service) {
       return res.status(404).json({ success: false, message: 'Service not found' });
@@ -192,6 +196,43 @@ export const getServicesByFacility = async (req, res, next) => {
     res.json({ success: true, data: results });
   } catch (err) {
     logger.error('Get services by facility error:', err);
+    next(err);
+  }
+};
+
+// Get services by machine id (service history for a machine)
+export const getServicesByMachine = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { page = 1, limit = 50, startDate, endDate } = req.query;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid machine id' });
+    }
+
+    const query = { machineId: id };
+
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate);
+      if (endDate) query.date.$lte = new Date(endDate);
+    }
+
+    const options = {
+      page: Number(page),
+      limit: Number(limit),
+      sort: { date: -1 },
+      populate: [
+        { path: 'userId', select: 'firstName lastName email employeeId role' },
+        { path: 'engineerInCharge._id', select: 'firstName lastName email employeeId phone' },
+        { path: 'machineId', select: 'model manufacturer serialNumber facility installedDate' }
+      ]
+    };
+
+    const results = await EngineeringService.paginate(query, options);
+    res.json({ success: true, data: results });
+  } catch (err) {
+    logger.error('Get services by machine error:', err);
     next(err);
   }
 };

@@ -23,6 +23,8 @@ const engineeringServiceSchema = new mongoose.Schema({
     default: 'maintenance',
   },
   machineDetails: { type: String, trim: true },
+  // Link to an existing machine (if this service is for an installed machine)
+  machineId: { type: mongoose.Schema.Types.ObjectId, ref: 'Machine' },
   conditionBefore: { type: String, trim: true },
   conditionAfter: { type: String, trim: true },
   otherPersonnel: [{ type: String }],

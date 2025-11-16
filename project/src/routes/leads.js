@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Lead from '../models/Lead.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import logger from '../utils/logger.js';
@@ -62,6 +63,10 @@ router.get('/', authenticate, async (req, res) => {
 // Get single lead (owner or admin)
 router.get('/:id', authenticate, async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid lead id' });
+    }
+
     const lead = await Lead.findById(req.params.id).lean();
     if (!lead) return res.status(404).json({ success: false, error: 'Lead not found' });
 
@@ -79,6 +84,10 @@ router.get('/:id', authenticate, async (req, res) => {
 // Update lead (owner or admin)
 router.put('/:id', authenticate, async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid lead id' });
+    }
+
     const lead = await Lead.findById(req.params.id);
     if (!lead) return res.status(404).json({ success: false, error: 'Lead not found' });
 
@@ -111,6 +120,10 @@ router.put('/:id', authenticate, async (req, res) => {
 // Delete lead (owner or admin)
 router.delete('/:id', authenticate, async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid lead id' });
+    }
+
     const lead = await Lead.findById(req.params.id);
     if (!lead) return res.status(404).json({ success: false, error: 'Lead not found' });
 
