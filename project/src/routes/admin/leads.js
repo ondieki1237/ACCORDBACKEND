@@ -21,11 +21,113 @@ router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) =>
     }
     if (search) query.$text = { $search: search };
 
+    // Debug: log incoming query params and constructed mongo query to help diagnose empty results
+    logger.debug('Admin get leads request query params', { rawQuery: req.query });
+    logger.debug('Admin get leads constructed mongo query', { query });
+
     const options = { page: parseInt(page), limit: parseInt(limit), sort: { createdAt: -1 } };
     const results = await Lead.paginate(query, options);
+
+    // Debug: log pagination results summary
+    logger.debug('Admin get leads pagination results', {
+      totalDocs: results.totalDocs,
+      docsReturned: Array.isArray(results.docs) ? results.docs.length : 0,
+      totalPages: results.totalPages,
+      page: results.page,
+      limit: results.limit
+    });
     res.json({ success: true, data: results });
   } catch (error) {
     logger.error('Admin get leads error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin diagnostic: comprehensive check of lead collection
+router.get('/check', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const total = await Lead.countDocuments({});
+    
+    const sample = await Lead.find({}).limit(5).sort({ createdAt: -1 }).populate('createdBy', 'email firstName lastName').lean();
+    
+    const byCreator = await Lead.aggregate([
+      { $group: { _id: '$createdBy', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+    
+    const byStatus = await Lead.aggregate([
+      { $group: { _id: '$leadStatus', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+
+    res.json({ 
+      success: true, 
+      data: { 
+        total, 
+        sample: sample.map(s => ({
+          id: s._id.toString(),
+          facilityName: s.facilityName,
+          leadStatus: s.leadStatus,
+          createdBy: s.createdBy,
+          createdAt: s.createdAt
+        })),
+        byCreator,
+        byStatus 
+      } 
+    });
+  } catch (error) {
+    logger.error('Admin check leads error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin diagnostic: return count of leads matching filters (useful to verify DB contents)
+router.get('/count', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const { facilityType, leadStatus, urgency, startDate, endDate, search } = req.query;
+    const query = {};
+    if (facilityType) query.facilityType = facilityType;
+    if (leadStatus) query.leadStatus = leadStatus;
+    if (urgency) query['timeline.urgency'] = urgency;
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+    if (search) query.$text = { $search: search };
+
+    logger.debug('Admin count leads constructed query', { query });
+
+    const count = await Lead.countDocuments(query);
+    res.json({ success: true, data: { count } });
+  } catch (error) {
+    logger.error('Admin count leads error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin diagnostic: return up to 100 raw lead documents matching filters (no pagination)
+router.get('/raw', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const { facilityType, leadStatus, urgency, startDate, endDate, search, limit = 100 } = req.query;
+    const query = {};
+    if (facilityType) query.facilityType = facilityType;
+    if (leadStatus) query.leadStatus = leadStatus;
+    if (urgency) query['timeline.urgency'] = urgency;
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+    if (search) query.$text = { $search: search };
+
+    logger.debug('Admin raw leads constructed query', { query });
+
+    const docs = await Lead.find(query).limit(Math.min(parseInt(limit), 100)).sort({ createdAt: -1 }).lean();
+    res.json({ success: true, data: { docs, count: docs.length } });
+  } catch (error) {
+    logger.error('Admin raw leads error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
