@@ -172,6 +172,25 @@ curl -X POST https://api.example.com/api/engineering-services \
 4. Add scheduled reminder emails/push notifications using existing `scheduledJobs` code.
 5. Add tests (Jest + Supertest) for machine CRUD and service creation with `machineId` validation.
 
+## Seeding sample machines
+
+A tiny seed script has been added at `project/seedMachines.js` to insert 200 synthetic Machine documents for testing.
+
+Usage (from the repo root):
+
+```bash
+# Option A: pass MongoDB URI on the command line
+node project/seedMachines.js "mongodb+srv://user:pass@cluster.example.com/dbname"
+
+# Option B: set MONGODB_URI in your environment or add it to a .env file in the project and run
+node project/seedMachines.js
+```
+
+Notes:
+- The script accepts either an environment variable `MONGODB_URI` or a command-line argument.
+- It will insert 200 machines with randomized fields (model, manufacturer, facility, dates).
+- If you want a smaller or larger batch, edit the script (`for (let i = 1; i <= 200; i++)`) before running.
+
 ---
 
 File locations (quick reference):
