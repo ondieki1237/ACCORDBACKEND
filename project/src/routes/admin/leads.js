@@ -25,7 +25,15 @@ router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) =>
     logger.debug('Admin get leads request query params', { rawQuery: req.query });
     logger.debug('Admin get leads constructed mongo query', { query });
 
-    const options = { page: parseInt(page), limit: parseInt(limit), sort: { createdAt: -1 } };
+    const options = { 
+      page: parseInt(page), 
+      limit: parseInt(limit), 
+      sort: { createdAt: -1 },
+      populate: [
+        { path: 'createdBy', select: 'firstName lastName email employeeId role' },
+        { path: 'statusHistory.changedBy', select: 'firstName lastName email employeeId role' }
+      ]
+    };
     const results = await Lead.paginate(query, options);
 
     // Debug: log pagination results summary
@@ -141,8 +149,19 @@ router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
 
     const lead = await Lead.findById(req.params.id)
       .populate('createdBy', 'firstName lastName email employeeId role')
-      .populate('statusHistory.changedBy', 'firstName lastName email employeeId role');
+      .populate('statusHistory.changedBy', 'firstName lastName email employeeId role')
+      .lean();
+    
     if (!lead) return res.status(404).json({ success: false, error: 'Lead not found' });
+    
+    // Log to help debug
+    logger.info('Admin get lead by id', {
+      leadId: lead._id,
+      currentStatus: lead.leadStatus,
+      historyCount: lead.statusHistory ? lead.statusHistory.length : 0,
+      hasHistory: !!lead.statusHistory && lead.statusHistory.length > 0
+    });
+    
     res.json({ success: true, data: lead });
   } catch (error) {
     logger.error('Admin get lead error:', error);
