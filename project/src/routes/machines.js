@@ -7,6 +7,82 @@ import { getServicesByMachine } from '../controllers/engineeringServiceControlle
 
 const router = express.Router();
 
+// Bulk create machines (accepts array of machine objects)
+router.post('/bulk', authenticate, async (req, res) => {
+  try {
+    const machinesArray = req.body;
+
+    // Validate input is an array
+    if (!Array.isArray(machinesArray)) {
+      return res.status(400).json({ success: false, error: 'Request body must be an array of machines' });
+    }
+
+    if (machinesArray.length === 0) {
+      return res.status(400).json({ success: false, error: 'Array cannot be empty' });
+    }
+
+    // Validate each machine has required fields
+    const validationErrors = [];
+    machinesArray.forEach((machine, index) => {
+      const errors = [];
+      if (!machine.model) errors.push('model');
+      if (!machine.manufacturer) errors.push('manufacturer');
+      if (!machine.facility || !machine.facility.name) errors.push('facility.name');
+      
+      if (errors.length > 0) {
+        validationErrors.push({ index, missingFields: errors });
+      }
+    });
+
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `${validationErrors.length} machine(s) missing required fields`,
+        details: validationErrors
+      });
+    }
+
+    // Add metadata to each machine
+    const machinesWithMeta = machinesArray.map(machine => ({
+      ...machine,
+      metadata: {
+        createdBy: req.user._id
+      }
+    }));
+
+    // Insert all machines
+    const results = await Machine.insertMany(machinesWithMeta, { ordered: false });
+    
+    logger.info('Bulk machines created', { 
+      userId: req.user._id, 
+      count: results.length,
+      userEmail: req.user.email 
+    });
+
+    res.status(201).json({ 
+      success: true, 
+      message: `${results.length} machines created successfully`,
+      data: { 
+        count: results.length,
+        machines: results 
+      }
+    });
+  } catch (err) {
+    logger.error('Bulk create machines error:', err);
+    
+    // Handle duplicate key errors (e.g., duplicate serial numbers)
+    if (err.code === 11000) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Duplicate machine detected (check serial numbers)',
+        details: err.message 
+      });
+    }
+    
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Create machine (engineers or admin/manager)
 router.post('/', authenticate, async (req, res) => {
   try {

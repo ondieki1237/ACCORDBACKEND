@@ -57,6 +57,29 @@ Base (engineers): `/api/machines`
     }
     ```
 
+- POST /api/machines/bulk
+  - Bulk create machines (authenticated). Accepts an array of machine objects.
+  - Body (JSON array):
+    ```json
+    [
+      {
+        "model": "XRay 5000",
+        "manufacturer": "Acme Med",
+        "facility": { "name": "Nairobi General" }
+      },
+      {
+        "model": "UltraScan 3",
+        "manufacturer": "MedEquip",
+        "facility": { "name": "Kisumu Hospital", "location": "Kisumu" },
+        "serialNumber": "US-789",
+        "status": "active"
+      }
+    ]
+    ```
+  - Required fields per machine: `model`, `manufacturer`, `facility.name`
+  - Response includes count of successfully created machines
+  - Uses `ordered: false` so processing continues even if some machines fail (e.g., duplicate serial numbers)
+
 - GET /api/machines
   - List machines (paginated). Query params: page, limit, facilityName, model, manufacturer, search
 
@@ -77,7 +100,12 @@ Base (engineers): `/api/machines`
 
 Admin base: `/api/admin/machines`
 
-- All endpoints similar to above but restricted to `admin` / `manager` roles and may return additional metadata.
+- POST /api/admin/machines/bulk
+  - Bulk create machines (admin/manager only). Same as `/api/machines/bulk` but restricted to admin/manager roles.
+  - Body (JSON array) - same format as user bulk endpoint
+  - Handles partial failures gracefully (returns 207 Multi-Status if some succeed and some fail due to duplicates)
+
+- All other endpoints similar to above but restricted to `admin` / `manager` roles and may return additional metadata.
 
 Responses follow the project pattern: { success: true/false, message?, data? }
 
@@ -154,6 +182,17 @@ curl -X POST https://api.example.com/api/machines \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{ "model":"XRay 5000", "manufacturer":"Acme Med", "facility": { "name":"Nairobi General" }, "installedDate":"2025-06-10" }'
+```
+
+- Bulk create machines
+```bash
+curl -X POST https://api.example.com/api/machines/bulk \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[
+    { "model":"XRay 5000", "manufacturer":"Acme Med", "facility": { "name":"Nairobi General" } },
+    { "model":"UltraScan 3", "manufacturer":"MedEquip", "facility": { "name":"Kisumu Hospital" } }
+  ]'
 ```
 
 - Create service for a machine (engineer/admin creates service)
