@@ -116,69 +116,30 @@ router.get('/heatmap', (req, res) => {
 router.get('/performance', authenticate, authorize('admin', 'manager'), getPerformance);
 
 // @route   GET /api/dashboard/recent-activity
-// @desc    Get recent activity feed
+// @desc    Get recent activity feed (trails only)
 // @access  Private (Admin/Manager)
 router.get('/recent-activity', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
     const { limit = 20 } = req.query;
 
-    // Get recent visits, orders, and trails
-    const [recentVisits, recentOrders, recentTrails] = await Promise.all([
-      Visit.find({})
-        .populate('userId', 'firstName lastName employeeId')
-        .sort({ createdAt: -1 })
-        .limit(parseInt(limit) / 3)
-        .select('client visitOutcome totalPotentialValue createdAt'),
+    // Get recent trails only
+    const recentTrails = await Trail.find({})
+      .populate('userId', 'firstName lastName employeeId')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .select('totalDistance totalDuration createdAt');
 
-      Order.find({})
-        .populate('userId', 'firstName lastName employeeId')
-        .sort({ createdAt: -1 })
-        .limit(parseInt(limit) / 3)
-        .select('client status totalAmount createdAt'),
-
-      Trail.find({})
-        .populate('userId', 'firstName lastName employeeId')
-        .sort({ createdAt: -1 })
-        .limit(parseInt(limit) / 3)
-        .select('totalDistance totalDuration createdAt')
-    ]);
-
-    // Combine and sort activities
-    const activities = [
-      ...recentVisits.map(visit => ({
-        type: 'visit',
-        id: visit._id,
-        user: visit.userId,
-        data: {
-          client: visit.client,
-          outcome: visit.visitOutcome,
-          potentialValue: visit.totalPotentialValue
-        },
-        timestamp: visit.createdAt
-      })),
-      ...recentOrders.map(order => ({
-        type: 'order',
-        id: order._id,
-        user: order.userId,
-        data: {
-          client: order.client,
-          status: order.status,
-          amount: order.totalAmount
-        },
-        timestamp: order.createdAt
-      })),
-      ...recentTrails.map(trail => ({
-        type: 'trail',
-        id: trail._id,
-        user: trail.userId,
-        data: {
-          distance: trail.totalDistance,
-          duration: trail.totalDuration
-        },
-        timestamp: trail.createdAt
-      }))
-    ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-     .slice(0, parseInt(limit));
+    // Format activities
+    const activities = recentTrails.map(trail => ({
+      type: 'trail',
+      id: trail._id,
+      user: trail.userId,
+      data: {
+        distance: trail.totalDistance,
+        duration: trail.totalDuration
+      },
+      timestamp: trail.createdAt
+    }));
 
     res.json({
       success: true,

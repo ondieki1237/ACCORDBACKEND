@@ -134,7 +134,7 @@ router.post('/', authenticate, async (req, res) => {
     // Validate required sections for non-draft submissions
     if (!isDraft) {
       const sectionsToValidate = usingSectionsAtRoot ? parsedSections : (content?.sections || []);
-      const requiredSectionIds = ['summary', 'visits', 'quotations', 'nextWeek'];
+      const requiredSectionIds = ['summary'];
       
       const missingSections = requiredSectionIds.filter(id => {
         const section = sectionsToValidate.find(s => s.id === id);
