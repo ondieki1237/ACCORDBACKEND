@@ -124,3 +124,119 @@ export async function getVisitByIdAdmin(req, res) {
     return res.status(500).json({ success: false, message: 'Failed to fetch visit' });
   }
 }
+
+/**
+ * GET /api/admin/visits/daily/activities
+ * Get all daily visits from sales team with optional date filtering
+ * Query: date (defaults to today), page, limit, region, userId, outcome
+ */
+export async function getDailyVisitsActivities(req, res) {
+  try {
+    const {
+      date,
+      page = 1,
+      limit = 50,
+      region,
+      userId,
+      outcome
+    } = req.query;
+
+    // Default to today if no date provided
+    const targetDate = date ? new Date(date) : new Date();
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Build query
+    const query = {
+      date: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      }
+    };
+
+    // Filter by userId if provided
+    if (userId) {
+      query.userId = userId;
+    } else if (region) {
+      // If region filter, get all sales users in that region
+      const regionUsers = await User.find({ 
+        role: 'sales', 
+        region,
+        isActive: true 
+      }).select('_id');
+      query.userId = { $in: regionUsers.map(u => u._id) };
+    } else {
+      // Get all active sales users
+      const salesUsers = await User.find({ 
+        role: 'sales',
+        isActive: true 
+      }).select('_id');
+      query.userId = { $in: salesUsers.map(u => u._id) };
+    }
+
+    // Filter by outcome if provided
+    if (outcome) {
+      query.visitOutcome = outcome;
+    }
+
+    const options = {
+      page: Number(page),
+      limit: Number(limit),
+      sort: '-date -createdAt',
+      populate: [
+        { 
+          path: 'userId', 
+          select: 'firstName lastName email employeeId region role' 
+        }
+      ],
+      lean: true
+    };
+
+    const result = await Visit.paginate(query, options);
+
+    // Add summary statistics
+    const summary = {
+      totalVisits: result.totalDocs,
+      date: targetDate.toISOString().split('T')[0],
+      visitsByOutcome: {}
+    };
+
+    // Calculate visits by outcome
+    if (result.docs.length > 0) {
+      const outcomeStats = await Visit.aggregate([
+        { $match: query },
+        {
+          $group: {
+            _id: '$visitOutcome',
+            count: { $sum: 1 }
+          }
+        }
+      ]);
+      outcomeStats.forEach(stat => {
+        summary.visitsByOutcome[stat._id || 'unspecified'] = stat.count;
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: result.docs,
+      summary,
+      meta: {
+        totalDocs: result.totalDocs,
+        limit: result.limit,
+        page: result.page,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPrevPage: result.hasPrevPage
+      }
+    });
+  } catch (err) {
+    logger.error('getDailyVisitsActivities error', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch daily visits activities' 
+    });
+  }
+}
