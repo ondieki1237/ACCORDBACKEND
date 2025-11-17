@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Trail from '../models/Trail.js';
 import Visit from '../models/Visit.js';
-import Order from '../models/Order.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validateDateRange } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
@@ -40,24 +39,7 @@ router.get('/overview', authenticate, authorize('admin', 'manager'), validateDat
     }
 
     // Get overview statistics
-    const [visitStats, trailStats, orderStats, activeUsers] = await Promise.all([
-      // Visit statistics
-      Visit.aggregate([
-        { $match: matchStage },
-        {
-          $group: {
-            _id: null,
-            totalVisits: { $sum: 1 },
-            successfulVisits: {
-              $sum: { $cond: [{ $eq: ['$visitOutcome', 'successful'] }, 1, 0] }
-            },
-            totalContacts: { $sum: { $size: '$contacts' } },
-            totalPotentialValue: { $sum: '$totalPotentialValue' },
-            averageDuration: { $avg: '$duration' }
-          }
-        }
-      ]),
-
+    const [trailStats, activeUsers] = await Promise.all([
       // Trail statistics
       Trail.aggregate([
         { $match: matchStage },
@@ -67,29 +49,6 @@ router.get('/overview', authenticate, authorize('admin', 'manager'), validateDat
             totalDistance: { $sum: '$totalDistance' },
             totalDuration: { $sum: '$totalDuration' },
             averageSpeed: { $avg: '$averageSpeed' }
-          }
-        }
-      ]),
-
-      // Order statistics
-      Order.aggregate([
-        { 
-          $match: {
-            ...matchStage,
-            createdAt: matchStage.date
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            totalOrders: { $sum: 1 },
-            totalValue: { $sum: '$totalAmount' },
-            approvedOrders: {
-              $sum: { $cond: [{ $eq: ['$status', 'approved'] }, 1, 0] }
-            },
-            pendingOrders: {
-              $sum: { $cond: [{ $eq: ['$status', 'submitted'] }, 1, 0] }
-            }
           }
         }
       ]),
@@ -122,9 +81,7 @@ router.get('/overview', authenticate, authorize('admin', 'manager'), validateDat
       success: true,
       data: {
         overview: {
-          visits: visitStats[0] || { totalVisits: 0, successfulVisits: 0, totalContacts: 0, totalPotentialValue: 0, averageDuration: 0 },
           trails: trailStats[0] || { totalDistance: 0, totalDuration: 0, averageSpeed: 0 },
-          orders: orderStats[0] || { totalOrders: 0, totalValue: 0, approvedOrders: 0, pendingOrders: 0 },
           activeUsers
         },
         trends: activityTrends
