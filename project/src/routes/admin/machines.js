@@ -88,6 +88,40 @@ router.post('/bulk', authenticate, authorize('admin', 'manager'), async (req, re
   }
 });
 
+// Admin: create a single machine
+router.post('/', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const payload = { ...req.body };
+
+    // Basic validation
+    const missing = [];
+    if (!payload.model) missing.push('model');
+    if (!payload.manufacturer) missing.push('manufacturer');
+    if (!payload.facility || !payload.facility.name) missing.push('facility.name');
+
+    if (missing.length > 0) {
+      return res.status(400).json({ success: false, error: `Missing required fields: ${missing.join(', ')}` });
+    }
+
+    payload.metadata = payload.metadata || {};
+    payload.metadata.createdBy = req.user._id;
+
+    const machine = new Machine(payload);
+    await machine.save();
+
+    // Populate createdBy for response
+    await machine.populate('metadata.createdBy', 'firstName lastName email');
+
+    res.status(201).json({ success: true, message: 'Machine created', data: machine });
+  } catch (err) {
+    logger.error('Admin create machine error:', err);
+    if (err.code === 11000) {
+      return res.status(400).json({ success: false, error: 'Duplicate key error', details: err.keyValue });
+    }
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Admin: list machines with filters
 router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
