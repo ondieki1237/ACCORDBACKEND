@@ -4,6 +4,7 @@ import Visit from '../models/Visit.js';
 import Trail from '../models/Trail.js';
 import { sendEmail } from './emailService.js';
 import logger from '../utils/logger.js';
+import { sendMachinesDueReport } from './machineReports.js';
 
 export const initializeScheduledJobs = () => {
   // Daily report at 6 PM
@@ -28,6 +29,18 @@ export const initializeScheduledJobs = () => {
   cron.schedule('0 10 * * *', async () => {
     logger.info('Running follow-up reminders job');
     await sendFollowUpReminders();
+  });
+
+  // Send machine due reminders at 09:00 daily (default 5 days ahead)
+  cron.schedule('0 9 * * *', async () => {
+    try {
+      const days = process.env.MACHINE_REMINDER_DAYS ? Number(process.env.MACHINE_REMINDER_DAYS) : 5;
+      logger.info(`Running machine due reminders job for next ${days} day(s)`);
+      const recipients = process.env.MACHINE_REMINDER_RECIPIENTS ? process.env.MACHINE_REMINDER_RECIPIENTS.split(',') : [];
+      await sendMachinesDueReport({ days, recipients });
+    } catch (err) {
+      logger.error('Machine reminders job error:', err);
+    }
   });
 
   logger.info('Scheduled jobs initialized');

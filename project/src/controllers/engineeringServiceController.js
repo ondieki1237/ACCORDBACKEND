@@ -61,8 +61,11 @@ export const createEngineeringService = async (req, res, next) => {
     const service = new EngineeringService(payload);
     await service.save();
 
-    // Populate userId for response
-    await service.populate('userId', 'firstName lastName email employeeId');
+    // Populate userId and machineId for response
+    await service.populate([
+      { path: 'userId', select: 'firstName lastName email employeeId' },
+      { path: 'machineId', select: 'model manufacturer serialNumber facility installedDate' }
+    ]);
 
     res.status(201).json({ 
       success: true, 
@@ -293,7 +296,11 @@ export const assignServiceToEngineer = async (req, res, next) => {
     service.metadata.assignedAt = new Date();
 
     await service.save();
-    await service.populate('userId', 'firstName lastName email employeeId');
+    // Populate userId and machineId for response
+    await service.populate([
+      { path: 'userId', select: 'firstName lastName email employeeId' },
+      { path: 'machineId', select: 'model manufacturer serialNumber facility installedDate' }
+    ]);
     
     res.json({ 
       success: true, 
@@ -340,8 +347,11 @@ export const updateEngineeringService = async (req, res, next) => {
       { $set: updates },
       { new: true, runValidators: true }
     )
-    .populate('userId', 'firstName lastName email employeeId role')
-    .populate('engineerInCharge._id', 'firstName lastName email employeeId phone');
+    .populate([
+      { path: 'userId', select: 'firstName lastName email employeeId role' },
+      { path: 'engineerInCharge._id', select: 'firstName lastName email employeeId phone' },
+      { path: 'machineId', select: 'model manufacturer serialNumber facility installedDate' }
+    ]);
 
     if (!service) {
       return res.status(404).json({ success: false, message: 'Service not found' });

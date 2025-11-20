@@ -119,6 +119,34 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/machines/due?days=5&page=1&limit=100 or ?overdue=true
+router.get('/due', authenticate, async (req, res) => {
+  try {
+    const { days = 5, page = 1, limit = 100, overdue } = req.query;
+    const query = {};
+
+    if (overdue === 'true' || overdue === true) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      query.nextServiceDue = { $lt: today };
+    } else {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + Number(days));
+      query.nextServiceDue = { $gte: start, $lte: end };
+    }
+
+    const options = { page: Number(page), limit: Number(limit), sort: { 'facility.name': 1, model: 1, serialNumber: 1 } };
+
+    const results = await Machine.paginate(query, options);
+    res.json({ success: true, data: results });
+  } catch (err) {
+    logger.error('Get machines due error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Get single machine
 router.get('/:id', authenticate, async (req, res) => {
   try {

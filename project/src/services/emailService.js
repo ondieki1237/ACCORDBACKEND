@@ -15,8 +15,14 @@ export const sendEmail = async ({ to, subject, template, data }) => {
   try {
     let html = '';
 
+    // Support passing raw HTML in data.rawHtml (caller-built html)
+    if (data && data.rawHtml) {
+      html = data.rawHtml;
+    }
+
+
     // Simple email templates
-    switch (template) {
+    if (!html) switch (template) {
       case 'welcome':
         html = `
           <h2>Welcome to Accord Medical!</h2>
@@ -104,7 +110,6 @@ export const sendEmail = async ({ to, subject, template, data }) => {
           <p>Best regards,<br>Accord Medical Team</p>
         `;
         break;
-        
       default:
         html = '<p>Default email template</p>';
     }

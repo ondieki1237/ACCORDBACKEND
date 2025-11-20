@@ -145,4 +145,20 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
   }
 });
 
+// Admin: trigger machines due report (POST /api/admin/machines/reports/due?days=5)
+router.post('/reports/due', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const days = req.query.days ? Number(req.query.days) : (req.body.days ? Number(req.body.days) : 5);
+    const recipients = req.body.recipients || (process.env.MACHINE_REMINDER_RECIPIENTS ? process.env.MACHINE_REMINDER_RECIPIENTS.split(',') : []);
+
+    const { sendMachinesDueReport } = await import('../../services/machineReports.js');
+    const result = await sendMachinesDueReport({ days, recipients, page: 1, limit: 1000 });
+
+    res.json({ success: true, message: 'Report queued', data: result });
+  } catch (err) {
+    logger.error('Admin trigger machines due report error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;

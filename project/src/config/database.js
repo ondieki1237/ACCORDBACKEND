@@ -3,7 +3,35 @@ import logger from '../utils/logger.js';
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+    // Read and sanitize URI
+    let uri = process.env.MONGODB_URI;
+    if (typeof uri === 'string') uri = uri.trim();
+
+    // If someone pasted the URI wrapped in angle brackets (<...>) or with stray chars, try to clean it
+    if (uri && (/^<.*>$/.test(uri) || uri.includes('<') || uri.includes('>'))) {
+      const cleaned = String(uri).replace(/^<|>$/g, '').trim();
+      logger.warn('MONGODB_URI appears to contain angle brackets or unexpected characters; attempting to clean it.');
+      uri = cleaned;
+    }
+
+    if (!uri || typeof uri !== 'string' || uri.trim() === '') {
+      logger.error('MONGODB_URI is not set. Please set MONGODB_URI in your environment or .env file.');
+      // Fail fast with a helpful message instead of passing undefined to mongoose
+      process.exit(1);
+    }
+
+    // Provide a masked preview of the host for easier debugging (don't log credentials)
+    try {
+      const m = String(uri).match(/^mongodb(?:\+srv)?:\/\/([^/]+)/);
+      let hostPreview = m ? m[1] : 'unknown';
+      // mask credentials if present
+      hostPreview = hostPreview.replace(/^[^@]+@/, '****@');
+      logger.info(`Connecting to MongoDB host: ${hostPreview}`);
+    } catch (e) {
+      // ignore preview errors
+    }
+
+    const conn = await mongoose.connect(uri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
