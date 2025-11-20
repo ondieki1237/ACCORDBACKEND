@@ -207,13 +207,24 @@ export const getServicesByFacility = async (req, res, next) => {
 export const getServicesByMachine = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { page = 1, limit = 50, startDate, endDate } = req.query;
+    const { page = 1, limit = 50, startDate, endDate, status, engineerId, userId } = req.query;
 
     if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({ success: false, message: 'Invalid machine id' });
     }
 
     const query = { machineId: id };
+
+    // Allow filtering by status (e.g., ?status=completed or ?status=pending,assigned)
+    if (status) {
+      const parts = String(status).split(',').map(s => s.trim()).filter(Boolean);
+      if (parts.length === 1) query.status = parts[0];
+      else query.status = { $in: parts };
+    }
+
+    // Honor role-based filtering passed from route (engineerId or userId)
+    if (engineerId) query['engineerInCharge._id'] = engineerId;
+    if (userId) query.userId = userId;
 
     if (startDate || endDate) {
       query.date = {};
