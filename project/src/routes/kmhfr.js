@@ -18,51 +18,54 @@ router.get('/status', (req, res) => {
 // --- Facilities ---
 
 // Search facilities (proxy)
-router.get('/facilities/search', async (req, res) => {
-  try {
-    const { name, county, limit, page } = req.query;
-    const params = new URLSearchParams();
-    if (name) params.append('name', name);
-    if (county) params.append('county', county);
-    if (limit) params.append('limit', limit);
-    if (page) params.append('page', page);
-
-    const url = `${KMHFR_BASE}/facilities/?${params.toString()}`;
-    const response = await axios.get(url);
-    res.json(response.data);
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to search facilities', error: err.message });
-  }
-});
+// Search facilities (proxy) - DISABLED: Conflicts with local facilities API
+// router.get('/facilities/search', async (req, res) => {
+//   try {
+//     const { name, county, limit, page } = req.query;
+//     const params = new URLSearchParams();
+//     if (name) params.append('name', name);
+//     if (county) params.append('county', county);
+//     if (limit) params.append('limit', limit);
+//     if (page) params.append('page', page);
+//
+//     const url = `${KMHFR_BASE}/facilities/?${params.toString()}`;
+//     const response = await axios.get(url);
+//     res.json(response.data);
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: 'Failed to search facilities', error: err.message });
+//   }
+// });
 
 // List facilities (paginated)
-router.get('/facilities', async (req, res) => {
-  try {
-    const { limit, page, county, ward } = req.query;
-    const params = new URLSearchParams();
-    if (limit) params.append('limit', limit);
-    if (page) params.append('page', page);
-    if (county) params.append('county', county);
-    if (ward) params.append('ward', ward);
-
-    const url = `${KMHFR_BASE}/facilities/?${params.toString()}`;
-    const response = await axios.get(url);
-    res.json(response.data);
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to list facilities', error: err.message });
-  }
-});
+// List facilities (paginated) - DISABLED: Conflicts with local facilities API
+// router.get('/facilities', async (req, res) => {
+//   try {
+//     const { limit, page, county, ward } = req.query;
+//     const params = new URLSearchParams();
+//     if (limit) params.append('limit', limit);
+//     if (page) params.append('page', page);
+//     if (county) params.append('county', county);
+//     if (ward) params.append('ward', ward);
+//
+//     const url = `${KMHFR_BASE}/facilities/?${params.toString()}`;
+//     const response = await axios.get(url);
+//     res.json(response.data);
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: 'Failed to list facilities', error: err.message });
+//   }
+// });
 
 // Facility detail
-router.get('/facilities/:id', async (req, res) => {
-  try {
-    const url = `${KMHFR_BASE}/facilities/${req.params.id}/`;
-    const response = await axios.get(url);
-    res.json(response.data);
-  } catch (err) {
-    res.status(404).json({ success: false, message: 'Facility not found', error: err.message });
-  }
-});
+// Facility detail - DISABLED: Conflicts with local facilities API
+// router.get('/facilities/:id', async (req, res) => {
+//   try {
+//     const url = `${KMHFR_BASE}/facilities/${req.params.id}/`;
+//     const response = await axios.get(url);
+//     res.json(response.data);
+//   } catch (err) {
+//     res.status(404).json({ success: false, message: 'Facility not found', error: err.message });
+//   }
+// });
 
 // Facility report (JSON or PDF)
 router.get('/facilities/:id/report', async (req, res) => {

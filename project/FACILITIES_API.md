@@ -98,6 +98,7 @@ fetch('/api/facilities/656e...').then(res => res.json());
 - Geometry is stored as GeoJSON Point.
 - For bulk import, use MongoDB Compass or mongoimport as described above.
 - If you want to make the search endpoint public, change the middleware in `src/routes/facilities.js` from `authenticate` to `optionalAuth` or remove auth for GET.
+- **Note on KMHFR Proxy**: The `kmhfr.js` routes for `/facilities` have been disabled to prevent conflict with this local API. If you need to access KMHFR directly, use the specific endpoints or re-enable them with a different path prefix.
 
 ---
 
