@@ -43,6 +43,7 @@ import leadsRoutes from './routes/leads.js';
 import adminLeadsRoutes from './routes/admin/leads.js';
 import machinesRoutes from './routes/machines.js';
 import adminMachinesRoutes from './routes/admin/machines.js';
+import facilitiesRoutes from './routes/facilities.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -109,6 +110,8 @@ app.use('/api/admin/leads', adminLeadsRoutes);
 // Machines endpoints (engineers & admin)
 app.use('/api/machines', machinesRoutes);
 app.use('/api/admin/machines', adminMachinesRoutes);
+// Facilities (search + admin create)
+app.use('/api/facilities', facilitiesRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
