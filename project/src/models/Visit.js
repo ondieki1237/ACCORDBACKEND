@@ -116,6 +116,18 @@ const equipmentRequestSchema = new mongoose.Schema({
   }
 });
 
+const productOfInterestSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  notes: {
+    type: String,
+    trim: true
+  }
+});
+
 const visitSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -141,14 +153,15 @@ const visitSchema = new mongoose.Schema({
   client: {
     name: { type: String, required: true },
     type: { type: String, enum: ['hospital', 'clinic', 'pharmacy', 'lab', 'imaging_center', 'other'], required: true },
-    level: { 
-      type: String, 
+    level: {
+      type: String,
       enum: ['1', '2', '3', '4', '5', '6', 'not_applicable'],
       trim: true
     },
     location: { type: String, required: true }
   },
   contacts: [contactSchema],
+  productsOfInterest: [productOfInterestSchema],
   existingEquipment: [equipmentSchema],
   requestedEquipment: [equipmentRequestSchema],
   visitPurpose: {
@@ -241,7 +254,7 @@ visitSchema.index({ 'client.type': 1 });
 visitSchema.index({ visitOutcome: 1 });
 
 // Pre-save middleware to generate visitId
-visitSchema.pre('save', async function(next) {
+visitSchema.pre('save', async function (next) {
   if (!this.visitId) {
     try {
       const date = new Date(this.date || new Date());

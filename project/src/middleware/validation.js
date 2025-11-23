@@ -51,6 +51,9 @@ export const validateVisit = [
   body('contacts').optional().isArray().withMessage('Contacts must be an array'),
   body('contacts.*.name').optional().notEmpty().withMessage('Contact name is required'),
   body('contacts.*.role').optional().isIn(['doctor', 'nurse', 'admin', 'procurement', 'it_manager', 'ceo', 'pharmacist', 'other']).withMessage('Invalid contact role'),
+  body('productsOfInterest').optional().isArray().withMessage('Products of interest must be an array'),
+  body('productsOfInterest.*.name').optional().notEmpty().withMessage('Product name is required'),
+  body('productsOfInterest.*.notes').optional().isString().withMessage('Product notes must be a string'),
   body('customData').optional().isString().withMessage('Custom data must be a string'),
   validate
 ];
