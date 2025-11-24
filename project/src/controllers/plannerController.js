@@ -27,10 +27,10 @@ export const createPlanner = async (req, res, next) => {
     // Strip out Saturday and Sunday entries (case-insensitive)
     const filteredDays = Array.isArray(days)
       ? days.filter(d => {
-          if (!d || !d.day) return false;
-          const name = String(d.day).trim().toLowerCase();
-          return name !== 'saturday' && name !== 'sunday';
-        })
+        if (!d || !d.day) return false;
+        const name = String(d.day).trim().toLowerCase();
+        return name !== 'saturday' && name !== 'sunday';
+      })
       : [];
 
     const planner = new Planner({
@@ -73,7 +73,7 @@ export const getMyPlanners = async (req, res, next) => {
 
     const total = await Planner.countDocuments({ userId });
 
-  res.json({ success: true, data: cleaned, meta: { page: Number(page), limit: Number(limit), totalDocs: total } });
+    res.json({ success: true, data: cleaned, meta: { page: Number(page), limit: Number(limit), totalDocs: total } });
   } catch (err) {
     logger.error('getMyPlanners error:', err);
     next(err);
@@ -134,6 +134,39 @@ export const adminGetAllPlanners = async (req, res, next) => {
     res.json({ success: true, data: cleanedAdmin, meta: { page: pageNum, limit: lim, totalDocs: total, totalPages: Math.ceil(total / lim) } });
   } catch (err) {
     logger.error('adminGetAllPlanners error:', err);
+    next(err);
+  }
+};
+
+// Admin: get a single planner by ID
+export const adminGetPlannerById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const planner = await Planner.findById(id)
+      .populate('userId', 'firstName lastName email employeeId phone')
+      .lean();
+
+    if (!planner) {
+      return res.status(404).json({
+        success: false,
+        message: 'Planner not found'
+      });
+    }
+
+    // Remove weekend entries
+    const cleaned = {
+      ...planner,
+      days: Array.isArray(planner.days) ? planner.days.filter(d => {
+        if (!d || !d.day) return false;
+        const name = String(d.day).trim().toLowerCase();
+        return name !== 'saturday' && name !== 'sunday';
+      }) : []
+    };
+
+    res.json({ success: true, data: cleaned });
+  } catch (err) {
+    logger.error('adminGetPlannerById error:', err);
     next(err);
   }
 };

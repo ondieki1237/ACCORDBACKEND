@@ -12,4 +12,7 @@ router.post('/', optionalAuth, createPlanner);
 // Get planners for authenticated user
 router.get('/', authenticate, getMyPlanners);
 
+// Alias route for frontend compatibility
+router.get('/my', authenticate, getMyPlanners);
+
 export default router;
