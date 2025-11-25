@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WeeklyReport>
+  <ReportMetadata>
+    <WeekStart>2025-11-16T21:00:00.000Z</WeekStart>
+    <WeekEnd>2025-11-23T20:59:59.999Z</WeekEnd>
+    <GeneratedAt>2025-11-25T06:59:05.511Z</GeneratedAt>
+    <TotalUsers>1</TotalUsers>
+  </ReportMetadata>
+  <Users>
+    <User>
+      <UserInfo>
+        <EmployeeID>N/A</EmployeeID>
+        <Name>No Activity</Name>
+        <Email>N/A</Email>
+        <Role>N/A</Role>
+        <Region>N/A</Region>
+        <Territory>N/A</Territory>
+      </UserInfo>
+      <DailyVisits>
+        <TotalVisits>0</TotalVisits>
+      </DailyVisits>
+      <WeeklyReports>
+        <TotalReports>0</TotalReports>
+      </WeeklyReports>
+      <LeadsGenerated>
+        <TotalLeads>0</TotalLeads>
+      </LeadsGenerated>
+    </User>
+  </Users>
+</WeeklyReport>

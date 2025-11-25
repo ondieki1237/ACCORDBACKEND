@@ -8,8 +8,8 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "jest",
-  "seed": "node src/scripts/seedData.js",
-  "seed:facilities": "node ../scripts/seedFacilities.js"
+    "seed": "node src/scripts/seedData.js",
+    "seed:facilities": "node ../scripts/seedFacilities.js"
   },
   "dependencies": {
     "axios": "^1.12.2",
@@ -31,7 +31,8 @@
     "nodemailer": "^6.9.7",
     "pdfkit": "^0.17.2",
     "socket.io": "^4.7.4",
-    "winston": "^3.11.0"
+    "winston": "^3.11.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "jest": "^29.7.0",

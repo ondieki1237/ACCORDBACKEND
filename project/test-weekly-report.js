@@ -12,7 +12,7 @@ import Visit from './src/models/Visit.js';
 import Report from './src/models/Report.js';
 import Lead from './src/models/Lead.js';
 import logger from './src/utils/logger.js';
-import { generateWeeklyReportXML } from './src/utils/xmlGenerator.js';
+import { generateWeeklyReportExcel, writeExcelFile } from './src/utils/excelGenerator.js';
 import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
@@ -114,38 +114,53 @@ const generateWeeklyXMLReport = async () => {
         console.log(`   Total leads: ${usersData.reduce((sum, u) => sum + u.leads.length, 0)}\n`);
 
         if (usersData.length === 0) {
-            console.log('⚠️  No activity found for the week. Skipping report generation.');
-            return;
+            console.log('⚠️  No activity found for the week.');
+            console.log('📧 Sending empty report anyway...\n');
+            // Create empty data structure for XML
+            usersData.push({
+                user: {
+                    employeeId: 'N/A',
+                    firstName: 'No',
+                    lastName: 'Activity',
+                    email: 'N/A',
+                    role: 'N/A',
+                    region: 'N/A',
+                    territory: 'N/A'
+                },
+                visits: [],
+                reports: [],
+                leads: []
+            });
         }
 
-        // Generate XML
-        console.log('🔧 Generating XML...');
-        const xmlData = {
+        // Generate Excel
+        console.log('🔧 Generating Excel file...');
+        const excelData = {
             weekStart: weekStart.toISOString(),
             weekEnd: weekEnd.toISOString(),
             usersData
         };
 
-        const xmlContent = generateWeeklyReportXML(xmlData);
+        const workbook = generateWeeklyReportExcel(excelData);
 
-        // Save XML to file
+        // Save Excel to file
         const uploadsDir = path.join(process.cwd(), 'uploads', 'weekly-reports');
         if (!fs.existsSync(uploadsDir)) {
             fs.mkdirSync(uploadsDir, { recursive: true });
         }
 
-        const filename = `weekly-report-${weekStart.toISOString().split('T')[0]}-to-${weekEnd.toISOString().split('T')[0]}.xml`;
+        const filename = `weekly-report-${weekStart.toISOString().split('T')[0]}-to-${weekEnd.toISOString().split('T')[0]}.xlsx`;
         const filepath = path.join(uploadsDir, filename);
 
-        fs.writeFileSync(filepath, xmlContent, 'utf8');
-        console.log(`✅ XML report saved to: ${filepath}`);
+        writeExcelFile(workbook, filepath);
+        console.log(`✅ Excel report saved to: ${filepath}`);
         console.log(`   File size: ${(fs.statSync(filepath).size / 1024).toFixed(2)} KB\n`);
 
-        // Send email with XML attachment
+        // Send email with Excel attachment
         console.log('📧 Sending email...');
         const recipients = ['bellarinseth@gmail.com', 'reports@accordmedical.co.ke'];
 
-        await sendWeeklyXMLEmail({
+        await sendWeeklyExcelEmail({
             recipients,
             filepath,
             filename,
@@ -157,19 +172,19 @@ const generateWeeklyXMLReport = async () => {
             totalLeads: usersData.reduce((sum, u) => sum + u.leads.length, 0)
         });
 
-        console.log('\n✅ Weekly XML report sent successfully!');
+        console.log('\n✅ Weekly Excel report sent successfully!');
         console.log(`   Recipients: ${recipients.join(', ')}\n`);
 
     } catch (error) {
-        console.error('\n❌ Error generating weekly XML report:', error);
-        logger.error('Weekly XML report generation error:', error);
+        console.error('\n❌ Error generating weekly Excel report:', error);
+        logger.error('Weekly Excel report generation error:', error);
     }
 };
 
 /**
- * Send weekly XML report via email
+ * Send weekly Excel report via email
  */
-const sendWeeklyXMLEmail = async ({ recipients, filepath, filename, weekStart, weekEnd, totalUsers, totalVisits, totalReports, totalLeads }) => {
+const sendWeeklyExcelEmail = async ({ recipients, filepath, filename, weekStart, weekEnd, totalUsers, totalVisits, totalReports, totalLeads }) => {
     try {
         const transporter = nodemailer.createTransport({
             host: process.env.EMAIL_HOST,
@@ -224,12 +239,16 @@ const sendWeeklyXMLEmail = async ({ recipients, filepath, filename, weekStart, w
           </table>
         </div>
 
-        <p>The attached XML file contains complete details including:</p>
+        <p>The attached Excel file contains 8 detailed sheets:</p>
         <ul>
-          <li>User information (Employee ID, Name, Email, Role, Region)</li>
-          <li>Daily visits with client details, contacts, equipment information</li>
-          <li>Weekly reports with all sections</li>
-          <li>Leads generated with full details</li>
+          <li><strong>Summary</strong> - Week overview and statistics</li>
+          <li><strong>Users</strong> - All active users with activity counts</li>
+          <li><strong>Visits</strong> - Complete visit details</li>
+          <li><strong>Visit Contacts</strong> - All contacts met during visits</li>
+          <li><strong>Equipment</strong> - Existing and requested equipment</li>
+          <li><strong>Weekly Reports</strong> - Submitted reports overview</li>
+          <li><strong>Report Sections</strong> - Detailed report content</li>
+          <li><strong>Leads</strong> - All leads generated with full details</li>
         </ul>
 
         <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ffc107;">
@@ -260,7 +279,7 @@ const sendWeeklyXMLEmail = async ({ recipients, filepath, filename, weekStart, w
                 {
                     filename: filename,
                     path: filepath,
-                    contentType: 'application/xml'
+                    contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 }
             ]
         };

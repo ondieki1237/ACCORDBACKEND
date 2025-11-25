@@ -279,9 +279,24 @@ const generateWeeklyXMLReport = async () => {
     }
 
     if (usersData.length === 0) {
-      logger.info('No activity found for the week. Skipping report generation.');
-      return;
+      logger.info('No activity found for the week. Sending empty report anyway.');
+      // Create empty data structure for XML
+      usersData.push({
+        user: {
+          employeeId: 'N/A',
+          firstName: 'No',
+          lastName: 'Activity',
+          email: 'N/A',
+          role: 'N/A',
+          region: 'N/A',
+          territory: 'N/A'
+        },
+        visits: [],
+        reports: [],
+        leads: []
+      });
     }
+
 
     // Generate XML
     const xmlData = {
