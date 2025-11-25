@@ -67,7 +67,13 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/', generalLimiter);
 
 // Allow all CORS
-app.use(cors());
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl) or reflect the request origin
+    callback(null, origin || '*');
+  },
+  credentials: true
+}));
 
 app.options("*", cors());
 
