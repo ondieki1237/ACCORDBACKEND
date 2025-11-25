@@ -85,39 +85,47 @@ router.get('/machines', authenticate, authorize('admin', 'manager'), async (req,
                 }
             }
 
-            if (coords) {
-                const machineData = {
-                    id: machine._id,
-                    serialNumber: machine.serialNumber,
-                    model: machine.model,
-                    manufacturer: machine.manufacturer,
-                    version: machine.version,
-                    facility: machine.facility,
-                    contactPerson: machine.contactPerson,
-                    installedDate: machine.installedDate,
-                    status: machine.status,
-                    coordinates: { lat: coords.lat, lng: coords.lng },
-                    color: getColorForModel(machine.model)
-                };
-
-                machinesWithCoords.push(machineData);
-
-                // Group by location for clustering info
-                const locationKey = `${coords.lat.toFixed(4)},${coords.lng.toFixed(4)}`;
-                if (!locationMap.has(locationKey)) {
-                    locationMap.set(locationKey, {
+            try {
+                if (coords && typeof coords.lat === 'number' && typeof coords.lng === 'number') {
+                    const machineData = {
+                        id: machine._id,
+                        serialNumber: machine.serialNumber,
+                        model: machine.model,
+                        manufacturer: machine.manufacturer,
+                        version: machine.version,
+                        facility: machine.facility,
+                        contactPerson: machine.contactPerson,
+                        installedDate: machine.installedDate,
+                        status: machine.status,
                         coordinates: { lat: coords.lat, lng: coords.lng },
-                        machines: [],
-                        facilityName: machine.facility?.name || 'Unknown',
-                        location: machine.facility?.location || 'Unknown'
+                        color: getColorForModel(machine.model)
+                    };
+
+                    machinesWithCoords.push(machineData);
+
+                    // Group by location for clustering info
+                    const locationKey = `${coords.lat.toFixed(4)},${coords.lng.toFixed(4)}`;
+                    if (!locationMap.has(locationKey)) {
+                        locationMap.set(locationKey, {
+                            coordinates: { lat: coords.lat, lng: coords.lng },
+                            machines: [],
+                            facilityName: machine.facility?.name || 'Unknown',
+                            location: machine.facility?.location || 'Unknown'
+                        });
+                    }
+                    locationMap.get(locationKey).machines.push(machineData);
+                } else {
+                    logger.warn('Could not geocode machine or invalid coords', {
+                        machineId: machine._id,
+                        facilityName: machine.facility?.name,
+                        location: machine.facility?.location,
+                        coords
                     });
                 }
-                locationMap.get(locationKey).machines.push(machineData);
-            } else {
-                logger.warn('Could not geocode machine', {
+            } catch (innerErr) {
+                logger.error('Error processing machine for map', {
                     machineId: machine._id,
-                    facilityName: machine.facility?.name,
-                    location: machine.facility?.location
+                    error: innerErr.message
                 });
             }
         }
