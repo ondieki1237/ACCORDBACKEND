@@ -12,4 +12,4 @@ const FacilitySchema = new mongoose.Schema({
 FacilitySchema.index({ 'properties.name': 'text', 'properties.amenity': 'text', 'properties.healthcare': 'text' });
 FacilitySchema.plugin(mongoosePaginate);
 
-export default mongoose.model('Facility', FacilitySchema, 'facilities');
+export default mongoose.model('Facility', FacilitySchema, 'locations');
