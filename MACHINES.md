@@ -400,3 +400,400 @@ Follow-ups (I can implement)
 2. Add an option to include past due machines (overdue) and/or a summary CSV attachment in the email.
 3. Add retries and monitoring/alerts for the notifier (e.g., push to Slack on failure).
 
+---
+
+## Kenya Map Visualization — API Documentation (2025-11-25)
+
+This section documents the map visualization feature that displays machine installations across Kenya on an interactive map with color-coded markers.
+
+### Overview
+
+The map visualization provides a geographic view of all installed machines across Kenya. It uses:
+- **Geocoding**: Cross-references facility names with the `Facility` collection (GeoJSON data) to get precise coordinates
+- **Fallback geocoding**: Uses predefined Kenya county/city coordinates for locations not found in the database
+- **Color coding**: Assigns colors to machine models for easy visual differentiation
+- **Clustering**: Groups nearby machines at the same location
+
+### API Endpoints
+
+#### GET `/api/admin/map/machines`
+
+Returns all machines with geocoded locations for map visualization.
+
+**Authentication**: Required (Admin or Manager role)
+
+**Query Parameters**:
+- `model` (optional) - Filter by machine model (case-insensitive regex match)
+- `manufacturer` (optional) - Filter by manufacturer (case-insensitive regex match)
+- `status` (optional) - Filter by status (exact match: `active`, `inactive`, `maintenance`, `decommissioned`)
+
+**Response Format**:
+```json
+{
+  "success": true,
+  "data": {
+    "machines": [
+      {
+        "id": "64f7a2c9e3b1c8d5f6e9a1b2",
+        "serialNumber": "SN-12345",
+        "model": "XRay 5000",
+        "manufacturer": "Acme Med",
+        "version": "v2",
+        "facility": {
+          "name": "Nairobi General Hospital",
+          "level": "level-5",
+          "location": "Nairobi"
+        },
+        "contactPerson": {
+          "name": "Dr. Jane Doe",
+          "phone": "+254712345678",
+          "email": "jane@ngh.co.ke"
+        },
+        "installedDate": "2025-06-10T00:00:00.000Z",
+        "status": "active",
+        "coordinates": {
+          "lat": -1.2921,
+          "lng": 36.8219
+        },
+        "color": "#3B82F6"
+      }
+    ],
+    "locations": [
+      {
+        "coordinates": {
+          "lat": -1.2921,
+          "lng": 36.8219
+        },
+        "machines": [ /* array of machines at this location */ ],
+        "facilityName": "Nairobi General Hospital",
+        "location": "Nairobi",
+        "count": 3
+      }
+    ],
+    "legend": [
+      {
+        "model": "XRay 5000",
+        "color": "#3B82F6",
+        "count": 15
+      },
+      {
+        "model": "CT Scanner",
+        "color": "#EF4444",
+        "count": 8
+      }
+    ],
+    "stats": {
+      "total": 150,
+      "geocoded": 142,
+      "failed": 8,
+      "uniqueLocations": 47
+    }
+  }
+}
+```
+
+**Response Fields**:
+- `machines` - Array of all machines with coordinates and color assignments
+- `locations` - Aggregated view grouping machines by geographic location (useful for clustering)
+- `legend` - Color legend showing model-to-color mappings and counts
+- `stats` - Summary statistics:
+  - `total` - Total machines in database (matching filters)
+  - `geocoded` - Successfully geocoded machines
+  - `failed` - Machines that couldn't be geocoded
+  - `uniqueLocations` - Number of distinct geographic locations
+
+**Example Request**:
+```bash
+# Get all active XRay machines
+curl -X GET "https://api.accordmedical.co.ke/api/admin/map/machines?status=active&model=xray" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Get all machines (no filters)
+curl -X GET "https://api.accordmedical.co.ke/api/admin/map/machines" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+#### GET `/api/admin/map/stats`
+
+Returns summary statistics for the map visualization.
+
+**Authentication**: Required (Admin or Manager role)
+
+**Response Format**:
+```json
+{
+  "success": true,
+  "data": {
+    "total": 150,
+    "byStatus": {
+      "active": 120,
+      "maintenance": 15,
+      "inactive": 10,
+      "decommissioned": 5
+    },
+    "uniqueModels": 12,
+    "uniqueManufacturers": 8,
+    "models": [
+      "Anesthesia Machine",
+      "CT Scanner",
+      "Dialysis Machine",
+      "ECG Machine",
+      "MRI Scanner",
+      "Ultrasound",
+      "Ventilator",
+      "XRay 5000"
+    ],
+    "manufacturers": [
+      "Acme Med",
+      "GE Healthcare",
+      "Philips",
+      "Siemens"
+    ]
+  }
+}
+```
+
+**Example Request**:
+```bash
+curl -X GET "https://api.accordmedical.co.ke/api/admin/map/stats" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Geocoding Logic
+
+The map API uses a multi-tier geocoding approach to maximize successful location matches:
+
+#### Tier 1: Facility Database Lookup (Most Accurate)
+1. Query the `Facility` collection using the machine's `facility.name`
+2. Extract coordinates from the facility's GeoJSON `geometry.coordinates` field
+3. GeoJSON format is `[longitude, latitude]`, which is converted to `{ lat, lng }`
+
+#### Tier 2: Location String Geocoding (Fallback)
+1. If Tier 1 fails, use the machine's `facility.location` string (e.g., "Nairobi")
+2. Match against predefined Kenya county/city coordinates in `utils/kenyaLocations.js`
+3. Supports exact and partial matching (e.g., "Nairobi County" matches "nairobi")
+
+#### Tier 3: Facility Name Geocoding (Last Resort)
+1. If Tier 2 fails, attempt to geocode using the `facility.name` itself
+2. Useful when facility names include location information (e.g., "Mombasa General Hospital")
+
+#### Failed Geocoding
+- Machines that cannot be geocoded are excluded from the map display
+- The `stats.failed` field indicates how many machines couldn't be geocoded
+- Check server logs for warnings about failed geocoding attempts
+
+**Geocoding Data Source**: `project/src/utils/kenyaLocations.js`
+- Contains coordinates for all 47 Kenya counties
+- Includes major cities and towns
+- Provides fallback coordinates for common location strings
+
+### Color Coding System
+
+Machine markers are color-coded by model for visual differentiation:
+
+#### Predefined Colors (Common Models)
+The system includes predefined colors for common medical equipment:
+
+| Model Type | Color | Hex Code |
+|------------|-------|----------|
+| XRay | Blue | `#3B82F6` |
+| CT Scanner | Red | `#EF4444` |
+| Ultrasound | Green | `#10B981` |
+| MRI | Purple | `#8B5CF6` |
+| ECG | Amber | `#F59E0B` |
+| Ventilator | Pink | `#EC4899` |
+| Dialysis | Teal | `#14B8A6` |
+| Anesthesia | Orange | `#F97316` |
+
+**Matching Logic**: Case-insensitive partial match (e.g., "XRay 5000" matches "xray")
+
+#### Dynamic Color Generation
+For models not in the predefined list, colors are generated using a hash-based algorithm:
+1. Hash the model name to a number
+2. Convert to HSL color space for better distribution
+3. Use consistent hue (0-360°), saturation (65-85%), and lightness (45-60%)
+4. Convert to hex color code
+
+**Benefits**:
+- Consistent colors for the same model across sessions
+- Good visual distribution and contrast
+- Avoids similar colors for different models
+
+**Color Assignment Function**: `getColorForModel()` in `utils/kenyaLocations.js`
+
+### Frontend Integration
+
+#### Recommended Libraries
+- **Leaflet** (`leaflet`) - Core mapping library
+- **React Leaflet** (`react-leaflet`) - React bindings for Leaflet
+- **Leaflet MarkerCluster** (`leaflet.markercluster`) - Optional, for clustering nearby markers
+
+#### Installation
+```bash
+cd project
+npm install leaflet react-leaflet leaflet.markercluster
+```
+
+#### Basic Usage Example
+```typescript
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+
+function MachinesMap() {
+  const [mapData, setMapData] = useState(null);
+  
+  useEffect(() => {
+    fetch('/api/admin/map/machines', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => setMapData(data.data));
+  }, []);
+  
+  if (!mapData) return <div>Loading map...</div>;
+  
+  return (
+    <MapContainer 
+      center={[0.0236, 37.9062]} 
+      zoom={6} 
+      style={{ height: '600px', width: '100%' }}
+    >
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; OpenStreetMap contributors'
+      />
+      
+      {mapData.machines.map(machine => (
+        <Marker 
+          key={machine.id}
+          position={[machine.coordinates.lat, machine.coordinates.lng]}
+        >
+          <Popup>
+            <strong>{machine.facility.name}</strong><br/>
+            {machine.model} - {machine.serialNumber}<br/>
+            Status: {machine.status}
+          </Popup>
+        </Marker>
+      ))}
+    </MapContainer>
+  );
+}
+```
+
+#### Custom Marker Colors
+To use the color-coded markers from the API:
+
+```typescript
+import L from 'leaflet';
+
+// Create custom icon with dynamic color
+const createColoredIcon = (color) => {
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `<div style="background-color: ${color}; width: 25px; height: 25px; border-radius: 50%; border: 2px solid white;"></div>`,
+    iconSize: [25, 25]
+  });
+};
+
+// In your Marker component
+<Marker 
+  position={[machine.coordinates.lat, machine.coordinates.lng]}
+  icon={createColoredIcon(machine.color)}
+>
+  {/* Popup content */}
+</Marker>
+```
+
+### Performance Considerations
+
+#### Backend Optimization
+- **No pagination**: The map endpoint returns all machines (filtered) in a single request
+- **Lean queries**: Uses `.lean()` to return plain JavaScript objects instead of Mongoose documents
+- **Selective fields**: Only fetches required fields to minimize data transfer
+- **Caching opportunity**: Consider implementing Redis caching for map data (updates infrequently)
+
+#### Frontend Optimization
+- **Marker clustering**: Use `leaflet.markercluster` to group nearby markers at lower zoom levels
+- **Lazy loading**: Load map component only when the map page is accessed
+- **Debounced filtering**: Debounce filter changes to avoid excessive API calls
+- **Local state management**: Cache map data in React state/context to avoid refetching
+
+#### Scalability
+Current implementation handles up to ~1000 machines efficiently. For larger datasets:
+1. Implement server-side clustering/aggregation
+2. Add viewport-based filtering (only return machines in visible map bounds)
+3. Implement pagination or tile-based loading
+
+### Error Handling
+
+#### Common Issues
+
+**Issue**: Many machines show `stats.failed` > 0
+- **Cause**: Facility names don't match database or location strings are ambiguous
+- **Solution**: 
+  1. Standardize facility names in machine records
+  2. Add more location mappings to `kenyaLocations.js`
+  3. Consider adding explicit `latitude`/`longitude` fields to Machine model
+
+**Issue**: Markers appear in wrong locations
+- **Cause**: Incorrect geocoding or facility data
+- **Solution**: 
+  1. Verify facility coordinates in Facility collection
+  2. Check server logs for geocoding warnings
+  3. Use Tier 1 (facility database) geocoding when possible
+
+**Issue**: Colors are inconsistent or hard to distinguish
+- **Cause**: Too many unique models or similar model names
+- **Solution**:
+  1. Add more predefined colors for common models in `kenyaLocations.js`
+  2. Group similar models (e.g., "XRay 5000" and "XRay 6000" → "XRay")
+  3. Consider color-coding by manufacturer or category instead
+
+### Testing
+
+#### Manual Testing
+```bash
+# Test basic endpoint
+curl -X GET "http://localhost:5000/api/admin/map/machines" \
+  -H "Authorization: Bearer $TOKEN" | jq
+
+# Test filtering
+curl -X GET "http://localhost:5000/api/admin/map/machines?model=xray&status=active" \
+  -H "Authorization: Bearer $TOKEN" | jq '.data.stats'
+
+# Test stats endpoint
+curl -X GET "http://localhost:5000/api/admin/map/stats" \
+  -H "Authorization: Bearer $TOKEN" | jq
+```
+
+#### Validation Checklist
+- [ ] All active machines appear on the map
+- [ ] Marker colors match the legend
+- [ ] Clicking markers shows correct facility/machine details
+- [ ] Filters work correctly (model, manufacturer, status)
+- [ ] Geocoding success rate is > 90% (check `stats.geocoded` vs `stats.total`)
+- [ ] Map centers on Kenya with appropriate zoom level
+- [ ] Performance is acceptable with full dataset
+
+### Future Enhancements
+
+1. **Heat Map View**: Show density of installations across regions
+2. **Service History Overlay**: Display machines due for service with different marker styles
+3. **Route Planning**: Calculate optimal routes for engineers visiting multiple sites
+4. **Export Functionality**: Download map data as KML/GeoJSON for use in other mapping tools
+5. **Real-time Updates**: WebSocket integration to show live machine status changes
+6. **Custom Regions**: Allow admins to define custom regions/territories for sales/service areas
+
+### Files Modified/Created
+
+Backend:
+- `project/src/routes/admin/map.js` - Map API endpoints
+- `project/src/utils/kenyaLocations.js` - Geocoding utilities and color generation
+- `project/src/server.js` - Route mounting
+
+Frontend (to be implemented):y
+- `project/src/components/MachinesMap.tsx` - Map component
+- `project/src/styles/map.css` - Map-specific styles
+
+---
+

@@ -3,6 +3,8 @@ import { authenticate, authorize } from '../../middleware/auth.js';
 import Report from '../../models/Report.js';
 import Visit from '../../models/Visit.js';
 import Request from '../../models/Request.js';
+import Planner from '../../models/Planner.js';
+import FollowUp from '../../models/FollowUp.js';
 import logger from '../../utils/logger.js';
 
 const router = express.Router();
@@ -141,6 +143,16 @@ router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
       report: report.toObject(),
       visits,
       quotations,
+      // Planners created by the user in the same week (if any)
+      planners: await Planner.find({
+        userId: report.userId._id,
+        weekCreatedAt: { $gte: report.weekStart, $lte: report.weekEnd }
+      }).lean(),
+      // Follow-ups created by the user in the same week
+      followUps: await FollowUp.find({
+        userId: report.userId._id,
+        createdAt: { $gte: report.weekStart, $lte: report.weekEnd }
+      }).lean(),
       statistics: {
         visits: visitStats,
         quotations: quotationStats
@@ -257,7 +269,7 @@ router.post('/bulk', authenticate, authorize('admin', 'manager'), async (req, re
       });
     }
 
-    // Fetch all visits and quotations for all reports
+    // Fetch all visits, quotations, planners and follow-ups for all reports
     const bulkData = await Promise.all(reports.map(async (report) => {
       const visits = await Visit.find({
         userId: report.userId._id,
@@ -283,13 +295,27 @@ router.post('/bulk', authenticate, authorize('admin', 'manager'), async (req, re
       .sort({ createdAt: 1 })
       .lean();
 
+      const planners = await Planner.find({
+        userId: report.userId._id,
+        weekCreatedAt: { $gte: report.weekStart, $lte: report.weekEnd }
+      }).lean();
+
+      const followUps = await FollowUp.find({
+        userId: report.userId._id,
+        createdAt: { $gte: report.weekStart, $lte: report.weekEnd }
+      }).lean();
+
       return {
         report,
         visits,
         quotations,
+        planners,
+        followUps,
         meta: {
           totalVisits: visits.length,
           totalQuotations: quotations.length,
+          totalPlanners: planners.length,
+          totalFollowUps: followUps.length,
           weekRange: report.weekRange,
           submittedAt: report.createdAt,
           salesRep: {
