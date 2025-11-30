@@ -7,7 +7,7 @@ import Lead from '../models/Lead.js';
 import { sendEmail } from './emailService.js';
 import logger from '../utils/logger.js';
 import { sendMachinesDueReport } from './machineReports.js';
-import { generateWeeklyReportXML } from '../utils/xmlGenerator.js';
+import { generateWeeklyReportExcel, writeExcelFile } from '../utils/excelGenerator.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -48,11 +48,20 @@ export const initializeScheduledJobs = () => {
     }
   });
 
-  // Weekly XML Report - Every Saturday at 9 AM EAT (6 AM UTC)
-  // EAT is UTC+3, so 9 AM EAT = 6 AM UTC
-  cron.schedule('0 6 * * 6', async () => {
-    logger.info('Running weekly XML report generation job');
-    await generateWeeklyXMLReport();
+  // Weekly Excel Report - Every Saturday at 8 AM EAT (5 AM UTC)
+  // EAT is UTC+3, so 8 AM EAT = 5 AM UTC
+  cron.schedule('0 5 * * 6', async () => {
+    logger.info('Running weekly Excel report generation job (Saturday)');
+    await generateWeeklyExcelReport();
+  }, {
+    timezone: 'Africa/Nairobi' // East Africa Time
+  });
+
+  // Weekly Excel Report - Every Sunday at 8 AM EAT (5 AM UTC)
+  // EAT is UTC+3, so 8 AM EAT = 5 AM UTC
+  cron.schedule('0 5 * * 0', async () => {
+    logger.info('Running weekly Excel report generation job (Sunday)');
+    await generateWeeklyExcelReport();
   }, {
     timezone: 'Africa/Nairobi' // East Africa Time
   });
@@ -196,12 +205,12 @@ const sendFollowUpReminders = async () => {
 };
 
 /**
- * Generate and send weekly XML report
- * Runs every Saturday at 9 AM EAT
+ * Generate and send weekly Excel report
+ * Runs every Sunday at 8 AM EAT
  */
-const generateWeeklyXMLReport = async () => {
+const generateWeeklyExcelReport = async () => {
   try {
-    logger.info('Starting weekly XML report generation...');
+    logger.info('Starting weekly Excel report generation...');
 
     // Calculate week range (Monday to Sunday of previous week)
     const today = new Date();
@@ -298,31 +307,31 @@ const generateWeeklyXMLReport = async () => {
     }
 
 
-    // Generate XML
-    const xmlData = {
+    // Generate Excel
+    const excelData = {
       weekStart: weekStart.toISOString(),
       weekEnd: weekEnd.toISOString(),
       usersData
     };
 
-    const xmlContent = generateWeeklyReportXML(xmlData);
+    const workbook = generateWeeklyReportExcel(excelData);
 
-    // Save XML to file
+    // Save Excel to file
     const uploadsDir = path.join(process.cwd(), 'uploads', 'weekly-reports');
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
-    const filename = `weekly-report-${weekStart.toISOString().split('T')[0]}-to-${weekEnd.toISOString().split('T')[0]}.xml`;
+    const filename = `weekly-report-${weekStart.toISOString().split('T')[0]}-to-${weekEnd.toISOString().split('T')[0]}.xlsx`;
     const filepath = path.join(uploadsDir, filename);
 
-    fs.writeFileSync(filepath, xmlContent, 'utf8');
-    logger.info(`XML report saved to: ${filepath}`);
+    writeExcelFile(workbook, filepath);
+    logger.info(`Excel report saved to: ${filepath}`);
 
-    // Send email with XML attachment
+    // Send email with Excel attachment
     const recipients = ['bellarinseth@gmail.com', 'reports@accordmedical.co.ke'];
 
-    await sendWeeklyXMLEmail({
+    await sendWeeklyExcelEmail({
       recipients,
       filepath,
       filename,
@@ -334,20 +343,20 @@ const generateWeeklyXMLReport = async () => {
       totalLeads: usersData.reduce((sum, u) => sum + u.leads.length, 0)
     });
 
-    logger.info('Weekly XML report sent successfully');
+    logger.info('Weekly Excel report sent successfully');
 
-    // Optional: Clean up old XML files (keep last 12 weeks)
-    cleanupOldXMLReports(uploadsDir);
+    // Optional: Clean up old Excel files (keep last 12 weeks)
+    cleanupOldExcelReports(uploadsDir);
 
   } catch (error) {
-    logger.error('Weekly XML report generation error:', error);
+    logger.error('Weekly Excel report generation error:', error);
   }
 };
 
 /**
- * Send weekly XML report via email
+ * Send weekly Excel report via email
  */
-const sendWeeklyXMLEmail = async ({ recipients, filepath, filename, weekStart, weekEnd, totalUsers, totalVisits, totalReports, totalLeads }) => {
+const sendWeeklyExcelEmail = async ({ recipients, filepath, filename, weekStart, weekEnd, totalUsers, totalVisits, totalReports, totalLeads }) => {
   try {
     const nodemailer = await import('nodemailer');
 
@@ -404,16 +413,20 @@ const sendWeeklyXMLEmail = async ({ recipients, filepath, filename, weekStart, w
           </table>
         </div>
 
-        <p>The attached XML file contains complete details including:</p>
+        <p>The attached Excel file contains complete details across multiple sheets including:</p>
         <ul>
-          <li>User information (Employee ID, Name, Email, Role, Region)</li>
-          <li>Daily visits with client details, contacts, equipment information</li>
-          <li>Weekly reports with all sections</li>
-          <li>Leads generated with full details</li>
+          <li>Summary - Overview of weekly activity</li>
+          <li>Users - User information (Employee ID, Name, Email, Role, Region)</li>
+          <li>Visits - Daily visits with client details and outcomes</li>
+          <li>Visit Contacts - Contact persons met during visits</li>
+          <li>Equipment - Existing and requested equipment information</li>
+          <li>Weekly Reports - Submitted weekly reports</li>
+          <li>Report Sections - Detailed report content</li>
+          <li>Leads - Leads generated with full details</li>
         </ul>
 
         <p style="margin-top: 30px; color: #7f8c8d; font-size: 12px;">
-          This is an automated report generated every Saturday at 9:00 AM EAT.<br>
+          This is an automated report generated every Sunday at 8:00 AM EAT.<br>
           Generated at: ${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })} EAT
         </p>
 
@@ -434,38 +447,38 @@ const sendWeeklyXMLEmail = async ({ recipients, filepath, filename, weekStart, w
         {
           filename: filename,
           path: filepath,
-          contentType: 'application/xml'
+          contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         }
       ]
     };
 
     await transporter.sendMail(mailOptions);
-    logger.info(`Weekly XML report email sent to: ${recipients.join(', ')}`);
+    logger.info(`Weekly Excel report email sent to: ${recipients.join(', ')}`);
 
   } catch (error) {
-    logger.error('Error sending weekly XML email:', error);
+    logger.error('Error sending weekly Excel email:', error);
     throw error;
   }
 };
 
 /**
- * Clean up old XML report files (keep last 12 weeks)
+ * Clean up old Excel report files (keep last 12 weeks)
  */
-const cleanupOldXMLReports = (uploadsDir) => {
+const cleanupOldExcelReports = (uploadsDir) => {
   try {
     const files = fs.readdirSync(uploadsDir);
-    const xmlFiles = files.filter(f => f.endsWith('.xml')).sort().reverse();
+    const excelFiles = files.filter(f => f.endsWith('.xlsx')).sort().reverse();
 
     // Keep only the last 12 reports
-    if (xmlFiles.length > 12) {
-      const filesToDelete = xmlFiles.slice(12);
+    if (excelFiles.length > 12) {
+      const filesToDelete = excelFiles.slice(12);
       filesToDelete.forEach(file => {
         const filepath = path.join(uploadsDir, file);
         fs.unlinkSync(filepath);
-        logger.info(`Deleted old XML report: ${file}`);
+        logger.info(`Deleted old Excel report: ${file}`);
       });
     }
   } catch (error) {
-    logger.error('Error cleaning up old XML reports:', error);
+    logger.error('Error cleaning up old Excel reports:', error);
   }
 };
