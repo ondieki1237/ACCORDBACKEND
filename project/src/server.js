@@ -46,6 +46,7 @@ import machinesRoutes from './routes/machines.js';
 import adminMachinesRoutes from './routes/admin/machines.js';
 import adminMapRoutes from './routes/admin/map.js';
 import facilitiesRoutes from './routes/facilities.js';
+import analyticsRoutes from './routes/analytics.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -123,6 +124,8 @@ app.use('/api/admin/machines', adminMachinesRoutes);
 app.use('/api/admin/map', adminMapRoutes);
 // Facilities (search + admin create)
 app.use('/api/facilities', facilitiesRoutes);
+// Analytics endpoints
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
