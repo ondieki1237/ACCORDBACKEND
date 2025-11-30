@@ -107,7 +107,7 @@ app.use('/api/admin/analytics', adminAnalyticsRoutes);
 app.use('/api/admin/reports', adminReportsRoutes);
 app.use('/api/admin/quotations', adminQuotationsRoutes);
 app.use('/api/engineering-services', engineeringServicesRoutes);
-app.use('/api/engineering/pricing', engineeringPricingRoutes);
+app.use('/api/engineering-pricing', engineeringPricingRoutes);
 app.use('/api/planner', plannerRoutes);
 app.use('/api/admin/planners', adminPlannersRoutes);
 app.use('/api/location', locationRoutes);
