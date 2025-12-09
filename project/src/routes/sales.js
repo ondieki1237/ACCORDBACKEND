@@ -121,4 +121,23 @@ router.get('/', authenticate, authorize('admin'), async (req, res) => {
   }
 });
 
+// @route   DELETE /api/sales/:id
+// @desc    Delete a sale (admin only)
+// @access  Private (Admin only)
+router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const sale = await Sale.findById(req.params.id);
+
+    if (!sale) {
+      return res.status(404).json({ success: false, message: 'Sale not found.' });
+    }
+
+    await sale.deleteOne();
+
+    res.json({ success: true, message: 'Sale deleted successfully.', data: {} });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to delete sale.' });
+  }
+});
+
 export default router;

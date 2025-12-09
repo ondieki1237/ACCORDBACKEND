@@ -38,6 +38,52 @@ export const createConsumable = async (req, res) => {
     }
 };
 
+// @desc    Get all consumables (Admin - with pagination and all statuses)
+// @route   GET /api/admin/consumables
+// @access  Private (Admin)
+export const getAdminConsumables = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
+        const { search, category } = req.query;
+
+        const query = {};
+
+        if (category) {
+            query.category = category;
+        }
+
+        if (search) {
+            query.name = { $regex: search, $options: 'i' };
+        }
+
+        const total = await Consumable.countDocuments(query);
+        const consumables = await Consumable.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .populate('createdBy', 'firstName lastName');
+
+        res.json({
+            success: true,
+            count: consumables.length,
+            pagination: {
+                total,
+                page,
+                pages: Math.ceil(total / limit)
+            },
+            data: consumables
+        });
+    } catch (error) {
+        logger.error('Get admin consumables error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch consumables'
+        });
+    }
+};
+
 // @desc    Get all consumables (grouped by category optional via frontend)
 // @route   GET /api/consumables
 // @access  Public
