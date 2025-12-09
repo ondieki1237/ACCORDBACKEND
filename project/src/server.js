@@ -46,6 +46,8 @@ import machinesRoutes from './routes/machines.js';
 import adminMachinesRoutes from './routes/admin/machines.js';
 import adminMapRoutes from './routes/admin/map.js';
 import facilitiesRoutes from './routes/facilities.js';
+import consumablesRoutes from './routes/consumables.js';
+import adminConsumablesRoutes from './routes/admin/consumables.js';
 import analyticsRoutes from './routes/analytics.js';
 
 const app = express();
@@ -124,6 +126,10 @@ app.use('/api/admin/machines', adminMachinesRoutes);
 app.use('/api/admin/map', adminMapRoutes);
 // Facilities (search + admin create)
 app.use('/api/facilities', facilitiesRoutes);
+// Consumables endpoints
+app.use('/api/consumables', consumablesRoutes);
+app.use('/api/admin/consumables', adminConsumablesRoutes);
+
 // Analytics endpoints
 app.use('/api/analytics', analyticsRoutes);
 

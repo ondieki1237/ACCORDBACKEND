@@ -1,0 +1,714 @@
+{
+  "SEMI-AUTOMATED BIOCHEM REAGENTS (SBIO)": [
+    {
+      "product": "Albumin kit",
+      "price": "Ksh 2,500"
+    },
+    {
+      "product": "Alkaline Phosphate (ALP)",
+      "price": "Ksh 2,500"
+    },
+    {
+      "product": "Bilirubin kit",
+      "price": "Ksh 3,500"
+    },
+    {
+      "product": "Calcium Kit",
+      "price": "Ksh 3,200"
+    },
+    {
+      "product": "Cholesterol Kit",
+      "price": "Ksh 3,200"
+    },
+    {
+      "product": "Creatinine kit",
+      "price": "Ksh 2,800"
+    },
+    {
+      "product": "Gamma Glutamyl Transferase (GGT) kit",
+      "price": "Ksh 2,600"
+    },
+    {
+      "product": "HDL-D Cholesterol kit",
+      "price": "Ksh 6,000"
+    },
+    {
+      "product": "LDL-D Cholesterol",
+      "price": "Ksh 8,500"
+    },
+    {
+      "product": "Potassium Kit",
+      "price": "Ksh 3,500"
+    },
+    {
+      "product": "Sodium Kit",
+      "price": "Ksh 3,800"
+    },
+    {
+      "product": "SGOT (ASAT) Kit",
+      "price": "Ksh 3,800"
+    },
+    {
+      "product": "SGPT (ALAT) Kit",
+      "price": "Ksh 3,500"
+    },
+    {
+      "product": "Total Protein kit",
+      "price": "Ksh 3,000"
+    },
+    {
+      "product": "Triglycerides kit",
+      "price": "Ksh 4,000"
+    },
+    {
+      "product": "Urea kit",
+      "price": "Ksh 3,000"
+    },
+    {
+      "product": "Chloride",
+      "price": "Ksh 2,800"
+    },
+    {
+      "product": "Phosphorous",
+      "price": "Ksh 1,700"
+    }
+  ],
+  "SEROLOGY (SBIO)": [
+    {
+      "product": "ASOT kit",
+      "price": "Ksh 1,350"
+    },
+    {
+      "product": "RF kit",
+      "price": "Ksh 900"
+    },
+    {
+      "product": "BAT A & M",
+      "price": "Ksh 950"
+    },
+    {
+      "product": "Widal kit",
+      "price": "Ksh 650"
+    },
+    {
+      "product": "CRP",
+      "price": "Ksh 1,100"
+    },
+    {
+      "product": "Combo abd",
+      "price": "Ksh 1,150"
+    }
+  ],
+  "HAEMATOLOGY (ZYBIO)": [
+    {
+      "product": "Z3 Diluent",
+      "price": "Ksh 8,000"
+    },
+    {
+      "product": "Z3 Lyse",
+      "price": "Ksh 6,500"
+    },
+    {
+      "product": "Z3 Probe cleaner",
+      "price": "Ksh 1,800"
+    },
+    {
+      "product": "Z5 Diluent",
+      "price": "Ksh 10,500"
+    },
+    {
+      "product": "Z5 Lyse B",
+      "price": "Ksh 9,600"
+    },
+    {
+      "product": "Z5 Lyse D",
+      "price": "Ksh 9,500"
+    }
+  ],
+  "ISE ELECTRODE & REFILL SOLUTIONS": [
+    {
+      "product": "Calibration std sin(reagent pack)",
+      "price": "Ksh 30,000"
+    },
+    {
+      "product": "K electrode",
+      "price": "Ksh 28,000"
+    },
+    {
+      "product": "Na electrode",
+      "price": "Ksh 32,000"
+    },
+    {
+      "product": "CI Electrode",
+      "price": "Ksh 28,000"
+    },
+    {
+      "product": "Reference electrode",
+      "price": "KSh 27,000"
+    },
+    {
+      "product": "Electrode Conditioner",
+      "price": "Ksh 8,000"
+    },
+    {
+      "product": "De-proteinizier with diluent",
+      "price": "Ksh 11,000"
+    },
+    {
+      "product": "Refill solution for ISE Electrode",
+      "price": "Ksh 8,000"
+    },
+    {
+      "product": "Refill solution for Ref electrode (20ml)",
+      "price": "Ksh 15,000"
+    },
+    {
+      "product": "Electrolytes Quality Control $H/M/L)$",
+      "price": "Ksh 11,000"
+    },
+    {
+      "product": "Print paper Roll",
+      "price": "Ksh 700"
+    }
+  ],
+  "MEDICAL EQUIPMENT DIVISON": [
+    {
+      "product": "Integrated ENT Diagnostic System",
+      "price": "110,000.00"
+    },
+    {
+      "product": "Hand-Held Oximeter-Adult & Paed Probes",
+      "price": "15,000.00"
+    },
+    {
+      "product": "BP Machine -YUWELL (AC/DC)",
+      "price": "3,500.00"
+    },
+    {
+      "product": "Mercurial Sphygmomanometer",
+      "price": "2,500.00"
+    },
+    {
+      "product": "Aneroid Sphygmomanometer",
+      "price": "1,250.00"
+    },
+    {
+      "product": "ENT Diagnostic Set",
+      "price": "8,000.00"
+    },
+    {
+      "product": "Fiber optic 4Blade Laryngoscope (adult/paed)",
+      "price": "9,000.00"
+    },
+    {
+      "product": "Fiber optic 3Blade Laryngoscope (adult/paed)",
+      "price": "8,000.00"
+    },
+    {
+      "product": "Yuwell Stethoscope",
+      "price": "2,500.00"
+    },
+    {
+      "product": "X Ray Film Viewer-Single",
+      "price": "12,000.00"
+    },
+    {
+      "product": "X Ray Film Viewer-Double",
+      "price": "30,000.00"
+    },
+    {
+      "product": "Suction Machine Bottle 7E-A",
+      "price": "12,500.00"
+    },
+    {
+      "product": "Suction Machine Dual Bottle 7A-23D",
+      "price": "24,000.00"
+    },
+    {
+      "product": "Suction Machine Dual Bottle 7A-23B",
+      "price": "40,000.00"
+    },
+    {
+      "product": "Manual Vacuum Aspiration Kit (MVA)",
+      "price": "5,000.00"
+    },
+    {
+      "product": "Nebulizer",
+      "price": "4,500.00"
+    },
+    {
+      "product": "Fetal Doppler JPD100B",
+      "price": "8,000.00"
+    },
+    {
+      "product": "Fetal Doppler JPD100E",
+      "price": "9,500.00"
+    },
+    {
+      "product": "Paediatric Digital Weight Scale",
+      "price": "7,000.00"
+    },
+    {
+      "product": "Paediatric Digital Weight Scale with heightmeter",
+      "price": "8,000.00"
+    },
+    {
+      "product": "Adult Weight and Height Mechanical Scale",
+      "price": "11,000.00"
+    },
+    {
+      "product": "Adult Weight Bathroom Mechanical Scale",
+      "price": "5,000.00"
+    },
+    {
+      "product": "Drip Stand SS",
+      "price": "3,500.00"
+    },
+    {
+      "product": "Examination Lamp LED",
+      "price": "15,000.00"
+    },
+    {
+      "product": "Silicon Manual Resuscitator - Infant (Ambu bag)",
+      "price": "4,500.00"
+    },
+    {
+      "product": "Silicon Manual Resuscitator - Adult (Ambu bag)",
+      "price": "4,500.00"
+    },
+    {
+      "product": "Wheelchair-Standard",
+      "price": "11,000.00"
+    },
+    {
+      "product": "Folding Steel Commode Chair With Castors",
+      "price": "8,500.00"
+    },
+    {
+      "product": "Steel Commode Chair",
+      "price": "6,500.00"
+    },
+    {
+      "product": "Folding Walker, Height Adjustable",
+      "price": "4,500.00"
+    },
+    {
+      "product": "Standard Delivery Bed",
+      "price": "35,000.00"
+    },
+    {
+      "product": "Hydraulic Delivery couch",
+      "price": "220,000.00"
+    },
+    {
+      "product": "Examination Coach SS",
+      "price": "15,000.00"
+    },
+    {
+      "product": "Single Crank Patient Bed With Mattress",
+      "price": "33,000.00"
+    },
+    {
+      "product": "Double Crank bed With Mattress",
+      "price": "38,000.00"
+    },
+    {
+      "product": "ICU Bed 5 Function with Matress",
+      "price": "145,000.00"
+    },
+    {
+      "product": "Ward Screen-3 Fold",
+      "price": "9,000.00"
+    },
+    {
+      "product": "Ward Screen-4 Fold",
+      "price": "12,000.00"
+    },
+    {
+      "product": "Instrument Trolley 2 shelves",
+      "price": "10,000.00"
+    },
+    {
+      "product": "Instrument Trolley 3 shelves",
+      "price": "15,000.00"
+    },
+    {
+      "product": "Dressing trolley 2 shelves",
+      "price": "14,000.00"
+    },
+    {
+      "product": "Emergency Trolley",
+      "price": "80,000.00"
+    },
+    {
+      "product": "Bedside Cabinet ABS",
+      "price": "9,700.00"
+    },
+    {
+      "product": "Ripple Mattress",
+      "price": "9,500.00"
+    },
+    {
+      "product": "Autoclave 18 L",
+      "price": "18,000.00"
+    },
+    {
+      "product": "Autoclave 24 L",
+      "price": "25,000.00"
+    },
+    {
+      "product": "Autoclave 50 L",
+      "price": "160,000.00"
+    },
+    {
+      "product": "Autoclave 75 L",
+      "price": "250,000.00"
+    },
+    {
+      "product": "Autoclave 100 L",
+      "price": "320,000.00"
+    },
+    {
+      "product": "Waste buckets (sets of Red, Black and Yellow) 25L",
+      "price": "6,000.00"
+    },
+    {
+      "product": "Oxygen Concentrator Dual-SL/Min",
+      "price": "75,000.00"
+    },
+    {
+      "product": "Portable Ultrasound Machine -(Mindray DPI0)2 Probes, B/W",
+      "price": "538,000.00"
+    },
+    {
+      "product": "Colour Doppler DC 26-3 Probes",
+      "price": "1650,000.00"
+    },
+    {
+      "product": "ECG Machine -12 Channels",
+      "price": "150,000.00"
+    },
+    {
+      "product": "Vital signs monitor(3 par)",
+      "price": "115,000.00"
+    },
+    {
+      "product": "Patient Monitor- & Trolley..5 Para",
+      "price": "130,000.00"
+    },
+    {
+      "product": "Patient Monitor- & Trolley ..7 Para",
+      "price": "200,000.00"
+    },
+    {
+      "product": "Dental Chair Complete Set & Compressor 32L",
+      "price": "450,000.00"
+    },
+    {
+      "product": "Baby Incubator BB100 Top grade",
+      "price": "300,000.00"
+    },
+    {
+      "product": "Baby Incubator BB200 STD",
+      "price": "350,000.00"
+    },
+    {
+      "product": "Infant Resuscitator AMBRIOO",
+      "price": "150,000.00"
+    },
+    {
+      "product": "Infant Radiant Warmer BN-100 Topgrade",
+      "price": "300,000.00"
+    },
+    {
+      "product": "Infant Radiant Warmer BN-200 STD",
+      "price": "350,000.00"
+    },
+    {
+      "product": "Fetal Monitor 12.1' Twin Probe",
+      "price": "250,000.00"
+    },
+    {
+      "product": "Infant Phototherapy Unit AMLB-50",
+      "price": "145,000.00"
+    },
+    {
+      "product": "Patient Transfer Trolley",
+      "price": "35,000.00"
+    },
+    {
+      "product": "Manual Operating Table -AMT100",
+      "price": "270,000.00"
+    },
+    {
+      "product": "Electric Operating Table CH-T200",
+      "price": "450,000.00"
+    },
+    {
+      "product": "LED Operating Shadowless Lamp CHGLED 700",
+      "price": "300,000.00"
+    },
+    {
+      "product": "LED Operating S.Lamp CHGLED 700/700",
+      "price": "600,000.00"
+    },
+    {
+      "product": "Anaesthesia Machine Atlas N3",
+      "price": "1,250,000.00"
+    },
+    {
+      "product": "Anaesthesia Machine S6100D",
+      "price": "1,100,000.00"
+    },
+    {
+      "product": "Electrosurgical Unit ESU400",
+      "price": "200,000.00"
+    },
+    {
+      "product": "Ventilator V6",
+      "price": "1,500,000.00"
+    },
+    {
+      "product": "Infusion Pump (With drug library)",
+      "price": "85,000.00"
+    },
+    {
+      "product": "Syringe Pump(Single Channel with drug library)",
+      "price": "85,000.00"
+    },
+    {
+      "product": "Enteral Feeding pump with drug library",
+      "price": "97,000.00"
+    },
+    {
+      "product": "Automated External Defibrillators (AED)",
+      "price": "150,000.00"
+    },
+    {
+      "product": "Biphasic Defibrillator",
+      "price": "420,000.00"
+    },
+    {
+      "product": "Hemodialysis Machine",
+      "price": "1,550,000.00"
+    }
+  ],
+  "IMMUNOASSAY KITS (Lamuno Plus)": [
+    {
+      "product": "Immuno assay analyzer(Lamuno plus)",
+      "price": "N/A"
+    }
+  ],
+  "THYROID FUNCTION": [
+    {
+      "product": "T3(Total Triiodothyronine)",
+      "price": "$8,625/=$"
+    },
+    {
+      "product": "T4(Total Thyroxine)",
+      "price": "$8,625/=$"
+    },
+    {
+      "product": "FT3(Free Triiodothyronine)",
+      "price": "$9,200/=$"
+    },
+    {
+      "product": "FT4(Free Thyroxine)",
+      "price": "$9,602.5/=$"
+    },
+    {
+      "product": "TSH(Thyroid Stimulating Hormone)",
+      "price": "$8,970/=$"
+    }
+  ],
+  "HORMONES": [
+    {
+      "product": "β-HCG(β-Human Chorionic Gonadotropin)",
+      "price": "$8,625/=$"
+    },
+    {
+      "product": "LH(Luteinizing Hormone)",
+      "price": "$9,775/=$"
+    },
+    {
+      "product": "FSH (Follicle-Stimulating Hormone)",
+      "price": "$9,775/=$"
+    },
+    {
+      "product": "PRL(Pituitary Prolactin)",
+      "price": "$8,625/=$"
+    },
+    {
+      "product": "AMH(Anti-Mullerian hormone)",
+      "price": "$20,930/=$"
+    },
+    {
+      "product": "Tes (Testosterone)",
+      "price": "$14260/=$"
+    },
+    {
+      "product": "Prog (Progesterone)",
+      "price": "$11,914/=$"
+    },
+    {
+      "product": "Cor(Cortisol)",
+      "price": "$10,120/=$"
+    },
+    {
+      "product": "Cor(Cortisol)",
+      "price": "$10,718/=$"
+    }
+  ],
+  "CARDIAC MARKERS": [
+    {
+      "product": "NT-proBNP (N-terminal Prohormone of Brain Natriuretic Peptide)",
+      "price": "$19,090/=$"
+    },
+    {
+      "product": "cTnI/CK-MB/MYO (Cardiac Troponin I/Creatine Kinase MB/ Myoglobin)",
+      "price": "$17,296/=$"
+    },
+    {
+      "product": "cTnI(Cardiac Troponin I)",
+      "price": "$8,924/=$"
+    },
+    {
+      "product": "cTnT(Cardiac Troponin T)",
+      "price": "$11,868/=$"
+    },
+    {
+      "product": "MYO(Myoglobin)",
+      "price": "$8,280/=$"
+    },
+    {
+      "product": "CK-MB(Creatine Kinase MB)",
+      "price": "$8,924/=$"
+    },
+    {
+      "product": "H-FABP (Heart-type Fatty Acid Binding Protein)",
+      "price": "$13,110/=$"
+    },
+    {
+      "product": "D-Dimer Rapid Quantitative Test",
+      "price": "$8,924/=$"
+    },
+    {
+      "product": "SST2(Soluble Growth Stimulation Expressed Gene 2 Protein)",
+      "price": "$20,240/=$"
+    }
+  ],
+  "INFLAMMATION DETECTION": [
+    {
+      "product": "HS-CRP/CRP (High Sensitivity C-reactive Protein/C-reactive Protein)",
+      "price": "$8,970/=$"
+    },
+    {
+      "product": "PCT(Procalcitonin)",
+      "price": "$14,858/=$"
+    },
+    {
+      "product": "SAA(Serum amyloid A)",
+      "price": "$9,775/=$"
+    },
+    {
+      "product": "IL-6(Interleukin-6)",
+      "price": "$12.075/=$"
+    },
+    {
+      "product": "HBP(Heparin Binding Protein)",
+      "price": "$16,422/=$"
+    },
+    {
+      "product": "Anti-CCP (Anti-cyclic Citrullinated Peptide Antibody)",
+      "price": "$13,064/=$"
+    }
+  ],
+  "CEREBRAL STROKE": [
+    {
+      "product": "S100- (S100-Beta)",
+      "price": "$29,210/=$"
+    }
+  ],
+  "DIABETES": [
+    {
+      "product": "HbAlc (Glycated Hemoglobin)",
+      "price": "$10,120/=$"
+    }
+  ],
+  "RENAL FUNCTION": [
+    {
+      "product": "NGAL (Neutrophil Gelatinase-Associated Lipocalin)",
+      "price": "$20,240/=$"
+    },
+    {
+      "product": "MAU (Microalbumin)",
+      "price": "$14,375/=$"
+    }
+  ],
+  "VITAMIN D": [
+    {
+      "product": "25-(OH)-VD (25-OH Vitamin D)",
+      "price": "$14,260/=$"
+    }
+  ],
+  "DIGESTIVE FUNCTION": [
+    {
+      "product": "G17(Gastrin-17)",
+      "price": "$24,725/=$"
+    },
+    {
+      "product": "PGI/PGII (Pepsinogen I/Pepsinogen II)",
+      "price": "$25,875/=$"
+    }
+  ],
+  "TUMOR MARKERS": [
+    {
+      "product": "Ferritin",
+      "price": "$15,525/=$"
+    },
+    {
+      "product": "PSA(Prostate Specific Antigen)",
+      "price": "$12,075/=$"
+    },
+    {
+      "product": "AFP(Alpha-Fetoprotein)",
+      "price": "$8,625/=$"
+    },
+    {
+      "product": "f-PSA(free Prostate Specific Antigen)",
+      "price": "$10,925/=$"
+    },
+    {
+      "product": "CEA(Carcino-Embryonic Antigen)",
+      "price": "$9,775/=$"
+    },
+    {
+      "product": "CA125 (Carbohydrate antigen 125)",
+      "price": "$18,975/=$"
+    },
+    {
+      "product": "CA15-3 (Carbohydrate antigen 15-3)",
+      "price": "$20,125/=$"
+    },
+    {
+      "product": "CA19-9 (Carbohydrate antigen 19-9)",
+      "price": "$18,975/=$"
+    }
+  ],
+  "ALLERGIES": [
+    {
+      "product": "IgE(Immunoglobulin E)",
+      "price": "$9,775/=$"
+    }
+  ],
+  "INFECTIOUS DISEASES": [
+    {
+      "product": "HCV(Hepatitis C Virus Antibody)",
+      "price": "$9,775/=$"
+    },
+    {
+      "product": "HCV(Hepatitis B surface antigen)",
+      "price": "$9,775/=$"
+    }
+  ]
+}
