@@ -1,37 +1,26 @@
 import mongoose from 'mongoose';
 
 const orderItemSchema = new mongoose.Schema({
-  productId: {
+  consumableId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
+    ref: 'Consumable',
     required: true
   },
-  productName: {
+  name: {
     type: String,
     required: true
   },
-  model: String,
   quantity: {
     type: Number,
     required: true,
     min: 1
   },
-  unitPrice: {
+  price: {
     type: Number,
     required: true,
     min: 0
   },
-  discount: {
-    type: Number,
-    default: 0,
-    min: 0,
-    max: 100
-  },
-  totalPrice: {
-    type: Number,
-    required: true,
-    min: 0
-  }
+  specifications: String
 });
 
 const orderSchema = new mongoose.Schema({
@@ -40,80 +29,162 @@ const orderSchema = new mongoose.Schema({
     unique: true,
     required: true
   },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  visitId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Visit'
-  },
-  client: {
-    id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Client'
-    },
+  
+  // Primary Contact (Person placing the order)
+  primaryContact: {
     name: {
       type: String,
-      required: true
+      required: true,
+      minlength: 3,
+      maxlength: 100
     },
-    email: String,
-    phone: String,
+    email: {
+      type: String,
+      required: true,
+      lowercase: true
+    },
+    phone: {
+      type: String,
+      required: true,
+      match: /^254\d{9}$/
+    },
+    jobTitle: {
+      type: String,
+      required: true,
+      minlength: 3,
+      maxlength: 50
+    }
+  },
+  
+  // Facility Information
+  facility: {
+    name: {
+      type: String,
+      required: true,
+      minlength: 5,
+      maxlength: 150
+    },
+    registrationNumber: String,
     type: {
       type: String,
       required: true,
-      enum: ['hospital', 'clinic', 'dispensary', 'pharmacy', 'laboratory', 'other']
+      enum: [
+        'Hospital',
+        'Clinic',
+        'Medical Center',
+        'Laboratory',
+        'Pharmacy',
+        'Dispensary',
+        'Health Center',
+        'Private Practice',
+        'Diagnostic Center',
+        'Nursing Home'
+      ]
     },
-    location: {
-      type: {
-        type: String,
-        enum: ['Point'],
-        default: 'Point'
+    address: {
+      type: String,
+      required: true,
+      minlength: 10,
+      maxlength: 200
+    },
+    city: {
+      type: String,
+      required: true,
+      minlength: 2,
+      maxlength: 50
+    },
+    county: {
+      type: String,
+      required: true
+    },
+    postalCode: {
+      type: String,
+      required: true,
+      match: /^\d{5}$/
+    },
+    GPS_coordinates: {
+      latitude: {
+        type: Number,
+        min: -12,
+        max: 5
       },
-      coordinates: [Number]
+      longitude: {
+        type: Number,
+        min: 28,
+        max: 42
+      }
     }
   },
+  
+  // Alternative Contact
+  alternativeContact: {
+    name: {
+      type: String,
+      required: true,
+      minlength: 3,
+      maxlength: 100
+    },
+    email: {
+      type: String,
+      required: true,
+      lowercase: true
+    },
+    phone: {
+      type: String,
+      required: true,
+      match: /^254\d{9}$/
+    },
+    relationship: {
+      type: String,
+      required: true,
+      minlength: 3,
+      maxlength: 50
+    }
+  },
+  
+  // Delivery Information
+  delivery: {
+    location: {
+      type: String,
+      required: true,
+      minlength: 10,
+      maxlength: 300
+    },
+    instructions: {
+      type: String,
+      maxlength: 500
+    },
+    preferredDate: Date,
+    preferredTime: String
+  },
+  
+  // Order Items
   items: [orderItemSchema],
-  subtotal: {
-    type: Number,
-    required: true,
-    min: 0
-  },
-  taxAmount: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  discountAmount: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
+  
+  // Payment Details
   totalAmount: {
     type: Number,
     required: true,
     min: 0
   },
-  currency: {
-    type: String,
-    default: 'KES'
-  },
-  status: {
-    type: String,
-    enum: ['draft', 'submitted', 'approved', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'],
-    default: 'draft'
-  },
-  paymentStatus: {
-    type: String,
-    enum: ['pending', 'partial', 'paid', 'overdue', 'cancelled'],
-    default: 'pending'
-  },
   paymentMethod: {
     type: String,
     enum: ['mpesa', 'bank_transfer', 'cash', 'cheque', 'other'],
-    default: 'mpesa'
+    default: 'mpesa',
+    required: true
   },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'cancelled'],
+    default: 'pending'
+  },
+  orderStatus: {
+    type: String,
+    enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+    default: 'pending'
+  },
+  
+  // M-Pesa Details
   mpesaDetails: {
     checkoutRequestID: String,
     merchantRequestID: String,
@@ -125,53 +196,19 @@ const orderSchema = new mongoose.Schema({
       default: Date.now
     }
   },
-  paymentTerms: {
+  
+  // Optional Fields
+  purchaseOrderNumber: String,
+  billingEmail: String,
+  notes: {
     type: String,
-    enum: ['cash', 'net_30', 'net_60', 'net_90', 'custom'],
-    default: 'net_30'
+    maxlength: 1000
   },
-  expectedDeliveryDate: Date,
-  actualDeliveryDate: Date,
-  notes: String,
-  internalNotes: String,
-  attachments: [{
-    filename: String,
-    originalName: String,
-    path: String,
-    mimeType: String,
-    size: Number,
-    uploadedAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  approvalHistory: [{
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    action: {
-      type: String,
-      enum: ['submitted', 'approved', 'rejected', 'cancelled']
-    },
-    comments: String,
-    timestamp: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  commission: {
-    percentage: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100
-    },
-    amount: {
-      type: Number,
-      default: 0,
-      min: 0
-    }
+  
+  // Metadata
+  currency: {
+    type: String,
+    default: 'KES'
   }
 }, {
   timestamps: true
@@ -185,7 +222,7 @@ orderSchema.pre('save', async function(next) {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const random = Math.random().toString(36).substr(2, 6).toUpperCase();
-    this.orderNumber = `AM${year}${month}${day}${random}`;
+    this.orderNumber = `ORD-${date.getTime()}${random}`;
   }
   next();
 });

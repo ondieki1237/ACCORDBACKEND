@@ -132,7 +132,7 @@ app.use('/api/consumables', consumablesRoutes);
 app.use('/api/admin/consumables', adminConsumablesRoutes);
 
 // Orders & Checkout endpoints (M-Pesa integration)
-app.use('/api/checkout', ordersCheckoutRoutes);
+app.use('/api/orders', ordersCheckoutRoutes);
 
 // Analytics endpoints
 app.use('/api/analytics', analyticsRoutes);

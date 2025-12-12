@@ -15,7 +15,7 @@ const router = express.Router();
  */
 
 // Create order and initiate M-Pesa payment
-router.post('/checkout', createOrderCheckout);
+router.post('/', createOrderCheckout);
 
 // Get order details
 router.get('/:orderId', getOrderDetails);

@@ -14,50 +14,120 @@ import {
 
 /**
  * Create order and initiate M-Pesa STK Push payment
- * @route POST /api/orders/checkout
+ * @route POST /api/orders
  * @access Public
  */
 export const createOrderCheckout = async (req, res) => {
   try {
     const { 
-      customerName, 
-      customerEmail, 
-      customerPhone, 
+      primaryContact, 
+      facility,
+      alternativeContact,
+      delivery,
       items, 
       totalAmount, 
-      paymentMethod = 'mpesa'
+      paymentMethod = 'mpesa',
+      purchaseOrderNumber,
+      billingEmail,
+      notes
     } = req.body;
 
-    // Validation
-    if (!customerName || !customerEmail || !customerPhone || !items || !totalAmount) {
+    // Validation - Required fields
+    if (!primaryContact || !facility || !alternativeContact || !delivery || !items || !totalAmount) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: customerName, customerEmail, customerPhone, items, totalAmount'
+        message: 'Validation error',
+        details: 'Missing required fields: primaryContact, facility, alternativeContact, delivery, items, totalAmount'
       });
     }
 
+    // Validate primary contact
+    if (!primaryContact.name || !primaryContact.email || !primaryContact.phone || !primaryContact.jobTitle) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        details: 'primaryContact must include: name, email, phone, jobTitle'
+      });
+    }
+
+    // Validate facility
+    if (!facility.name || !facility.type || !facility.address || !facility.city || !facility.county || !facility.postalCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        details: 'facility must include: name, type, address, city, county, postalCode'
+      });
+    }
+
+    // Validate alternative contact
+    if (!alternativeContact.name || !alternativeContact.email || !alternativeContact.phone || !alternativeContact.relationship) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        details: 'alternativeContact must include: name, email, phone, relationship'
+      });
+    }
+
+    // Validate delivery
+    if (!delivery.location) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        details: 'delivery.location is required'
+      });
+    }
+
+    // Validate items
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Items array is required and must have at least one item'
+        message: 'Validation error',
+        details: 'Items array is required and must have at least one item'
       });
     }
 
     // Validate phone number format (254XXXXXXXXX)
     const phoneRegex = /^254\d{9}$/;
-    if (!phoneRegex.test(customerPhone)) {
+    if (!phoneRegex.test(primaryContact.phone)) {
       return res.status(400).json({
         success: false,
-        message: 'Phone number must be in format 254XXXXXXXXX'
+        message: 'Validation error',
+        details: 'primaryContact.phone must be in format 254XXXXXXXXX'
+      });
+    }
+
+    if (!phoneRegex.test(alternativeContact.phone)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        details: 'alternativeContact.phone must be in format 254XXXXXXXXX'
       });
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(customerEmail)) {
+    if (!emailRegex.test(primaryContact.email)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid email address'
+        message: 'Validation error',
+        details: 'primaryContact.email is invalid'
+      });
+    }
+
+    if (!emailRegex.test(alternativeContact.email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        details: 'alternativeContact.email is invalid'
+      });
+    }
+
+    // Validate postal code format (5 digits)
+    if (!/^\d{5}$/.test(facility.postalCode)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        details: 'facility.postalCode must be exactly 5 digits'
       });
     }
 
@@ -69,49 +139,70 @@ export const createOrderCheckout = async (req, res) => {
     if (Math.abs(calculatedTotal - totalAmount) > 0.01) {
       return res.status(400).json({
         success: false,
-        message: `Total amount mismatch. Expected ${calculatedTotal}, got ${totalAmount}`
+        message: 'Validation error',
+        details: `Total amount mismatch. Expected ${calculatedTotal}, got ${totalAmount}`
       });
     }
 
-    // Generate unique order ID
-    const orderId = `ORD-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-
     // Create order in database
     const orderData = {
-      orderNumber: orderId,
-      client: {
-        name: customerName,
-        email: customerEmail,
-        phone: customerPhone,
-        type: 'other'
+      primaryContact: {
+        name: primaryContact.name,
+        email: primaryContact.email,
+        phone: primaryContact.phone,
+        jobTitle: primaryContact.jobTitle
+      },
+      facility: {
+        name: facility.name,
+        registrationNumber: facility.registrationNumber,
+        type: facility.type,
+        address: facility.address,
+        city: facility.city,
+        county: facility.county,
+        postalCode: facility.postalCode,
+        GPS_coordinates: facility.GPS_coordinates
+      },
+      alternativeContact: {
+        name: alternativeContact.name,
+        email: alternativeContact.email,
+        phone: alternativeContact.phone,
+        relationship: alternativeContact.relationship
+      },
+      delivery: {
+        location: delivery.location,
+        instructions: delivery.instructions,
+        preferredDate: delivery.preferredDate,
+        preferredTime: delivery.preferredTime
       },
       items: items.map(item => ({
-        productId: item.consumableId || item.productId,
-        productName: item.name,
+        consumableId: item.consumableId,
+        name: item.name,
         quantity: item.quantity,
-        unitPrice: item.price,
-        totalPrice: item.quantity * item.price
+        price: item.price,
+        specifications: item.specifications
       })),
-      subtotal: totalAmount,
       totalAmount: totalAmount,
       paymentMethod: paymentMethod,
       paymentStatus: 'pending',
-      status: 'pending',
+      orderStatus: 'pending',
+      purchaseOrderNumber: purchaseOrderNumber,
+      billingEmail: billingEmail,
+      notes: notes,
       currency: 'KES'
     };
 
     const order = await Order.create(orderData);
 
-    logger.info(`Order created: ${order._id}, Order Number: ${orderId}, Amount: ${totalAmount}`);
+    logger.info(`Order created: ${order._id}, Order Number: ${order.orderNumber}, Amount: ${totalAmount}`);
 
     // Initiate M-Pesa STK Push
     let mpesaResponse;
     try {
       mpesaResponse = await initiateSTKPush(
-        customerPhone,
+        primaryContact.phone,
         Math.round(totalAmount),
-        orderId,
-        `AccordMedical-${orderId}`
+        order.orderNumber,
+        `AccordMedical-${order.orderNumber}`
       );
 
       // Update order with M-Pesa details
@@ -120,14 +211,13 @@ export const createOrderCheckout = async (req, res) => {
         {
           'mpesaDetails.checkoutRequestID': mpesaResponse.CheckoutRequestID,
           'mpesaDetails.merchantRequestID': mpesaResponse.MerchantRequestID,
-          'mpesaDetails.phoneNumber': customerPhone
+          'mpesaDetails.phoneNumber': primaryContact.phone
         }
       );
 
       logger.info(`M-Pesa STK Push initiated: ${mpesaResponse.CheckoutRequestID}`);
     } catch (mpesaError) {
       logger.error('M-Pesa initiation error:', mpesaError);
-      // Don't fail the order creation, but log the error
       return res.status(500).json({
         success: false,
         message: 'Failed to initiate M-Pesa payment',
@@ -137,15 +227,15 @@ export const createOrderCheckout = async (req, res) => {
 
     // Send order confirmation email to customer
     try {
-      await sendOrderConfirmationEmail(order, customerEmail);
-      logger.info(`Order confirmation email sent to: ${customerEmail}`);
+      await sendOrderConfirmationEmail(order);
+      logger.info(`Order confirmation email sent to: ${primaryContact.email}`);
     } catch (emailError) {
       logger.error('Customer email error:', emailError);
     }
 
     // Send order notification to admin
     try {
-      await sendAdminOrderNotification(order, customerName, customerEmail, customerPhone);
+      await sendAdminOrderNotification(order);
       logger.info('Admin order notification sent');
     } catch (adminEmailError) {
       logger.error('Admin email error:', adminEmailError);
@@ -153,13 +243,31 @@ export const createOrderCheckout = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Order created successfully. Please complete payment on your phone.',
+      message: 'Order created successfully',
       data: {
         orderId: order.orderNumber,
-        customerName: customerName,
+        facility: {
+          name: facility.name,
+          type: facility.type,
+          location: `${facility.city}, ${facility.county}`
+        },
+        primaryContact: {
+          name: primaryContact.name,
+          phone: primaryContact.phone
+        },
+        alternativeContact: {
+          name: alternativeContact.name,
+          phone: alternativeContact.phone
+        },
+        delivery: {
+          location: delivery.location,
+          preferredDate: delivery.preferredDate
+        },
         totalAmount: totalAmount,
+        itemCount: items.length,
         paymentStatus: order.paymentStatus,
-        checkoutRequestID: mpesaResponse.CheckoutRequestID
+        checkoutRequestID: mpesaResponse.CheckoutRequestID,
+        nextSteps: `M-Pesa STK prompt sent to ${primaryContact.name}. Contact ${alternativeContact.name} if needed.`
       }
     });
 
@@ -193,7 +301,20 @@ export const getOrderDetails = async (req, res) => {
 
     res.json({
       success: true,
-      data: order
+      data: {
+        _id: order._id,
+        orderNumber: order.orderNumber,
+        primaryContact: order.primaryContact,
+        facility: order.facility,
+        alternativeContact: order.alternativeContact,
+        delivery: order.delivery,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        paymentStatus: order.paymentStatus,
+        orderStatus: order.orderStatus,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt
+      }
     });
 
   } catch (error) {
@@ -214,7 +335,12 @@ export const getCustomerOrders = async (req, res) => {
   try {
     const { email } = req.params;
 
-    const orders = await Order.find({ 'client.email': email }).sort({ createdAt: -1 });
+    const orders = await Order.find({ 
+      $or: [
+        { 'primaryContact.email': email },
+        { 'alternativeContact.email': email }
+      ]
+    }).sort({ createdAt: -1 });
 
     res.json({
       success: true,
@@ -233,7 +359,7 @@ export const getCustomerOrders = async (req, res) => {
 
 /**
  * M-Pesa Callback Handler
- * @route POST /api/mpesa/callback
+ * @route POST /api/orders/mpesa/callback
  * @access Private (M-Pesa Safaricom)
  */
 export const mpesaCallback = async (req, res) => {
@@ -287,7 +413,7 @@ export const mpesaCallback = async (req, res) => {
         { _id: order._id },
         {
           paymentStatus: 'paid',
-          status: 'processing',
+          orderStatus: 'processing',
           'mpesaDetails.mpesaReceiptNumber': mpesaReceipt,
           'mpesaDetails.transactionDate': new Date(transactionDate?.toString().slice(0, 14)),
           'mpesaDetails.phoneNumber': phoneNumber,
@@ -330,7 +456,7 @@ export const mpesaCallback = async (req, res) => {
         { _id: order._id },
         {
           paymentStatus: 'cancelled',
-          status: 'cancelled',
+          orderStatus: 'cancelled',
           updatedAt: new Date()
         }
       );
@@ -406,7 +532,7 @@ export const queryPaymentStatus = async (req, res) => {
 
 /**
  * Get all orders (Admin)
- * @route GET /api/admin/orders
+ * @route GET /api/orders/admin/all
  * @access Private (Admin)
  */
 export const getAllOrders = async (req, res) => {
@@ -417,7 +543,7 @@ export const getAllOrders = async (req, res) => {
     const { status, paymentStatus } = req.query;
 
     const query = {};
-    if (status) query.status = status;
+    if (status) query.orderStatus = status;
     if (paymentStatus) query.paymentStatus = paymentStatus;
 
     const total = await Order.countDocuments(query);
