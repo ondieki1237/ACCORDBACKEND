@@ -61,7 +61,7 @@ const orderSchema = new mongoose.Schema({
     name: {
       type: String,
       required: true,
-      minlength: 5,
+      minlength: 1,
       maxlength: 150
     },
     type: {
