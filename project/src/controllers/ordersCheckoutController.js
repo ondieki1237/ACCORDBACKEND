@@ -23,21 +23,17 @@ export const createOrderCheckout = async (req, res) => {
       primaryContact, 
       facility,
       alternativeContact,
-      delivery,
       items, 
       totalAmount, 
-      paymentMethod = 'mpesa',
-      purchaseOrderNumber,
-      billingEmail,
-      notes
+      paymentMethod = 'mpesa'
     } = req.body;
 
     // Validation - Required fields
-    if (!primaryContact || !facility || !alternativeContact || !delivery || !items || !totalAmount) {
+    if (!primaryContact || !facility || !alternativeContact || !items || !totalAmount) {
       return res.status(400).json({
         success: false,
         message: 'Validation error',
-        details: 'Missing required fields: primaryContact, facility, alternativeContact, delivery, items, totalAmount'
+        details: 'Missing required fields: primaryContact, facility, alternativeContact, items, totalAmount'
       });
     }
 
@@ -68,14 +64,7 @@ export const createOrderCheckout = async (req, res) => {
       });
     }
 
-    // Validate delivery
-    if (!delivery.location) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation error',
-        details: 'delivery.location is required'
-      });
-    }
+    // Delivery removed
 
     // Validate items
     if (!Array.isArray(items) || items.length === 0) {
@@ -123,13 +112,7 @@ export const createOrderCheckout = async (req, res) => {
     }
 
     // Validate postal code format (5 digits)
-    if (!/^\d{5}$/.test(facility.postalCode)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation error',
-        details: 'facility.postalCode must be exactly 5 digits'
-      });
-    }
+    // Postal code optional now
 
     // Verify totalAmount matches sum of items
     const calculatedTotal = items.reduce((sum, item) => {
@@ -154,7 +137,6 @@ export const createOrderCheckout = async (req, res) => {
       },
       facility: {
         name: facility.name,
-        registrationNumber: facility.registrationNumber,
         type: facility.type,
         address: facility.address,
         city: facility.city,
@@ -168,12 +150,7 @@ export const createOrderCheckout = async (req, res) => {
         phone: alternativeContact.phone,
         relationship: alternativeContact.relationship
       },
-      delivery: {
-        location: delivery.location,
-        instructions: delivery.instructions,
-        preferredDate: delivery.preferredDate,
-        preferredTime: delivery.preferredTime
-      },
+      // delivery removed
       items: items.map(item => ({
         consumableId: item.consumableId,
         name: item.name,
@@ -185,9 +162,6 @@ export const createOrderCheckout = async (req, res) => {
       paymentMethod: paymentMethod,
       paymentStatus: 'pending',
       orderStatus: 'pending',
-      purchaseOrderNumber: purchaseOrderNumber,
-      billingEmail: billingEmail,
-      notes: notes,
       currency: 'KES'
     };
 
@@ -259,10 +233,7 @@ export const createOrderCheckout = async (req, res) => {
           name: alternativeContact.name,
           phone: alternativeContact.phone
         },
-        delivery: {
-          location: delivery.location,
-          preferredDate: delivery.preferredDate
-        },
+        // delivery removed from response
         totalAmount: totalAmount,
         itemCount: items.length,
         paymentStatus: order.paymentStatus,

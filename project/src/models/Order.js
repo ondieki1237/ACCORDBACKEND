@@ -64,7 +64,6 @@ const orderSchema = new mongoose.Schema({
       minlength: 5,
       maxlength: 150
     },
-    registrationNumber: String,
     type: {
       type: String,
       required: true,
@@ -98,9 +97,7 @@ const orderSchema = new mongoose.Schema({
       required: true
     },
     postalCode: {
-      type: String,
-      required: true,
-      match: /^\d{5}$/
+      type: String
     },
     GPS_coordinates: {
       latitude: {
@@ -142,21 +139,7 @@ const orderSchema = new mongoose.Schema({
     }
   },
   
-  // Delivery Information
-  delivery: {
-    location: {
-      type: String,
-      required: true,
-      minlength: 10,
-      maxlength: 300
-    },
-    instructions: {
-      type: String,
-      maxlength: 500
-    },
-    preferredDate: Date,
-    preferredTime: String
-  },
+  // Delivery Information (removed as per request)
   
   // Order Items
   items: [orderItemSchema],
@@ -197,13 +180,7 @@ const orderSchema = new mongoose.Schema({
     }
   },
   
-  // Optional Fields
-  purchaseOrderNumber: String,
-  billingEmail: String,
-  notes: {
-    type: String,
-    maxlength: 1000
-  },
+  // Optional Fields removed as per request
   
   // Metadata
   currency: {
