@@ -74,15 +74,20 @@ export const initiateSTKPush = async (phoneNumber, amount, orderId, accountRefer
 
     const url = `${baseUrl}/mpesa/stkpush/v1/processrequest`;
 
+    // Use sandbox test number in sandbox environment
+    const testPhone = MPESA_ENVIRONMENT === 'sandbox' ? '254708374149' : phoneNumber;
+    
+    logger.info(`Using phone number: ${testPhone} (Original: ${phoneNumber}, Env: ${MPESA_ENVIRONMENT})`);
+
     const payload = {
       BusinessShortCode: MPESA_BUSINESS_SHORT_CODE,
       Password: password,
       Timestamp: timestamp,
       TransactionType: 'CustomerPayBillOnline',
       Amount: Math.round(amount),
-      PartyA: phoneNumber,
+      PartyA: testPhone,
       PartyB: MPESA_BUSINESS_SHORT_CODE,
-      PhoneNumber: phoneNumber,
+      PhoneNumber: testPhone,
       CallBackURL: MPESA_CALLBACK_URL,
       AccountReference: (accountReference || orderId).substring(0, 12),
       TransactionDesc: `Payment for Order ${orderId}`.substring(0, 13)
