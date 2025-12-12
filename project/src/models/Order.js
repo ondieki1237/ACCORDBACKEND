@@ -58,6 +58,8 @@ const orderSchema = new mongoose.Schema({
       type: String,
       required: true
     },
+    email: String,
+    phone: String,
     type: {
       type: String,
       required: true,
@@ -106,6 +108,22 @@ const orderSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'partial', 'paid', 'overdue', 'cancelled'],
     default: 'pending'
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['mpesa', 'bank_transfer', 'cash', 'cheque', 'other'],
+    default: 'mpesa'
+  },
+  mpesaDetails: {
+    checkoutRequestID: String,
+    merchantRequestID: String,
+    mpesaReceiptNumber: String,
+    transactionDate: Date,
+    phoneNumber: String,
+    initiatedAt: {
+      type: Date,
+      default: Date.now
+    }
   },
   paymentTerms: {
     type: String,

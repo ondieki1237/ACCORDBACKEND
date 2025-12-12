@@ -1,0 +1,168 @@
+{
+  "info": {
+    "name": "ACCORD PDF Catalog Generator API",
+    "description": "API endpoints for PDF catalog generation from products database",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Generate from API",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"apiUrl\": \"http://localhost:5000/api/machines\",\n  \"company\": \"ACCORD Medical\",\n  \"filename\": \"machines-catalog.pdf\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/catalogs/generate",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "catalogs",
+            "generate"
+          ]
+        },
+        "description": "Generate PDF catalog by fetching data from an external API endpoint"
+      },
+      "response": []
+    },
+    {
+      "name": "Generate from Data",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"products\": [\n    {\n      \"name\": \"Hospital Bed\",\n      \"description\": \"Adjustable electric hospital bed with side rails\",\n      \"facility\": { \"name\": \"Surgical Equipment\" },\n      \"imageUrl\": \"https://example.com/bed.jpg\"\n    },\n    {\n      \"name\": \"Surgical Trolley\",\n      \"description\": \"Stainless steel trolley for surgical instruments\",\n      \"facility\": { \"name\": \"Surgical Equipment\" },\n      \"imageUrl\": \"https://example.com/trolley.jpg\"\n    },\n    {\n      \"name\": \"Microscope\",\n      \"description\": \"High-magnification laboratory microscope\",\n      \"facility\": { \"name\": \"Laboratory\" },\n      \"imageUrl\": \"https://example.com/microscope.jpg\"\n    }\n  ],\n  \"company\": \"ACCORD Medical\",\n  \"filename\": \"custom-catalog.pdf\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/catalogs/generate-data",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "catalogs",
+            "generate-data"
+          ]
+        },
+        "description": "Generate PDF catalog from an array of product data (no API call needed)"
+      },
+      "response": []
+    },
+    {
+      "name": "List All Catalogs",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:5000/api/catalogs/list",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "catalogs",
+            "list"
+          ]
+        },
+        "description": "List all generated PDF catalogs"
+      },
+      "response": []
+    },
+    {
+      "name": "Download Catalog",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/catalogs/product-catalog.pdf",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "catalogs",
+            "product-catalog.pdf"
+          ]
+        },
+        "description": "Download a specific PDF catalog (no auth required)"
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Catalog",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:5000/api/catalogs/product-catalog.pdf",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "catalogs",
+            "product-catalog.pdf"
+          ]
+        },
+        "description": "Delete a specific PDF catalog (admin only)"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "authToken",
+      "value": "your-jwt-token-here",
+      "type": "string"
+    }
+  ]
+}
