@@ -5,7 +5,8 @@ import {
   getCustomerOrders,
   mpesaCallback,
   queryPaymentStatus,
-  getAllOrders
+  getAllOrders,
+  getOrderReceipt
 } from '../controllers/ordersCheckoutController.js';
 
 const router = express.Router();
@@ -19,6 +20,9 @@ router.post('/', createOrderCheckout);
 
 // Get order details
 router.get('/:orderId', getOrderDetails);
+
+// Get order receipt
+router.get('/:orderId/receipt', getOrderReceipt);
 
 // Get customer orders by email
 router.get('/customer/:email', getCustomerOrders);

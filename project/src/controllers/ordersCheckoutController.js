@@ -547,3 +547,114 @@ export const getAllOrders = async (req, res) => {
     });
   }
 };
+
+/**
+ * Get receipt data for an order
+ * @route GET /api/orders/:orderId/receipt
+ * @access Public
+ */
+export const getOrderReceipt = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const order = await Order.findOne({ orderNumber: orderId });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Only allow receipt for paid orders
+    if (order.paymentStatus !== 'paid') {
+      return res.status(400).json({
+        success: false,
+        message: 'Receipt is only available for paid orders',
+        paymentStatus: order.paymentStatus
+      });
+    }
+
+    // Generate receipt number if not exists
+    if (!order.receiptNumber) {
+      order.receiptNumber = `RCP-${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      order.receiptGenerated = true;
+      order.receiptGeneratedAt = new Date();
+      await order.save();
+    }
+
+    // Format receipt data
+    const receiptData = {
+      receiptNumber: order.receiptNumber,
+      orderNumber: order.orderNumber,
+      orderDate: order.createdAt,
+      paymentDate: order.mpesaDetails?.transactionDate || order.updatedAt,
+      paymentStatus: order.paymentStatus,
+      
+      facility: {
+        name: order.facility.name,
+        type: order.facility.type,
+        address: order.facility.address,
+        city: order.facility.city,
+        county: order.facility.county,
+        postalCode: order.facility.postalCode
+      },
+      
+      primaryContact: {
+        name: order.primaryContact.name,
+        email: order.primaryContact.email,
+        phone: order.primaryContact.phone,
+        jobTitle: order.primaryContact.jobTitle
+      },
+      
+      alternativeContact: {
+        name: order.alternativeContact.name,
+        email: order.alternativeContact.email,
+        phone: order.alternativeContact.phone,
+        relationship: order.alternativeContact.relationship
+      },
+      
+      items: order.items.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        total: item.quantity * item.price,
+        specifications: item.specifications
+      })),
+      
+      summary: {
+        subtotal: order.totalAmount,
+        tax: 0,
+        total: order.totalAmount,
+        currency: order.currency
+      },
+      
+      payment: {
+        method: order.paymentMethod === 'mpesa' ? 'M-Pesa' : order.paymentMethod,
+        mpesaReceiptNumber: order.mpesaDetails?.mpesaReceiptNumber,
+        phoneNumber: order.mpesaDetails?.phoneNumber,
+        transactionDate: order.mpesaDetails?.transactionDate
+      },
+      
+      company: {
+        name: 'Accord Medical',
+        email: 'sales@accordmedical.co.ke',
+        phone: '+254 700 000000',
+        address: 'Nairobi, Kenya',
+        website: 'www.accordmedical.co.ke'
+      }
+    };
+
+    res.json({
+      success: true,
+      data: receiptData
+    });
+
+  } catch (error) {
+    logger.error('Get order receipt error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch receipt'
+    });
+  }
+};

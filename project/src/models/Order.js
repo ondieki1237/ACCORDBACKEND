@@ -186,7 +186,19 @@ const orderSchema = new mongoose.Schema({
   currency: {
     type: String,
     default: 'KES'
-  }
+  },
+  
+  // Receipt Information
+  receiptNumber: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  receiptGenerated: {
+    type: Boolean,
+    default: false
+  },
+  receiptGeneratedAt: Date
 }, {
   timestamps: true
 });
@@ -201,6 +213,14 @@ orderSchema.pre('save', async function(next) {
     const random = Math.random().toString(36).substr(2, 6).toUpperCase();
     this.orderNumber = `ORD-${date.getTime()}${random}`;
   }
+  
+  // Generate receipt number when payment is confirmed
+  if (this.paymentStatus === 'paid' && !this.receiptNumber) {
+    this.receiptNumber = `RCP-${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    this.receiptGenerated = true;
+    this.receiptGeneratedAt = new Date();
+  }
+  
   next();
 });
 
