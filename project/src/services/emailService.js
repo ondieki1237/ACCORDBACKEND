@@ -11,6 +11,26 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Helper function to safely get order data (handles both old and new formats)
+const getOrderData = (order) => {
+  return {
+    orderNumber: order.orderNumber,
+    customerName: order.primaryContact?.name || order.client?.name || 'Valued Customer',
+    customerEmail: order.primaryContact?.email || order.client?.email || '',
+    customerPhone: order.primaryContact?.phone || order.client?.phone || '',
+    facilityName: order.facility?.name || order.client?.facility || 'N/A',
+    jobTitle: order.primaryContact?.jobTitle || 'Staff',
+    totalAmount: order.totalAmount || 0,
+    items: (order.items || []).map(item => ({
+      name: item.name || item.productName || 'Unknown',
+      quantity: item.quantity || 0,
+      price: item.price || item.unitPrice || 0
+    })),
+    createdAt: order.createdAt,
+    mpesaReceipt: order.mpesaDetails?.mpesaReceiptNumber || ''
+  };
+};
+
 export const sendEmail = async ({ to, subject, template, data }) => {
   try {
     let html = '';
@@ -164,7 +184,7 @@ export const sendOrderConfirmationEmail = async (order, customerEmail) => {
           
           <div class="content">
             <div class="section">
-              <p>Dear <strong>${order.client.name}</strong>,</p>
+              <p>Dear <strong>${order.primaryContact?.name || 'Valued Customer'}</strong>,</p>
               <p>Thank you for your order! We have received your order and it is now awaiting payment.</p>
             </div>
 

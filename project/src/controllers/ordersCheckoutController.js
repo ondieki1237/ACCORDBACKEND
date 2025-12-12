@@ -10,7 +10,7 @@ import {
   sendAdminOrderNotification,
   sendPaymentConfirmationEmail,
   sendAdminPaymentNotification
-} from '../services/emailService.js';
+} from '../services/emailServiceCheckout.js';
 
 /**
  * Create order and initiate M-Pesa STK Push payment
