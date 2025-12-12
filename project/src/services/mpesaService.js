@@ -4,14 +4,13 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const {
-  MPESA_CONSUMER_KEY,
-  MPESA_CONSUMER_SECRET,
-  MPESA_BUSINESS_SHORT_CODE,
-  MPESA_PASSKEY,
-  MPESA_ENVIRONMENT,
-  MPESA_CALLBACK_URL
-} = process.env;
+// Trim all env values to avoid whitespace issues that can cause "Wrong credentials"
+const MPESA_CONSUMER_KEY = (process.env.MPESA_CONSUMER_KEY || '').trim();
+const MPESA_CONSUMER_SECRET = (process.env.MPESA_CONSUMER_SECRET || '').trim();
+const MPESA_BUSINESS_SHORT_CODE = (process.env.MPESA_BUSINESS_SHORT_CODE || '').trim();
+const MPESA_PASSKEY = (process.env.MPESA_PASSKEY || '').trim();
+const MPESA_ENVIRONMENT = (process.env.MPESA_ENVIRONMENT || process.env.MPESA_ENV || 'sandbox').trim();
+const MPESA_CALLBACK_URL = (process.env.MPESA_CALLBACK_URL || '').trim();
 
 const baseUrl = MPESA_ENVIRONMENT === 'production'
   ? 'https://api.safaricom.co.ke'
@@ -59,9 +58,8 @@ function generatePassword() {
   const passwordString = `${MPESA_BUSINESS_SHORT_CODE}${MPESA_PASSKEY}${timestamp}`;
   const password = Buffer.from(passwordString).toString('base64');
 
-  logger.debug(`Password generation - ShortCode: ${MPESA_BUSINESS_SHORT_CODE}, Timestamp: ${timestamp}`);
-  logger.debug(`Password generation - Raw string: ${passwordString}`);
-  logger.debug(`Password generation - Base64: ${password}`);
+  logger.info(`Password generation - ShortCode: ${MPESA_BUSINESS_SHORT_CODE}, Timestamp: ${timestamp}, Passkey length: ${MPESA_PASSKEY.length}`);
+  logger.info(`Password generation - Base64 (first 12 chars): ${password.slice(0, 12)}...`);
 
   return { password, timestamp };
 }
@@ -91,8 +89,8 @@ export const initiateSTKPush = async (phoneNumber, amount, orderId, accountRefer
     };
 
     logger.info(`Initiating STK Push - URL: ${url}`);
-    logger.info(`STK Push Payload:`, JSON.stringify(payload, null, 2));
-    logger.info(`STK Push - Phone: ${phoneNumber}, Amount: ${amount}, Order: ${orderId}`);
+    logger.info(`STK Push Payload: ${JSON.stringify(payload, null, 2)}`);
+    logger.info(`STK Push - Phone: ${phoneNumber}, Amount: ${amount}, Order: ${orderId}, Env: ${MPESA_ENVIRONMENT}`);
 
     const response = await axios.post(url, payload, {
       headers: {
