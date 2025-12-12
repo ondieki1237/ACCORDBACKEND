@@ -95,7 +95,13 @@ app.use('/api/trails', trailRoutes);
 app.use('/api/visits', visitRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/equipment', equipmentRoutes);
-app.use('/api/orders', orderRoutes);
+
+// Orders & Checkout endpoints (M-Pesa integration - PUBLIC, must come before protected /api/orders)
+app.use('/api/orders', ordersCheckoutRoutes);
+
+// Protected orders endpoints
+app.use('/api/orders/admin', orderRoutes);
+
 app.use('/api/reports', reportsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
@@ -130,9 +136,6 @@ app.use('/api/facilities', facilitiesRoutes);
 // Consumables endpoints
 app.use('/api/consumables', consumablesRoutes);
 app.use('/api/admin/consumables', adminConsumablesRoutes);
-
-// Orders & Checkout endpoints (M-Pesa integration)
-app.use('/api/orders', ordersCheckoutRoutes);
 
 // Analytics endpoints
 app.use('/api/analytics', analyticsRoutes);
