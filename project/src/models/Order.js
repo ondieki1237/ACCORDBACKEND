@@ -51,7 +51,7 @@ const orderSchema = new mongoose.Schema({
     jobTitle: {
       type: String,
       required: true,
-      minlength: 3,
+      minlength: 1,
       maxlength: 50
     }
   },

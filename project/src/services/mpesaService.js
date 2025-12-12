@@ -56,9 +56,12 @@ function generatePassword() {
     .replace(/[^0-9]/g, '')
     .slice(0, 14);
 
-  const password = Buffer.from(
-    `${MPESA_BUSINESS_SHORT_CODE}${MPESA_PASSKEY}${timestamp}`
-  ).toString('base64');
+  const passwordString = `${MPESA_BUSINESS_SHORT_CODE}${MPESA_PASSKEY}${timestamp}`;
+  const password = Buffer.from(passwordString).toString('base64');
+
+  logger.debug(`Password generation - ShortCode: ${MPESA_BUSINESS_SHORT_CODE}, Timestamp: ${timestamp}`);
+  logger.debug(`Password generation - Raw string: ${passwordString}`);
+  logger.debug(`Password generation - Base64: ${password}`);
 
   return { password, timestamp };
 }
@@ -83,11 +86,13 @@ export const initiateSTKPush = async (phoneNumber, amount, orderId, accountRefer
       PartyB: MPESA_BUSINESS_SHORT_CODE,
       PhoneNumber: phoneNumber,
       CallBackURL: MPESA_CALLBACK_URL,
-      AccountReference: accountReference || orderId,
-      TransactionDesc: `Payment for Order ${orderId}`
+      AccountReference: (accountReference || orderId).substring(0, 12),
+      TransactionDesc: `Payment for Order ${orderId}`.substring(0, 13)
     };
 
-    logger.info(`Initiating STK Push - Phone: ${phoneNumber}, Amount: ${amount}, Order: ${orderId}`);
+    logger.info(`Initiating STK Push - URL: ${url}`);
+    logger.info(`STK Push Payload:`, JSON.stringify(payload, null, 2));
+    logger.info(`STK Push - Phone: ${phoneNumber}, Amount: ${amount}, Order: ${orderId}`);
 
     const response = await axios.post(url, payload, {
       headers: {
@@ -96,6 +101,8 @@ export const initiateSTKPush = async (phoneNumber, amount, orderId, accountRefer
       },
       timeout: 30000
     });
+
+    logger.info(`STK Push Response:`, JSON.stringify(response.data, null, 2));
 
     if (response.data && response.data.ResponseCode === '0') {
       logger.info(`STK Push initiated successfully: ${response.data.CheckoutRequestID}`);
@@ -111,7 +118,8 @@ export const initiateSTKPush = async (phoneNumber, amount, orderId, accountRefer
       throw new Error(errorMessage);
     }
   } catch (error) {
-    logger.error('Initiate STK Push error:', error.response?.data || error.message);
+    logger.error('Initiate STK Push error response:', error.response?.data);
+    logger.error('Initiate STK Push error message:', error.message);
     throw new Error('Failed to initiate M-Pesa payment: ' + error.message);
   }
 };
