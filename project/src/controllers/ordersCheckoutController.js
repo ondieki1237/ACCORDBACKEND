@@ -20,6 +20,7 @@ import {
 export const createOrderCheckout = async (req, res) => {
   try {
     const { 
+      orderNumber,
       primaryContact, 
       facility,
       alternativeContact,
@@ -129,6 +130,7 @@ export const createOrderCheckout = async (req, res) => {
 
     // Create order in database
     const orderData = {
+      ...(orderNumber && { orderNumber }),
       primaryContact: {
         name: primaryContact.name,
         email: primaryContact.email,
