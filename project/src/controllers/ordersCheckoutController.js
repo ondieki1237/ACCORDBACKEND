@@ -128,9 +128,12 @@ export const createOrderCheckout = async (req, res) => {
       });
     }
 
+    // Ensure order number exists (prefer client-provided, fallback to server-generated)
+    const generatedOrderNumber = orderNumber || `ORD-${Date.now()}${Math.floor(Math.random() * 1000)}`;
+
     // Create order in database
     const orderData = {
-      ...(orderNumber && { orderNumber }),
+      orderNumber: generatedOrderNumber,
       primaryContact: {
         name: primaryContact.name,
         email: primaryContact.email,
