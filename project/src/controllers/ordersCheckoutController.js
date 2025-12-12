@@ -47,11 +47,11 @@ export const createOrderCheckout = async (req, res) => {
     }
 
     // Validate facility
-    if (!facility.name || !facility.type || !facility.address || !facility.city || !facility.county || !facility.postalCode) {
+    if (!facility.name || !facility.type || !facility.address || !facility.city || !facility.county) {
       return res.status(400).json({
         success: false,
         message: 'Validation error',
-        details: 'facility must include: name, type, address, city, county, postalCode'
+        details: 'facility must include: name, type, address, city, county'
       });
     }
 
