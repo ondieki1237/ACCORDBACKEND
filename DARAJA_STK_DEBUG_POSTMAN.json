@@ -1,0 +1,192 @@
+{
+  "info": {
+    "name": "Daraja STK Push Debug Collection",
+    "description": "Test M-Pesa STK push with multiple test numbers and debug endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Available Test Numbers",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/debug/test-numbers",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "orders", "debug", "test-numbers"]
+        },
+        "description": "View all available Daraja sandbox test phone numbers"
+      }
+    },
+    {
+      "name": "Test STK Push - Default (254708374149)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phoneNumber\": \"254708374149\",\n  \"amount\": 1\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/debug/stk-push-test",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "orders", "debug", "stk-push-test"]
+        },
+        "description": "Test STK push with default Daraja sandbox test number. If you get 'Unable to lock subscriber', wait 1-2 minutes and try again."
+      }
+    },
+    {
+      "name": "Test STK Push - Alt 1 (254712345678)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phoneNumber\": \"254712345678\",\n  \"amount\": 1\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/debug/stk-push-test",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "orders", "debug", "stk-push-test"]
+        },
+        "description": "Test STK push with alternative test number. Use this if the default gets locked."
+      }
+    },
+    {
+      "name": "Test STK Push - Alt 2 (254799012345)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phoneNumber\": \"254799012345\",\n  \"amount\": 1\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/debug/stk-push-test",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "orders", "debug", "stk-push-test"]
+        },
+        "description": "Test STK push with second alternative test number."
+      }
+    },
+    {
+      "name": "Test STK Push - Alt 3 (254701234567)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phoneNumber\": \"254701234567\",\n  \"amount\": 1\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/debug/stk-push-test",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "orders", "debug", "stk-push-test"]
+        },
+        "description": "Test STK push with third alternative test number."
+      }
+    },
+    {
+      "name": "Test STK Push - Your Number",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phoneNumber\": \"254YOUR_NUMBER_HERE\",\n  \"amount\": 1\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/debug/stk-push-test",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "orders", "debug", "stk-push-test"]
+        },
+        "description": "Test STK push with your own phone number. Replace 254YOUR_NUMBER_HERE with your actual number in format 254XXXXXXXXX. Only works if MPESA_USE_TEST_PHONE=false in your environment."
+      }
+    },
+    {
+      "name": "Create Full Order (Triggers STK)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderNumber\": \"ORD-{{$timestamp}}\",\n  \"primaryContact\": {\n    \"name\": \"Test User\",\n    \"email\": \"test@example.com\",\n    \"phone\": \"254708374149\",\n    \"jobTitle\": \"Manager\"\n  },\n  \"facility\": {\n    \"name\": \"Test Hospital\",\n    \"type\": \"Hospital\",\n    \"address\": \"123 Main St\",\n    \"city\": \"Nairobi\",\n    \"county\": \"Nairobi\"\n  },\n  \"alternativeContact\": {\n    \"name\": \"Alt Contact\",\n    \"email\": \"alt@example.com\",\n    \"phone\": \"254708374149\",\n    \"relationship\": \"Manager\"\n  },\n  \"items\": [\n    {\n      \"consumableId\": \"TEST001\",\n      \"name\": \"Test Product\",\n      \"quantity\": 1,\n      \"price\": 100\n    }\n  ],\n  \"totalAmount\": 100,\n  \"paymentMethod\": \"mpesa\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/orders",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "orders"]
+        },
+        "description": "Create a complete order and trigger STK push. Save the orderId from response for later queries."
+      }
+    },
+    {
+      "name": "Check Order Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "orders", "{{orderId}}"]
+        },
+        "description": "Check payment status of an order. Use the orderId from the Create Order response."
+      }
+    },
+    {
+      "name": "Get Receipt (After Payment)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/{{orderId}}/receipt",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "orders", "{{orderId}}", "receipt"]
+        },
+        "description": "Get receipt data after payment is confirmed (paymentStatus = 'paid')"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://app.codewithseth.co.ke",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

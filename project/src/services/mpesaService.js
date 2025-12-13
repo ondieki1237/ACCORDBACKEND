@@ -13,6 +13,9 @@ const MPESA_ENVIRONMENT = (process.env.MPESA_ENVIRONMENT || process.env.MPESA_EN
 const MPESA_USE_TEST_PHONE = ((process.env.MPESA_USE_TEST_PHONE ?? 'true')).toString().trim().toLowerCase() === 'true';
 const MPESA_CALLBACK_URL = (process.env.MPESA_CALLBACK_URL || '').trim();
 
+// Debug: Log env var loading
+logger.info(`MPESA Service Loaded - Environment: ${MPESA_ENVIRONMENT}, UseTestPhone: ${MPESA_USE_TEST_PHONE}, Raw env value: "${process.env.MPESA_USE_TEST_PHONE}"`);
+
 const baseUrl = MPESA_ENVIRONMENT === 'production'
   ? 'https://api.safaricom.co.ke'
   : 'https://sandbox.safaricom.co.ke';
