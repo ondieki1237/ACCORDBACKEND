@@ -10,6 +10,7 @@ const MPESA_CONSUMER_SECRET = (process.env.MPESA_CONSUMER_SECRET || '').trim();
 const MPESA_BUSINESS_SHORT_CODE = (process.env.MPESA_BUSINESS_SHORT_CODE || '').trim();
 const MPESA_PASSKEY = (process.env.MPESA_PASSKEY || '').trim();
 const MPESA_ENVIRONMENT = (process.env.MPESA_ENVIRONMENT || process.env.MPESA_ENV || 'sandbox').trim();
+const MPESA_USE_TEST_PHONE = ((process.env.MPESA_USE_TEST_PHONE ?? 'true')).toString().trim().toLowerCase() === 'true';
 const MPESA_CALLBACK_URL = (process.env.MPESA_CALLBACK_URL || '').trim();
 
 const baseUrl = MPESA_ENVIRONMENT === 'production'
@@ -74,10 +75,12 @@ export const initiateSTKPush = async (phoneNumber, amount, orderId, accountRefer
 
     const url = `${baseUrl}/mpesa/stkpush/v1/processrequest`;
 
-    // Use sandbox test number in sandbox environment
-    const testPhone = MPESA_ENVIRONMENT === 'sandbox' ? '254708374149' : phoneNumber;
-    
-    logger.info(`Using phone number: ${testPhone} (Original: ${phoneNumber}, Env: ${MPESA_ENVIRONMENT})`);
+    // Choose phone number: allow disabling sandbox test number via env
+    const resolvedPhone = (MPESA_ENVIRONMENT === 'sandbox' && MPESA_USE_TEST_PHONE)
+      ? '254708374149'
+      : phoneNumber;
+
+    logger.info(`Using phone number: ${resolvedPhone} (Original: ${phoneNumber}, Env: ${MPESA_ENVIRONMENT}, UseTestPhone: ${MPESA_USE_TEST_PHONE})`);
 
     const payload = {
       BusinessShortCode: MPESA_BUSINESS_SHORT_CODE,
@@ -85,9 +88,9 @@ export const initiateSTKPush = async (phoneNumber, amount, orderId, accountRefer
       Timestamp: timestamp,
       TransactionType: 'CustomerPayBillOnline',
       Amount: Math.round(amount),
-      PartyA: testPhone,
+      PartyA: resolvedPhone,
       PartyB: MPESA_BUSINESS_SHORT_CODE,
-      PhoneNumber: testPhone,
+      PhoneNumber: resolvedPhone,
       CallBackURL: MPESA_CALLBACK_URL,
       AccountReference: (accountReference || orderId).substring(0, 12),
       TransactionDesc: `Payment for Order ${orderId}`.substring(0, 13)

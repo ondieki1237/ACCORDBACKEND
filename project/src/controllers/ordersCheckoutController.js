@@ -658,3 +658,72 @@ export const getOrderReceipt = async (req, res) => {
     });
   }
 };
+
+/**
+ * Debug: Test STK Push directly (Sandbox only)
+ * @route POST /api/orders/debug/stk-push-test
+ * @access Public (Debug only - remove in production)
+ */
+export const debugSTKPushTest = async (req, res) => {
+  try {
+    const { phoneNumber, amount = 1 } = req.body;
+
+    // Validate phone format
+    const phoneRegex = /^254\d{9}$/;
+    if (!phoneNumber || !phoneRegex.test(phoneNumber)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid phone number. Must be format: 254XXXXXXXXX'
+      });
+    }
+
+    logger.info(`=== DEBUG STK PUSH TEST ===`);
+    logger.info(`Phone: ${phoneNumber}, Amount: ${amount}`);
+
+    // Attempt STK push
+    const mpesaResponse = await initiateSTKPush(
+      phoneNumber,
+      amount,
+      `DEBUG-${Date.now()}`,
+      `Debug-${Date.now()}`
+    );
+
+    logger.info(`STK Push test response:`, JSON.stringify(mpesaResponse, null, 2));
+
+    res.json({
+      success: true,
+      message: 'STK push test initiated',
+      data: mpesaResponse
+    });
+
+  } catch (error) {
+    logger.error('Debug STK push test error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'STK push test failed',
+      error: error.message,
+      hint: 'If "Unable to lock subscriber", wait 1-2 minutes and try again with same number, or use different test number'
+    });
+  }
+};
+
+/**
+ * Debug: List available Daraja test numbers
+ * @route GET /api/orders/debug/test-numbers
+ * @access Public (Debug only)
+ */
+export const debugTestNumbers = async (req, res) => {
+  const testNumbers = [
+    { number: '254708374149', name: 'Default Sandbox Test', status: 'Try first' },
+    { number: '254712345678', name: 'Alternative Test 1', status: 'Use if 149 locked' },
+    { number: '254799012345', name: 'Alternative Test 2', status: 'Use if others locked' },
+    { number: '254701234567', name: 'Alternative Test 3', status: 'Rotate for testing' }
+  ];
+
+  res.json({
+    success: true,
+    message: 'Available Daraja sandbox test numbers (rotate if getting "Unable to lock subscriber")',
+    testNumbers: testNumbers,
+    tip: 'If a number gets locked, wait 1-2 minutes or try a different number'
+  });
+};

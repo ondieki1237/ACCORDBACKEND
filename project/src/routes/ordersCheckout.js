@@ -6,7 +6,9 @@ import {
   mpesaCallback,
   queryPaymentStatus,
   getAllOrders,
-  getOrderReceipt
+  getOrderReceipt,
+  debugSTKPushTest,
+  debugTestNumbers
 } from '../controllers/ordersCheckoutController.js';
 
 const router = express.Router();
@@ -36,6 +38,16 @@ router.get('/status/:checkoutRequestID', queryPaymentStatus);
 
 // M-Pesa callback handler (called by Safaricom)
 router.post('/mpesa/callback', mpesaCallback);
+
+/**
+ * DEBUG ROUTES (Sandbox Testing Only - Remove in Production!)
+ */
+
+// Debug: Test STK push directly
+router.post('/debug/stk-push-test', debugSTKPushTest);
+
+// Debug: List available test numbers
+router.get('/debug/test-numbers', debugTestNumbers);
 
 /**
  * ADMIN ROUTES
