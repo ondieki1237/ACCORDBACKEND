@@ -50,6 +50,8 @@ import consumablesRoutes from './routes/consumables.js';
 import adminConsumablesRoutes from './routes/admin/consumables.js';
 import analyticsRoutes from './routes/analytics.js';
 import ordersCheckoutRoutes from './routes/ordersCheckout.js';
+import callLogsRoutes from './routes/callLogs.js';
+import adminCallLogsRoutes from './routes/admin/callLogs.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -136,6 +138,10 @@ app.use('/api/facilities', facilitiesRoutes);
 // Consumables endpoints
 app.use('/api/consumables', consumablesRoutes);
 app.use('/api/admin/consumables', adminConsumablesRoutes);
+
+// Call logs endpoints
+app.use('/api/call-logs', callLogsRoutes);
+app.use('/api/admin/call-logs', adminCallLogsRoutes);
 
 // Analytics endpoints
 app.use('/api/analytics', analyticsRoutes);
