@@ -39,7 +39,9 @@ Authorization: Bearer {accessToken}
 **Request Body:**
 ```json
 {
-  "clientName": "Dr. John Smith (Radiologist, City Hospital)",
+  "clientName": "Dr. John Smith",
+  "clientFacilityName": "City Hospital",
+  "clientRole": "Radiologist",
   "clientPhone": "+254712345678",
   "callDirection": "outbound",
   "callDate": "2026-01-13",
@@ -49,14 +51,14 @@ Authorization: Bearer {accessToken}
   "nextAction": "Send product brochure",
   "followUpDate": "2026-01-20",
   "callNotes": "Client is interested in X-ray machine. Needs quote by end of month.",
-  "tags": ["high-priority", "x-ray"],
-  "relatedLead": "lead_id_here",
-  "relatedVisit": "visit_id_here"
+  "tags": ["high-priority", "x-ray"]
 }
 ```
 
 **Field Descriptions:**
-- `clientName` (required): Name of the client/contact person. **Include the role and facility in parentheses, e.g., "Dr. John Smith (Radiologist, City Hospital)"**
+- `clientName` (required): Name of the client/contact person
+- `clientFacilityName` (required): Name of the client's facility/organization
+- `clientRole` (required): Role or title of the client/contact person
 - `clientPhone` (required): Phone number of the client
 - `callDirection` (required): `inbound` or `outbound`
 - `callDate` (required): Date of the call (ISO date format)
@@ -72,8 +74,6 @@ Authorization: Bearer {accessToken}
 - `followUpDate` (optional): Date for follow-up (ISO date format)
 - `callNotes` (optional): Detailed notes/summary of the call
 - `tags` (optional): Array of tags for categorization
-- `relatedLead` (optional): ID of related Lead document
-- `relatedVisit` (optional): ID of related Visit document
 
 **Response (201 Created):**
 ```json
@@ -82,7 +82,9 @@ Authorization: Bearer {accessToken}
   "message": "Call log created successfully",
   "data": {
     "_id": "call_log_id",
-    "clientName": "Dr. John Smith (Radiologist, City Hospital)",
+    "clientName": "Dr. John Smith",
+    "clientFacilityName": "City Hospital",
+    "clientRole": "Radiologist",
     "clientPhone": "+254712345678",
     "callDirection": "outbound",
     "callDate": "2026-01-13T00:00:00.000Z",
@@ -291,16 +293,6 @@ This endpoint provides the data structure for the collapsible folder tree in the
       "email": "jane@accord.com",
       "role": "sales"
     },
-    "relatedLead": {
-      "_id": "lead_id",
-      "facilityName": "City Hospital",
-      "leadStatus": "qualified"
-    },
-    "relatedVisit": {
-      "_id": "visit_id",
-      "client": { "name": "City Hospital" },
-      "visitPurpose": "demo"
-    }
   }
 }
 ```
@@ -451,7 +443,9 @@ All admin endpoints are under `/api/admin/call-logs` and require `admin` or `man
 
 ```javascript
 {
-  clientName: String (required), // Include role and facility, e.g., "Dr. John Smith (Radiologist, City Hospital)"
+  clientName: String (required),
+  clientFacilityName: String (required),
+  clientRole: String (required),
   clientPhone: String (required),
   callDirection: 'inbound' | 'outbound' (required),
   callDate: Date (required, indexed),
@@ -462,8 +456,6 @@ All admin endpoints are under `/api/admin/call-logs` and require `admin` or `man
   followUpDate: Date (optional, indexed),
   callNotes: String (optional),
   tags: [String],
-  relatedLead: ObjectId (ref: Lead, optional),
-  relatedVisit: ObjectId (ref: Visit, optional),
   year: Number (auto-calculated, indexed),
   month: Number (auto-calculated, indexed),
   week: Number (auto-calculated, indexed),
@@ -540,7 +532,9 @@ const response = await fetch(
 **3. Create New Call Log:**
 ```javascript
 const callLog = {
-  clientName: "Dr. Sarah Johnson (Procurement, County Clinic)",
+  clientName: "Dr. Sarah Johnson",
+  clientFacilityName: "County Clinic",
+  clientRole: "Procurement",
   clientPhone: "+254700123456",
   callDirection: "outbound",
   callDate: "2026-01-13",

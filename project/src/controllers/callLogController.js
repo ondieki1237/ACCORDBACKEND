@@ -15,9 +15,7 @@ export const createCallLog = async (req, res) => {
       nextAction,
       followUpDate,
       callNotes,
-      tags,
-      relatedLead,
-      relatedVisit
+      tags
     } = req.body;
 
     // Validate required fields
@@ -41,8 +39,6 @@ export const createCallLog = async (req, res) => {
       followUpDate: followUpDate || null,
       callNotes: callNotes || '',
       tags: tags || [],
-      relatedLead: relatedLead || null,
-      relatedVisit: relatedVisit || null,
       createdBy: req.user._id
     });
 

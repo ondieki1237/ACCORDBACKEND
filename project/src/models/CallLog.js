@@ -66,17 +66,14 @@ const callLogSchema = new mongoose.Schema({
   // Metadata for organization
   year: {
     type: Number,
-    required: true,
     index: true
   },
   month: {
     type: Number,
-    required: true,
     index: true
   },
   week: {
     type: Number,
-    required: true,
     index: true
   },
   
