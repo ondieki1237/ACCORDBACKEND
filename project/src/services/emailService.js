@@ -31,7 +31,7 @@ const getOrderData = (order) => {
   };
 };
 
-export const sendEmail = async ({ to, subject, template, data }) => {
+export const sendEmail = async ({ to, subject, template, data, attachments }) => {
   try {
     let html = '';
 
@@ -138,7 +138,8 @@ export const sendEmail = async ({ to, subject, template, data }) => {
       from: process.env.EMAIL_FROM,
       to,
       subject,
-      html
+      html,
+      attachments: attachments || []
     };
 
     const result = await transporter.sendMail(mailOptions);
