@@ -39,7 +39,9 @@ export async function getUserVisitsAdmin(req, res) {
       limit: Number(limit),
       sort,
       populate: [
-        { path: 'userId', select: 'firstName lastName email role' }
+        { path: 'userId', select: 'firstName lastName email role' },
+        { path: 'followUpVisits' },
+        { path: 'followUpActions.assignedTo', select: 'firstName lastName email role' }
       ],
       lean: true
     };
@@ -189,7 +191,9 @@ export async function getDailyVisitsActivities(req, res) {
         { 
           path: 'userId', 
           select: 'firstName lastName email employeeId region role' 
-        }
+        },
+        { path: 'followUpVisits' },
+        { path: 'followUpActions.assignedTo', select: 'firstName lastName email role' }
       ],
       lean: true
     };

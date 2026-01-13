@@ -1,8 +1,6 @@
 import Planner from '../models/Planner.js';
 import User from '../models/User.js';
 import logger from '../utils/logger.js';
-import { generatePlannerPDF } from '../services/plannerPdfService.js';
-import { sendEmail } from '../services/emailService.js';
 
 // Create a planner for the authenticated user
 export const createPlanner = async (req, res, next) => {
@@ -43,38 +41,6 @@ export const createPlanner = async (req, res, next) => {
     });
 
     await planner.save();
-    // After saving, try to generate a PDF and email it to admins
-    try {
-      const user = await User.findById(userId).select('firstName lastName email');
-      const pdf = await generatePlannerPDF(planner, user || { firstName: 'Unknown', lastName: '', email: '' });
-
-      const recipients = [
-        'accounts@accordmedical.co.ke',
-        'reports@accordmedical.co.ke',
-        'bellarinseth@gmail.com'
-      ];
-
-      // Send email with attachment
-      await sendEmail({
-        to: recipients.join(','),
-        subject: `New Weekly Planner submitted by ${user ? user.firstName + ' ' + user.lastName : 'User'}`,
-        template: 'newReport',
-        data: {
-          author: `${user ? user.firstName + ' ' + user.lastName : 'User'}`,
-          weekRange: new Date(planner.weekCreatedAt).toDateString(),
-          submittedAt: planner.createdAt,
-          pdfUrl: null
-        },
-        attachments: [
-          {
-            filename: pdf.filename,
-            path: pdf.filepath
-          }
-        ]
-      });
-    } catch (emailErr) {
-      logger.error('Error generating/sending planner PDF email:', emailErr);
-    }
 
     res.status(201).json({ success: true, data: planner });
   } catch (err) {
