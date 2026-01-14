@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticate, authorize } from '../../middleware/auth.js';
 import {
+  listAdminVisits,
   getUserVisitsAdmin,
   getVisitsSummary,
   getVisitByIdAdmin,
@@ -11,6 +12,9 @@ const router = express.Router();
 
 // Require admin
 router.use(authenticate, authorize('admin'));
+
+// Paginated list of visits (admin export/list)
+router.get('/', listAdminVisits);
 
 // Get daily visits activities for all sales team
 router.get('/daily/activities', getDailyVisitsActivities);
