@@ -76,7 +76,8 @@ export const validateObjectId = (field) => [
 
 export const validatePagination = [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
-  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+  // Allow larger page sizes for admin or bulk requests; frontend should still prefer reasonable page sizes.
+  query('limit').optional().isInt({ min: 1, max: 1000 }).withMessage('Limit must be between 1 and 1000'),
   validate
 ];
 

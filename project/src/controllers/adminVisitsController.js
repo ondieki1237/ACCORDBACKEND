@@ -142,7 +142,14 @@ export async function getUserVisitsAdmin(req, res) {
       sort = '-date'
     } = req.query;
 
-    const q = { userId };
+    // Build query; treat literal 'null'/'undefined'/'all' as no user filter
+    const q = {};
+    if (userId && !['null', 'undefined', 'all'].includes(String(userId).toLowerCase())) {
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ success: false, message: 'Invalid userId parameter' });
+      }
+      q.userId = mongoose.Types.ObjectId(userId);
+    }
 
     if (startDate || endDate) {
       q.date = {};
