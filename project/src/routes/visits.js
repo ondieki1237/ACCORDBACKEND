@@ -1,6 +1,8 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import Visit from '../models/Visit.js';
+import Facility from '../../src/models/Facility.js';
+import Machine from '../../src/models/Machine.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validateVisit, validatePagination, validateDateRange } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
@@ -379,6 +381,77 @@ router.get('/analytics/summary', authenticate, authorize('admin', 'manager'), as
       success: false,
       message: 'Failed to retrieve analytics'
     });
+  }
+});
+
+// @route   GET /api/visits/:id/contacts-mapped
+// @desc    Get single visit and map contacts, facility info and possible machine matches
+// @access  Private
+router.get('/:id/contacts-mapped', authenticate, async (req, res) => {
+  try {
+    const visit = await Visit.findById(req.params.id).lean();
+    if (!visit) {
+      return res.status(404).json({ success: false, message: 'Visit not found' });
+    }
+
+    // Permission check: sales users may only fetch their own visits
+    if (req.user.role === 'sales' && visit.userId && visit.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    // Attempt to resolve facility by exact name, then by text-search fallback
+    let facility = null;
+    const clientName = visit.client && visit.client.name;
+    if (clientName) {
+      facility = await Facility.findOne({ 'properties.name': clientName }).lean();
+      if (!facility) {
+        facility = await Facility.findOne({ $text: { $search: clientName } }).lean();
+      }
+    }
+
+    // For each productOfInterest try to find a matching machine record
+    const mappedProducts = [];
+    if (Array.isArray(visit.productsOfInterest)) {
+      for (const p of visit.productsOfInterest) {
+        const name = p && p.name ? p.name : '';
+        let matched = null;
+        if (name) {
+          // Try text search first (requires machine text index), then fallback to regex on model/manufacturer
+          try {
+            matched = await Machine.findOne({ $text: { $search: name } }).lean();
+          } catch (e) {
+            matched = null;
+          }
+
+          if (!matched) {
+            const regex = new RegExp(name.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&'), 'i');
+            matched = await Machine.findOne({ $or: [{ model: regex }, { manufacturer: regex }, { 'facility.name': regex }] }).lean();
+          }
+        }
+
+        mappedProducts.push({ product: p, matchedMachine: matched || null });
+      }
+    }
+
+    const payload = {
+      visitId: visit._id,
+      visitRef: visit.visitId || null,
+      date: visit.date,
+      startTime: visit.startTime,
+      endTime: visit.endTime,
+      duration: visit.duration,
+      client: visit.client || null,
+      facility: facility || null,
+      contacts: visit.contacts || [],
+      productsOfInterest: mappedProducts,
+      existingEquipment: visit.existingEquipment || [],
+      notes: visit.notes || null
+    };
+
+    return res.json({ success: true, data: payload });
+  } catch (error) {
+    logger.error('Get visit contacts-mapped error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve mapped visit data' });
   }
 });
 
