@@ -76,7 +76,8 @@ const equipmentRequestSchema = new mongoose.Schema({
   },
   quantity: {
     type: Number,
-    required: true,
+    required: false,
+    default: 1,
     min: 1
   },
   estimatedBudget: {
@@ -89,8 +90,9 @@ const equipmentRequestSchema = new mongoose.Schema({
   },
   expectedPurchasePeriod: {
     type: String,
-    required: true,
-    trim: true
+    required: false,
+    trim: true,
+    default: 'not_specified'
   },
   urgency: {
     type: String,
