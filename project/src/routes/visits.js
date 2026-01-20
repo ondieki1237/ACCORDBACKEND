@@ -59,10 +59,24 @@ router.post('/', authenticate, validateVisit, async (req, res) => {
       data: visit
     });
   } catch (error) {
-    logger.error('Visit creation error:', error);
+    // Log full error for debugging
+    logger.error('Visit creation error:', error && error.stack ? error.stack : error);
+
+    // If validation error from mongoose, return details
+    if (error && error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors
+      });
+    }
+
+    // Return error.message to help frontend debug (kept concise)
     res.status(500).json({
       success: false,
-      message: 'Failed to record visit'
+      message: 'Failed to record visit',
+      error: error && error.message ? error.message : 'Unknown error'
     });
   }
 });
