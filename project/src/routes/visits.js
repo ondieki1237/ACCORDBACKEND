@@ -235,8 +235,8 @@ router.put('/:id', authenticate, async (req, res) => {
 
 // @route   DELETE /api/visits/:id
 // @desc    Delete visit
-// @access  Private (Admin/Manager only)
-router.delete('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
+// @access  Private (Admin/Manager or owner)
+router.delete('/:id', authenticate, async (req, res) => {
   try {
     const visit = await Visit.findById(req.params.id);
 
@@ -244,6 +244,14 @@ router.delete('/:id', authenticate, authorize('admin', 'manager'), async (req, r
       return res.status(404).json({
         success: false,
         message: 'Visit not found'
+      });
+    }
+
+    // Permission check: admin/manager can delete any; sales can delete their own visits
+    if (req.user.role !== 'admin' && req.user.role !== 'manager' && visit.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied'
       });
     }
 
