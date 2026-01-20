@@ -190,8 +190,8 @@ router.put('/:id', authenticate, async (req, res) => {
       });
     }
 
-    // Check permission
-    if (req.user.role === 'sales' && visit.userId.toString() !== req.user._id.toString()) {
+    // Check permission (owners allowed to update their own visits)
+    if (req.user.role === 'sales' && String(visit.userId) !== String(req.user._id)) {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -226,9 +226,21 @@ router.put('/:id', authenticate, async (req, res) => {
     });
   } catch (error) {
     logger.error('Update visit error:', error);
+
+    // Provide validation details when available to help frontend debug
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors
+      });
+    }
+
     res.status(500).json({
       success: false,
-      message: 'Failed to update visit'
+      message: 'Failed to update visit',
+      error: error.message
     });
   }
 });
