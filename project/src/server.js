@@ -52,6 +52,7 @@ import analyticsRoutes from './routes/analytics.js';
 import ordersCheckoutRoutes from './routes/ordersCheckout.js';
 import callLogsRoutes from './routes/callLogs.js';
 import adminCallLogsRoutes from './routes/admin/callLogs.js';
+import machineDocumentsRoutes from './routes/machineDocuments.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -142,6 +143,9 @@ app.use('/api/admin/consumables', adminConsumablesRoutes);
 // Call logs endpoints
 app.use('/api/call-logs', callLogsRoutes);
 app.use('/api/admin/call-logs', adminCallLogsRoutes);
+
+// Machine documents (Google Drive uploads)
+app.use('/api/machine-documents', machineDocumentsRoutes);
 
 // Analytics endpoints
 app.use('/api/analytics', analyticsRoutes);

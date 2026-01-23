@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Google service account key
+kazihub-468305-1a197c2229be.json
+service-account.json
