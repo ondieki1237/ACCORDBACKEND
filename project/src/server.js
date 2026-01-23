@@ -86,13 +86,9 @@ const allowedOrigins = [
   .reduce((acc, item) => acc.concat(item.split(',').map(s => s.trim())), [])
   .filter(Boolean);
 
+// Allow all origins and reflect the request origin (prevents CORS rejections)
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (curl, mobile apps) or those from the whitelist
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
-    return callback(new Error('CORS policy: Origin not allowed'), false);
-  },
+  origin: true,
   credentials: true
 }));
 
