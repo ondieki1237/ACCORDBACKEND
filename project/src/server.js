@@ -53,6 +53,8 @@ import ordersCheckoutRoutes from './routes/ordersCheckout.js';
 import callLogsRoutes from './routes/callLogs.js';
 import adminCallLogsRoutes from './routes/admin/callLogs.js';
 import machineDocumentsRoutes from './routes/machineDocuments.js';
+import engineeringRequestsRoutes from './routes/engineeringRequests.js';
+import adminEngineeringRequestsRoutes from './routes/admin/engineeringRequests.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -74,16 +76,27 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/', generalLimiter);
 
-// Allow all CORS
+// CORS configuration: whitelist important client origins but allow non-browser requests
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  process.env.ALLOWED_CLIENT_ORIGINS, // optional comma-separated list
+  'https://v0-client-service-portal.vercel.app'
+]
+  .filter(Boolean)
+  .reduce((acc, item) => acc.concat(item.split(',').map(s => s.trim())), [])
+  .filter(Boolean);
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl) or reflect the request origin
-    callback(null, origin || '*');
+    // Allow requests with no origin (curl, mobile apps) or those from the whitelist
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+    return callback(new Error('CORS policy: Origin not allowed'), false);
   },
   credentials: true
 }));
 
-app.options("*", cors());
+app.options('*', cors());
 
 // Socket.IO setup
 app.set('io', io);
@@ -146,6 +159,10 @@ app.use('/api/admin/call-logs', adminCallLogsRoutes);
 
 // Machine documents (Google Drive uploads)
 app.use('/api/machine-documents', machineDocumentsRoutes);
+
+// Engineering requests (public + admin)
+app.use('/api/engineering-requests', engineeringRequestsRoutes);
+app.use('/api/admin/engineering-requests', adminEngineeringRequestsRoutes);
 
 // Analytics endpoints
 app.use('/api/analytics', analyticsRoutes);

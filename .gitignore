@@ -1,0 +1,12 @@
+# Ignore service account at repository root
+service-account.json
+
+# Node
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Env
+.env
