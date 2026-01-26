@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
-import Visit from '../../src/models/Visit.js';
-import User from '../../src/models/User.js';
-import logger from '../../src/utils/logger.js';
+import Visit from '../models/Visit.js';
+import User from '../models/User.js';
+import logger from '../utils/logger.js';
 
 // Admin: GET /api/admin/visits
 export async function listAdminVisits(req, res) {
@@ -47,7 +47,7 @@ export async function listAdminVisits(req, res) {
     if (contactName) match['contacts.name'] = { $regex: contactName, $options: 'i' };
     if (outcome) match.visitOutcome = outcome;
     if (tag) match.tags = tag;
-    if (userId && mongoose.Types.ObjectId.isValid(userId)) match.userId = mongoose.Types.ObjectId(userId);
+    if (userId && mongoose.Types.ObjectId.isValid(userId)) match.userId = new mongoose.Types.ObjectId(userId);
 
     const pipeline = [ { $match: match } ];
 
@@ -148,7 +148,7 @@ export async function getUserVisitsAdmin(req, res) {
       if (!mongoose.Types.ObjectId.isValid(userId)) {
         return res.status(400).json({ success: false, message: 'Invalid userId parameter' });
       }
-      q.userId = mongoose.Types.ObjectId(userId);
+      q.userId = new mongoose.Types.ObjectId(userId);
     }
 
     if (startDate || endDate) {
@@ -173,6 +173,30 @@ export async function getUserVisitsAdmin(req, res) {
       ],
       lean: true
     };
+
+    // If requesting a very large export (e.g., limit >= 10000) return fully populated documents via find()
+    const intLimit = Number(limit);
+    if (intLimit >= 10000) {
+      const docs = await Visit.find(q)
+        .sort(sort)
+        .limit(intLimit)
+        .populate('userId', 'firstName lastName email role employeeId region')
+        .populate('followUpVisits')
+        .populate('followUpActions.assignedTo', 'firstName lastName email employeeId')
+        .lean();
+
+      const total = await Visit.countDocuments(q);
+      return res.json({
+        success: true,
+        data: docs,
+        meta: {
+          totalDocs: total,
+          limit: intLimit,
+          page: Number(page),
+          totalPages: Math.ceil(total / intLimit) || 1
+        }
+      });
+    }
 
     const result = await Visit.paginate(q, options);
 

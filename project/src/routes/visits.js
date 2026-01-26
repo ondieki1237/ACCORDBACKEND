@@ -1,8 +1,8 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import Visit from '../models/Visit.js';
-import Facility from '../../src/models/Facility.js';
-import Machine from '../../src/models/Machine.js';
+import Facility from '../models/Facility.js';
+import Machine from '../models/Machine.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validateVisit, validatePagination, validateDateRange } from '../middleware/validation.js';
 import logger from '../utils/logger.js';

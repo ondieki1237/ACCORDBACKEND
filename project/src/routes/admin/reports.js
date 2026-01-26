@@ -357,7 +357,7 @@ router.get('/stats/summary', authenticate, authorize('admin', 'manager'), async 
       if (endDate) matchStage.weekStart.$lte = new Date(endDate);
     }
 
-    if (userId) matchStage.userId = mongoose.Types.ObjectId(userId);
+    if (userId) matchStage.userId = new mongoose.Types.ObjectId(userId);
 
     const stats = await Report.aggregate([
       { $match: matchStage },

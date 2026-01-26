@@ -55,6 +55,7 @@ import adminCallLogsRoutes from './routes/admin/callLogs.js';
 import machineDocumentsRoutes from './routes/machineDocuments.js';
 import engineeringRequestsRoutes from './routes/engineeringRequests.js';
 import adminEngineeringRequestsRoutes from './routes/admin/engineeringRequests.js';
+import debugRoutes from './routes/debug.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -159,6 +160,9 @@ app.use('/api/machine-documents', machineDocumentsRoutes);
 // Engineering requests (public + admin)
 app.use('/api/engineering-requests', engineeringRequestsRoutes);
 app.use('/api/admin/engineering-requests', adminEngineeringRequestsRoutes);
+
+// Debug helpers (ping + route list)
+app.use('/api/debug', debugRoutes);
 
 // Analytics endpoints
 app.use('/api/analytics', analyticsRoutes);
