@@ -57,8 +57,15 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  mustChangePassword: {
+    type: Boolean,
+    default: false
+  },
   profileImage: {
     type: String
+  },
+  lastPasswordChangeAt: {
+    type: Date
   },
   lastLogin: {
     type: Date
