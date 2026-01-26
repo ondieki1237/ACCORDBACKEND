@@ -114,10 +114,20 @@ const generateDailyReports = async () => {
   }
 };
 
-const generateWeeklySummaries = async () => {
+export const generateWeeklySummaries = async () => {
   try {
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - 7);
+    // Calculate previous week range: Monday - Sunday of the week that just ended
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday ...
+
+    // weekEnd = last Sunday
+    const weekEnd = new Date(today);
+    weekEnd.setDate(today.getDate() - dayOfWeek);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    // weekStart = previous Monday
+    const weekStart = new Date(weekEnd);
+    weekStart.setDate(weekEnd.getDate() - 6);
     weekStart.setHours(0, 0, 0, 0);
 
     const adminUsers = await User.find({ role: { $in: ['admin', 'manager'] }, isActive: true });
@@ -125,7 +135,7 @@ const generateWeeklySummaries = async () => {
     const weeklyStats = await Visit.aggregate([
       {
         $match: {
-          date: { $gte: weekStart }
+          date: { $gte: weekStart, $lte: weekEnd }
         }
       },
       {
@@ -147,9 +157,39 @@ const generateWeeklySummaries = async () => {
       }
     ]);
 
+    const stats = (weeklyStats && weeklyStats[0]) || { totalVisits: 0, totalContacts: 0, totalPotentialValue: 0, uniqueClients: [] };
+
+    const weekStartFormatted = weekStart.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const weekEndFormatted = weekEnd.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Send a brief HTML summary email to each admin
     for (const admin of adminUsers) {
-      // Send weekly summary email to admins
-      logger.info(`Sending weekly summary to ${admin.email}`);
+      try {
+        logger.info(`Sending weekly summary to ${admin.email}`);
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width:600px;">
+            <h2>Weekly Summary</h2>
+            <p>Dear ${admin.firstName || 'Admin'},</p>
+            <p>Here is the activity summary for <strong>${weekStartFormatted}</strong> to <strong>${weekEndFormatted}</strong>:</p>
+            <ul>
+              <li><strong>Total Visits:</strong> ${stats.totalVisits || 0}</li>
+              <li><strong>Total Contacts:</strong> ${stats.totalContacts || 0}</li>
+              <li><strong>Total Potential Value:</strong> KES ${Number(stats.totalPotentialValue || 0).toLocaleString()}</li>
+              <li><strong>Unique Clients:</strong> ${Array.isArray(stats.uniqueClients) ? stats.uniqueClients.length : 0}</li>
+            </ul>
+            <p>View the full weekly report in the admin dashboard.</p>
+            <p>Regards,<br/>ACCORD System</p>
+          </div>
+        `;
+
+        await sendEmail({
+          to: admin.email,
+          subject: `Weekly Activity Summary - ${weekStartFormatted} to ${weekEndFormatted}`,
+          data: { rawHtml: html }
+        });
+      } catch (err) {
+        logger.error(`Failed to send weekly summary to ${admin.email}:`, err);
+      }
     }
   } catch (error) {
     logger.error('Weekly summary generation error:', error);
@@ -208,7 +248,7 @@ const sendFollowUpReminders = async () => {
  * Generate and send weekly Excel report
  * Runs every Sunday at 8 AM EAT
  */
-const generateWeeklyExcelReport = async () => {
+export const generateWeeklyExcelReport = async () => {
   try {
     logger.info('Starting weekly Excel report generation...');
 
