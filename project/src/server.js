@@ -55,7 +55,13 @@ import adminCallLogsRoutes from './routes/admin/callLogs.js';
 import machineDocumentsRoutes from './routes/machineDocuments.js';
 import engineeringRequestsRoutes from './routes/engineeringRequests.js';
 import adminEngineeringRequestsRoutes from './routes/admin/engineeringRequests.js';
+import salesDocumentsRoutes from './routes/salesDocuments.js';
+import documentCategoriesRoutes from './routes/documentCategories.js';
+import manufacturersRoutes from './routes/manufacturers.js';
 import debugRoutes from './routes/debug.js';
+import User from './models/User.js';
+import Visit from './models/Visit.js';
+import XLSX from 'xlsx';
 
 const app = express();
 const httpServer = createServer(app);
@@ -100,6 +106,27 @@ app.set('io', io);
 
 // Serve static files for app downloads
 app.use('/downloads', express.static('downloads'));
+
+// Public app update endpoint (convenience root path)
+app.get('/app/update', (req, res) => {
+  const versionCode = process.env.VERSION_CODE ? Number(process.env.VERSION_CODE) : Number(process.env.VERSION_CODE || 0);
+  const versionName = process.env.VERSION_NAME || process.env.VERSION || '1.0.0';
+  const apkPath = process.env.APK_PATH || '/downloads/app-release.apk';
+  const forceUpdate = process.env.FORCE_UPDATE === 'true' || false;
+  const changelog = process.env.CHANGELOG || '';
+  // Construct absolute URL based on host when possible
+  const host = process.env.APP_HOST || `${req.protocol}://${req.get('host')}`;
+  const apkUrl = apkPath.startsWith('http') ? apkPath : `${host}${apkPath}`;
+
+  res.set('Cache-Control', 'no-cache');
+  return res.json({
+    versionCode,
+    versionName,
+    apkUrl,
+    forceUpdate,
+    changelog
+  });
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -150,12 +177,26 @@ app.use('/api/facilities', facilitiesRoutes);
 app.use('/api/consumables', consumablesRoutes);
 app.use('/api/admin/consumables', adminConsumablesRoutes);
 
+// Also expose root-level routes (frontend may call without /api prefix)
+app.use('/visits', visitRoutes);
+app.use('/sales', salesRoutes);
+app.use('/reports', reportsRoutes);
+app.use('/consumables', consumablesRoutes);
+
+// Also expose sales documents at root-level for frontend convenience
+app.use('/sales/documents', salesDocumentsRoutes);
+
 // Call logs endpoints
 app.use('/api/call-logs', callLogsRoutes);
 app.use('/api/admin/call-logs', adminCallLogsRoutes);
 
 // Machine documents (Google Drive uploads)
 app.use('/api/machine-documents', machineDocumentsRoutes);
+
+// Public sales documents (link records)
+app.use('/api/sales/documents', salesDocumentsRoutes);
+app.use('/api/document-categories', documentCategoriesRoutes);
+app.use('/api/manufacturers', manufacturersRoutes);
 
 // Engineering requests (public + admin)
 app.use('/api/engineering-requests', engineeringRequestsRoutes);
@@ -166,6 +207,69 @@ app.use('/api/debug', debugRoutes);
 
 // Analytics endpoints
 app.use('/api/analytics', analyticsRoutes);
+// Export endpoint: GET /sales/export?format=xlsx&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+app.get('/sales/export', async (req, res) => {
+  try {
+    const { format = 'xlsx', startDate, endDate } = req.query;
+    const start = startDate ? new Date(startDate) : new Date(new Date().getFullYear(), 0, 1);
+    const end = endDate ? new Date(endDate) : new Date(new Date().getFullYear(), 11, 31, 23, 59, 59, 999);
+
+    const salesUsers = await User.find({ role: 'sales', isActive: true }).lean();
+    const userIds = salesUsers.map(u => u._id);
+    const visits = await Visit.find({ userId: { $in: userIds }, date: { $gte: start, $lte: end } }).lean();
+
+    // Group visits by user
+    const visitsByUser = {};
+    for (const user of salesUsers) visitsByUser[user._id.toString()] = { user, visits: [] };
+    for (const v of visits) {
+      const uid = v.userId.toString();
+      if (visitsByUser[uid]) visitsByUser[uid].visits.push(v);
+    }
+
+    const workbook = XLSX.utils.book_new();
+    for (const { user, visits } of Object.values(visitsByUser)) {
+      const headers = [
+        'Visit ID', 'Date', 'Start Time', 'End Time', 'Duration (min)',
+        'Client Name', 'Client Type', 'Client Level', 'Location',
+        'Visit Purpose', 'Visit Outcome', 'Contacts Count', 'Products of Interest',
+        'Competitor Activity', 'Market Insights', 'Notes', 'Follow-up Required'
+      ];
+      const rows = visits.map(visit => [
+        visit.visitId || visit._id?.toString() || 'N/A',
+        visit.date ? new Date(visit.date).toLocaleDateString() : 'N/A',
+        visit.startTime ? new Date(visit.startTime).toLocaleTimeString() : 'N/A',
+        visit.endTime ? new Date(visit.endTime).toLocaleTimeString() : 'N/A',
+        visit.duration || 'N/A',
+        visit.client?.name || 'N/A',
+        visit.client?.type || 'N/A',
+        visit.client?.level || 'N/A',
+        visit.client?.location || 'N/A',
+        visit.visitPurpose || 'N/A',
+        visit.visitOutcome || 'N/A',
+        visit.contacts?.length || 0,
+        visit.productsOfInterest?.map(p => p.name).join(', ') || 'N/A',
+        visit.competitorActivity || 'N/A',
+        visit.marketInsights || 'N/A',
+        visit.notes || 'N/A',
+        visit.isFollowUpRequired ? 'Yes' : 'No'
+      ]);
+      const sheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      let sheetName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+      if (!sheetName) sheetName = (user.email || '').split('@')[0];
+      sheetName = sheetName.slice(0, 31);
+      XLSX.utils.book_append_sheet(workbook, sheet, sheetName || 'Unknown');
+    }
+
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    const filename = `sales-export-${start.toISOString().split('T')[0]}-to-${end.toISOString().split('T')[0]}.xlsx`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    return res.send(buffer);
+  } catch (err) {
+    logger.error('Sales export error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to generate export' });
+  }
+});
 
 // Health check
 app.get('/api/health', (req, res) => {

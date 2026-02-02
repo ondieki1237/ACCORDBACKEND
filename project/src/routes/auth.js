@@ -183,6 +183,8 @@ router.post('/refresh', async (req, res) => {
     user.refreshTokens.push({ token: newRefreshToken });
     await user.save();
 
+    // Also include new access token in header for convenient client rotation
+    res.set('X-New-Access-Token', accessToken);
     res.json({
       success: true,
       data: {
