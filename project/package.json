@@ -1,6 +1,6 @@
 {
   "name": "accord-medical-backend",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "Field Sales Personnel Tracking and Management System for Accord Medical",
   "main": "src/server.js",
   "type": "module",
