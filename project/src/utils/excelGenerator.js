@@ -271,3 +271,89 @@ export const generateWeeklyReportExcel = (data) => {
 export const writeExcelFile = (workbook, filepath) => {
     XLSX.writeFile(workbook, filepath);
 };
+
+/**
+ * Generate monthly sales Excel for a single user
+ * @param {Object} params
+ * @param {Date} params.monthStart
+ * @param {Date} params.monthEnd
+ * @param {Object} params.userData - { user: {...}, visits: [...], leads: [...] }
+ * @returns {Object} workbook
+ */
+export const generateMonthlySalesExcel = ({ monthStart, monthEnd, userData }) => {
+    try {
+        const workbook = XLSX.utils.book_new();
+
+        const user = userData.user || {};
+        const visits = userData.visits || [];
+        const leads = userData.leads || [];
+
+        const monthRange = `${new Date(monthStart).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} - ${new Date(monthEnd).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+
+        // Summary sheet
+        const summaryData = [
+            ['Monthly Activity Report'],
+            [''],
+            ['User', `${user.firstName || ''} ${user.lastName || ''}`],
+            ['Email', user.email || 'N/A'],
+            ['Month Range', monthRange],
+            ['Generated At', new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' }) + ' EAT'],
+            ['Total Visits', visits.length],
+            ['Total Leads', leads.length],
+            ['Unique Clients Met', Array.from(new Set(visits.map(v => v.client?.name).filter(Boolean))).length],
+            ['Total Contacts Met', visits.reduce((s, v) => s + (v.contacts ? v.contacts.length : 0), 0)]
+        ];
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(summaryData), 'Summary');
+
+        // Visits sheet (exclude start/end times and duration per request)
+        const visitHeaders = ['Date', 'Client Name', 'Client Type', 'Location', 'Visit Purpose', 'Visit Outcome', 'Contacts Count', 'Contact Phones', 'Products Of Interest'];
+        const visitRows = visits.map(visit => {
+            const contactPhones = (visit.contacts || []).map(c => c.phone).filter(Boolean).join(', ');
+            const products = (visit.productsOfInterest || []).map(p => (p.name || p)).join(', ');
+            return [
+                visit.date ? new Date(visit.date).toLocaleDateString() : 'N/A',
+                visit.client?.name || 'N/A',
+                visit.client?.type || 'N/A',
+                visit.client?.location || 'N/A',
+                visit.visitPurpose || 'N/A',
+                visit.visitOutcome || 'N/A',
+                (visit.contacts || []).length,
+                contactPhones || 'N/A',
+                products || 'N/A'
+            ];
+        });
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([visitHeaders, ...visitRows]), 'Visits');
+
+        // Leads sheet
+        const leadHeaders = ['Created At', 'Facility Name', 'Location', 'Lead Status', 'Contact Name', 'Contact Phone', 'Equipment Of Interest', 'Budget', 'Expected Purchase Date', 'Urgency', 'Notes'];
+        const leadRows = leads.map(lead => {
+            const equipment = lead.equipmentOfInterest ? (lead.equipmentOfInterest.name || lead.equipmentOfInterest) : 'N/A';
+            const budget = lead.budget ? (lead.budget.amount ? `${lead.budget.amount}` : 'N/A') : 'N/A';
+            const expected = lead.timeline?.expectedPurchaseDate ? new Date(lead.timeline.expectedPurchaseDate).toLocaleDateString() : 'N/A';
+            return [
+                lead.createdAt ? new Date(lead.createdAt).toLocaleString() : 'N/A',
+                lead.facilityName || 'N/A',
+                lead.location || 'N/A',
+                lead.leadStatus || 'N/A',
+                lead.contactPerson?.name || 'N/A',
+                lead.contactPerson?.phone || 'N/A',
+                equipment,
+                budget,
+                expected,
+                lead.timeline?.urgency || 'N/A',
+                lead.additionalInfo?.notes || lead.notes || 'N/A'
+            ];
+        });
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([leadHeaders, ...leadRows]), 'Leads');
+
+        // Unique Clients sheet
+        const uniqueClients = Array.from(new Set(visits.map(v => v.client?.name).filter(Boolean)));
+        const clientRows = uniqueClients.map(name => [name]);
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([['Client Name'], ...clientRows]), 'Clients');
+
+        return workbook;
+    } catch (error) {
+        logger.error('Monthly Excel generation error:', error);
+        throw error;
+    }
+};

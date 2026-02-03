@@ -5,6 +5,8 @@ import compression from 'compression';
 import morgan from 'morgan';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import { fileURLToPath } from 'url';
+import path from 'path';
 import 'dotenv/config';
 
 import connectDB from './config/database.js';
@@ -58,6 +60,7 @@ import adminEngineeringRequestsRoutes from './routes/admin/engineeringRequests.j
 import salesDocumentsRoutes from './routes/salesDocuments.js';
 import documentCategoriesRoutes from './routes/documentCategories.js';
 import manufacturersRoutes from './routes/manufacturers.js';
+import appUpdatesRoutes from './routes/appUpdates.js';
 import debugRoutes from './routes/debug.js';
 import User from './models/User.js';
 import Visit from './models/Visit.js';
@@ -104,8 +107,11 @@ app.options('*', cors());
 // Socket.IO setup
 app.set('io', io);
 
-// Serve static files for app downloads
-app.use('/downloads', express.static('downloads'));
+// Serve static files for app downloads (absolute path)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const downloadPath = path.join(__dirname, '../downloads');
+app.use('/downloads', express.static(downloadPath));
 
 // Public app update endpoint (convenience root path)
 app.get('/app/update', (req, res) => {
@@ -192,6 +198,9 @@ app.use('/api/admin/call-logs', adminCallLogsRoutes);
 
 // Machine documents (Google Drive uploads)
 app.use('/api/machine-documents', machineDocumentsRoutes);
+
+// App updates API (public check + admin CRUD)
+app.use('/api/app-updates', appUpdatesRoutes);
 
 // Public sales documents (link records)
 app.use('/api/sales/documents', salesDocumentsRoutes);

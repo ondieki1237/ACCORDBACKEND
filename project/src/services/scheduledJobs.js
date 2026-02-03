@@ -7,7 +7,7 @@ import Lead from '../models/Lead.js';
 import { sendEmail } from './emailService.js';
 import logger from '../utils/logger.js';
 import { sendMachinesDueReport } from './machineReports.js';
-import { generateWeeklyReportExcel, writeExcelFile } from '../utils/excelGenerator.js';
+import { generateWeeklyReportExcel, writeExcelFile, generateMonthlySalesExcel } from '../utils/excelGenerator.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -177,6 +177,75 @@ export const initializeScheduledJobs = () => {
       logger.error('Machine due reminder job error:', err);
     }
   });
+
+  // Monthly sales summaries: run on day 2 of every month at 00:00 (midnight)
+  cron.schedule('0 0 2 * *', async () => {
+    logger.info('Running monthly sales summaries job');
+    try {
+      await generateMonthlySalesSummaries();
+    } catch (err) {
+      logger.error('Monthly sales summaries job error:', err);
+    }
+  });
+};
+
+export const generateMonthlySalesSummaries = async () => {
+  try {
+    // Previous month range
+    const now = new Date();
+    const firstOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(firstOfThisMonth.getTime() - 1);
+    monthEnd.setHours(23,59,59,999);
+    const monthStart = new Date(monthEnd.getFullYear(), monthEnd.getMonth(), 1);
+    monthStart.setHours(0,0,0,0);
+
+    const monthLabel = monthStart.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+
+    // Get all active sales users
+    const salesUsers = await User.find({ role: 'sales', isActive: true }).select('firstName lastName email employeeId');
+
+    const uploadsDir = path.join(process.cwd(), 'uploads', 'monthly-sales');
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+    for (const user of salesUsers) {
+      try {
+        const visits = await Visit.find({ userId: user._id, date: { $gte: monthStart, $lte: monthEnd } }).lean();
+        const leads = await Lead.find({ createdBy: user._id, createdAt: { $gte: monthStart, $lte: monthEnd } }).lean();
+
+        const userData = { user: user.toObject(), visits, leads };
+
+        // Generate workbook
+        const workbook = generateMonthlySalesExcel({ monthStart, monthEnd, userData });
+
+        const filename = `${(user.email || user.employeeId || user._id).toString().replace(/[@<>:\"/\\|?*\s]/g, '_')}-${monthStart.getFullYear()}-${String(monthStart.getMonth()+1).padStart(2,'0')}.xlsx`;
+        const filepath = path.join(uploadsDir, filename);
+        writeExcelFile(workbook, filepath);
+
+        // Build email
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width:600px;">
+            <h2>Monthly Activity Summary</h2>
+            <p>Hello ${user.firstName || ''},</p>
+            <p>Please find attached your activity summary for <strong>${monthLabel}</strong>.</p>
+            <ul>
+              <li>Total Visits: <strong>${visits.length}</strong></li>
+              <li>Total Leads: <strong>${leads.length}</strong></li>
+              <li>Unique Clients Met: <strong>${Array.from(new Set(visits.map(v => v.client?.name).filter(Boolean))).length}</strong></li>
+            </ul>
+            <p>Please login and review your activities in the app.</p>
+            <p>Regards,<br/>ACCORD System</p>
+          </div>
+        `;
+
+        await sendEmailWithAttachment({ to: user.email, subject: `Monthly Activity Summary - ${monthLabel}`, html, attachments: [{ filename, path: filepath, contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }] });
+        logger.info(`Monthly summary sent to ${user.email}`);
+      } catch (innerErr) {
+        logger.error(`Failed to generate/send monthly summary for ${user.email}:`, innerErr);
+      }
+    }
+  } catch (error) {
+    logger.error('generateMonthlySalesSummaries error:', error);
+  }
 };
 
 const cleanupOldData = async () => {
