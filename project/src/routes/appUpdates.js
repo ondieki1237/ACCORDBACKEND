@@ -1,5 +1,5 @@
 import express from 'express';
-import { createUpdate, listUpdates, getUpdate, updateUpdate, deleteUpdate, checkForUpdate } from '../controllers/appUpdateController.js';
+import { createUpdate, listUpdates, getUpdate, updateUpdate, deleteUpdate, checkForUpdate, syncVersionUpdate } from '../controllers/appUpdateController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -12,6 +12,7 @@ router.get('/check', checkForUpdate);
 router.use(authenticate);
 router.get('/', authorize('admin'), listUpdates);
 router.post('/', authorize('admin'), createUpdate);
+router.post('/sync-version', authorize('admin'), syncVersionUpdate);
 router.get('/:id', authorize('admin'), getUpdate);
 router.put('/:id', authorize('admin'), updateUpdate);
 router.delete('/:id', authorize('admin'), deleteUpdate);

@@ -1,5 +1,8 @@
 import AppUpdate from '../models/AppUpdate.js';
 import logger from '../utils/logger.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const semverGreater = (a, b) => {
   if (!a || !b) return false;
@@ -98,5 +101,83 @@ export const checkForUpdate = async (req, res) => {
   } catch (err) {
     logger.error('checkForUpdate error', err);
     return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// Admin endpoint: Sync package.json version to create AppUpdate
+export const syncVersionUpdate = async (req, res) => {
+  try {
+    const { platform = 'android', role = 'sales', force = false } = req.body;
+
+    // Read package.json
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const packagePath = path.join(__dirname, '../../package.json');
+    const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+    const newVersion = packageData.version;
+
+    logger.info(`Syncing version: ${newVersion} for ${platform}/${role}`);
+
+    // Check if update already exists
+    let existingUpdate = await AppUpdate.findOne({
+      version: newVersion,
+      platform: platform,
+      targetRoles: { $in: [role] }
+    });
+
+    if (existingUpdate && !force) {
+      // Just activate if not already
+      if (!existingUpdate.isActive) {
+        existingUpdate.isActive = true;
+        await existingUpdate.save();
+      }
+      logger.info(`Version ${newVersion} already exists, activated`);
+      return res.json({
+        success: true,
+        message: 'Update already exists',
+        data: existingUpdate,
+        isNew: false
+      });
+    }
+
+    // Create new AppUpdate record
+    const releaseNotes = `
+Automatic deployment update
+
+Version: ${newVersion}
+Platform: ${platform}
+Timestamp: ${new Date().toISOString()}
+`.trim();
+
+    const newUpdate = new AppUpdate({
+      version: newVersion,
+      platform: platform,
+      targetRoles: [role],
+      releaseNotes: releaseNotes,
+      updateMethod: 'internal',
+      updateInstructions: `Please restart the app to apply version ${newVersion} updates`,
+      forced: false,
+      isActive: true,
+      requiresRestart: true,
+      changeLog: `Backend updated to ${newVersion}`,
+      compatibleVersions: [],
+      createdBy: req.user?._id
+    });
+
+    const savedUpdate = await newUpdate.save();
+    logger.info(`AppUpdate created: v${newVersion} for ${platform}/${role}`);
+
+    return res.status(201).json({
+      success: true,
+      message: `AppUpdate created for version ${newVersion}`,
+      data: savedUpdate,
+      isNew: true
+    });
+  } catch (error) {
+    logger.error('syncVersionUpdate error', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Server error'
+    });
   }
 };
