@@ -110,7 +110,7 @@ app.set('io', io);
 // Serve static files for app downloads (absolute path)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const downloadPath = path.join(__dirname, '../downloads');
+const downloadPath = path.join(__dirname, '../../downloads');
 app.use('/downloads', express.static(downloadPath));
 
 // Public app update endpoint (convenience root path)
