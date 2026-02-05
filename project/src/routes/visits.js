@@ -214,6 +214,14 @@ router.put('/:id', authenticate, async (req, res) => {
 
     // Recalculate duration if times are updated
     const updateData = { ...req.body };
+
+    // Sanitize empty strings to undefined for enum fields to avoid validation errors
+    if (updateData.visitOutcome === '') {
+      delete updateData.visitOutcome;
+    }
+    if (updateData.client && updateData.client.level === '') {
+      delete updateData.client.level;
+    }
     if (updateData.startTime && updateData.endTime) {
       const start = new Date(updateData.startTime);
       const end = new Date(updateData.endTime);
