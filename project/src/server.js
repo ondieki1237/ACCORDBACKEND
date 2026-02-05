@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import fs from 'fs';
 import 'dotenv/config';
 
 import connectDB from './config/database.js';
@@ -111,13 +112,35 @@ app.set('io', io);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const downloadPath = path.join(__dirname, '../../downloads');
+
+// APK download endpoint with proper headers for Android Download Manager
+app.get('/downloads/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(downloadPath, filename);
+  
+  // Check if file exists
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ success: false, message: 'File not found' });
+  }
+  
+  // Set headers for APK files (required for Android)
+  if (filename.endsWith('.apk')) {
+    res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Accept-Ranges', 'bytes');
+  }
+  
+  res.sendFile(filePath);
+});
+
+// Fallback static serve for other files
 app.use('/downloads', express.static(downloadPath));
 
 // Public app update endpoint (convenience root path)
 app.get('/app/update', (req, res) => {
   const versionCode = process.env.VERSION_CODE ? Number(process.env.VERSION_CODE) : Number(process.env.VERSION_CODE || 0);
   const versionName = process.env.VERSION_NAME || process.env.VERSION || '1.0.0';
-  const apkPath = process.env.APK_PATH || '/downloads/app-release.apk';
+  const apkPath = process.env.APK_PATH || '/downloads/app-debug.apk';
   const forceUpdate = process.env.FORCE_UPDATE === 'true' || false;
   const changelog = process.env.CHANGELOG || '';
   // Construct absolute URL based on host when possible

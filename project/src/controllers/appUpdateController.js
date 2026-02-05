@@ -77,27 +77,34 @@ export const checkForUpdate = async (req, res) => {
 
     // Find latest active update that targets the role (or 'all') and matches platform
     const update = await AppUpdate.findOne({ isActive: true, platform, targetRoles: { $in: [role, 'all'] } }).sort({ createdAt: -1 }).lean();
-    if (!update) return res.json({ success: true, updateAvailable: false });
+    if (!update) return res.json({ hasUpdate: false, updateAvailable: false });
 
     if (currentVersion && !semverGreater(update.version, currentVersion)) {
-      return res.json({ success: true, updateAvailable: false });
+      return res.json({ hasUpdate: false, updateAvailable: false });
     }
 
-    // Return update with internal update mechanism (app applies changes without download)
-    const updateData = {
-      ...update,
-      internalUpdate: true, // Tells app to update internally
-      updateMethod: 'internal', // Options: 'internal' or 'external'
-      bundledCode: update.bundledCode || null, // Optional: JavaScript patches to apply
-      updateInstructions: update.updateInstructions || 'Please restart the app to apply updates',
-      downloadUrl: update.downloadUrl || null, // Fallback for external download if needed
-      // Add metadata for app decision-making
-      requiresRestart: true,
-      timestamp: new Date()
-    };
+    // Construct download URL - use APP_HOST for production domain
+    const host = process.env.APP_HOST || 'https://app.codewithseth.co.ke';
+    const downloadUrl = `${host}/downloads/app-debug.apk`;
 
     logger.info(`Update check: ${role}/${platform} - Update available: v${update.version}`);
-    return res.json({ success: true, updateAvailable: true, update: updateData });
+    
+    // Return format expected by frontend (VERSIONUPDATE.md)
+    return res.json({ 
+      hasUpdate: true,
+      updateAvailable: true,  // Legacy support
+      latestVersion: update.version,
+      mandatory: update.forced || false,
+      downloadUrl: downloadUrl,
+      releaseNotes: update.releaseNotes || '',
+      // Additional metadata
+      update: {
+        version: update.version,
+        releaseNotes: update.releaseNotes,
+        forced: update.forced,
+        downloadUrl: downloadUrl
+      }
+    });
   } catch (err) {
     logger.error('checkForUpdate error', err);
     return res.status(500).json({ success: false, message: 'Server error' });

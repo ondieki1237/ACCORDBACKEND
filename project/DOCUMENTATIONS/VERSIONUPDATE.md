@@ -1,89 +1,215 @@
-# Backend changes required for ACCORD frontend features
+📦 Over-the-Air (OTA) APK Update Documentation
 
-This document lists backend endpoints, request/response contracts, headers, and server configuration required by the frontend changes in this repository. Implement these on your deployed backend (https://app.codewithseth.co.ke) so the mobile/web app works correctly in production.
+Project: Accord App
+Backend: https://app.codewithseth.co.ke
+APK: app-debug.apk
+Framework: Capacitor (Android)
 
-## 1) Update endpoint for in-app APK updates
-- Path: `GET /app/update`
-- Purpose: Inform clients about a new APK and provide a download URL.
-- Response (200):
+1. Overview
 
-```json
+This document describes how the Accord mobile application checks for updates and downloads a new APK securely over HTTPS using Capacitor and Android’s native installer.
+
+⚠️ Important: Android apps cannot self-install APKs. The app must hand off the download to the Android system.
+
+2. Update Flow Architecture
+Mobile App
+   │
+   │ POST /api/app-updates/check
+   │
+   ▼
+Backend API
+   │
+   │ Returns update metadata + HTTPS download URL
+   │
+   ▼
+Mobile App
+   │
+   │ Browser.open(downloadUrl)
+   │
+   ▼
+Android Download Manager
+   │
+   ▼
+APK Installer Prompt
+
+3. Backend Implementation
+3.1 APK Location
+
+The APK must exist in the backend project:
+
+/backend
+ ├─ downloads/
+ │   └─ app-debug.apk
+ └─ server.js
+
+3.2 APK Download Endpoint
+
+Route
+
+GET /downloads/app-debug.apk
+
+
+Implementation (Express.js)
+
+import path from 'path';
+
+app.get('/downloads/app-debug.apk', (req, res) => {
+  const apkPath = path.join(process.cwd(), 'downloads', 'app-debug.apk');
+
+  res.setHeader(
+    'Content-Type',
+    'application/vnd.android.package-archive'
+  );
+  res.setHeader(
+    'Content-Disposition',
+    'attachment; filename="app-debug.apk"'
+  );
+  res.setHeader('Accept-Ranges', 'bytes');
+
+  res.sendFile(apkPath);
+});
+
+
+✅ Supports Android range requests
+✅ Works with Download Manager
+✅ HTTPS trusted by Android
+
+3.3 Update Check API
+
+Route
+
+POST /api/app-updates/check
+
+
+Request Body
+
 {
-  "versionCode": 123,
-  "versionName": "1.2.3",
-  "apkUrl": "https://yourdomain.com/apk/app-release.apk",
-  "forceUpdate": false,
-  "changelog": "- Fixes and improvements"
+  "currentVersion": "1.0.2",
+  "platform": "android"
 }
-```
 
-- Requirements:
-  - Serve the APK file at the `apkUrl` over HTTPS.
-  - `apkUrl` must be accessible without authentication.
-  - The server must support large file downloads and range requests (for resumable downloads).
-  - Set `Content-Type: application/vnd.android.package-archive` and a sensible `Content-Disposition` if needed.
-  - Use `Cache-Control: no-cache` or short TTL for the update endpoint (so clients get fresh info).
 
-## 2) Visit CRUD and deletion
-- Paths:
-  - `GET /visits` (list, supports `page`, `limit`, `startDate`, `endDate`)
-  - `POST /visits` (create visit)
-  - `DELETE /visits/:id` (delete visit)
+Response Example
 
-- Requirements:
-  - `POST /visits` should accept the payload shape used by `lib/api.ts#createVisit` and return the created visit object or an error.
-  - `DELETE /visits/:id` should return 200/204 on success and a descriptive JSON error on failure.
+{
+  "hasUpdate": true,
+  "latestVersion": "1.0.3",
+  "mandatory": false,
+  "downloadUrl": "https://app.codewithseth.co.ke/downloads/app-debug.apk"
+}
 
-## 3) Reports / Sales deletion and PDF hosting
-- Paths:
-  - `GET /sales` / `GET /reports` (list)
-  - `DELETE /sales/:id` (delete report)
-  - Report PDF files should be hosted and their `pdfUrl` included in the report object.
 
-- Requirements:
-  - When the frontend calls delete, the server should validate permissions and return 200 on success.
-  - `pdfUrl` should be a full HTTPS URL and accessible to authenticated users (or public if intended).
+⚠️ Never return localhost or IP-based URLs
 
-## 4) Consumables / Products API
-- Paths (suggested):
-  - `GET /consumables` (query params: `q`, `category`, `page`, `limit`, `sort`)
-  - `GET /consumables/:id`
+4. Frontend (Capacitor) Implementation
+4.1 Update Check Request
+const response = await fetch(
+  'https://app.codewithseth.co.ke/api/app-updates/check',
+  {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      currentVersion: APP_VERSION,
+      platform: 'android',
+    }),
+  }
+);
 
-- Response shape:
-  - Return paginated results with fields: `id`, `name`, `sku`, `price`, `unit`, `stock`, `category`, `description`.
+const updateInfo = await response.json();
 
-## 5) Authentication and token refresh
-- Paths:
-  - `POST /auth/login` — returns `{ tokens: { accessToken, refreshToken }, user }`
-  - `POST /auth/refresh` — accepts `{ refreshToken }`, returns new `{ tokens }`
+4.2 Triggering the APK Download (CRITICAL)
 
-- Requirements:
-  - Backend should return `401` for expired access tokens.
-  - When the `makeRequest` client sees `401`, it posts to `/auth/refresh`.
-  - Optionally add an `X-New-Access-Token` header on responses when tokens are rotated. The frontend will read this header and update stored tokens if present.
+❌ Do NOT use
 
-## 6) XLSX / Export endpoints
-- If exports are generated server-side, provide endpoints such as:
-  - `GET /sales/export?format=xlsx&startDate=...&endDate=...` returning `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` and the file stream.
+fetch(downloadUrl);
+axios.get(downloadUrl);
 
-## 7) CORS / Security
-- Ensure CORS allows the frontend origin(s) (web and Android webview) for the needed endpoints.
-- Use HTTPS everywhere.
-- For APK hosting, use a domain with a valid TLS certificate.
 
-## 8) Headers / Response conventions
-- Successful responses should follow a JSON envelope like `{ success: true, data: ... }` or direct objects — the frontend handles either but expects a JSON body.
-- Error responses should include `message` and optionally `errors` for field-level issues.
+Android will refuse to install.
 
-## 9) Performance / Hosting considerations for APKs
-- Use a CDN or blob storage (S3, GCS) for serving APKs to handle bandwidth and resume capabilities.
-- Set proper `Content-Length` and support `Accept-Ranges: bytes`.
+✅ Correct Way (Required)
+import { Browser } from '@capacitor/browser';
 
-## 10) Recommended server flags / env variables
-- Ability to configure `VERSION_CODE`, `VERSION_NAME`, `APK_PATH`, `FORCE_UPDATE`, and `CHANGELOG` for the update endpoint.
+async function downloadAndInstall(downloadUrl: string) {
+  await Browser.open({
+    url: downloadUrl,
+  });
+}
 
-## 11) Example minimal update server behavior
-- The repository includes `scripts/update-server/server.js` as a reference. Production servers should implement the same contract but with secure hosting and CDN for the APK.
 
----
-If you want, I can also generate OpenAPI (Swagger) specs for these endpoints, or scaffold server code (Node/FastAPI) that implements them. Tell me which endpoints you want scaffolded first and your preferred backend stack.
+This hands control to:
+
+Android Browser
+
+Android Download Manager
+
+System APK installer
+
+4.3 Complete Update Logic
+if (updateInfo.hasUpdate) {
+  await Browser.open({
+    url: updateInfo.downloadUrl,
+  });
+}
+
+5. Capacitor Configuration
+capacitor.config.ts
+import { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'com.accord.app',
+  appName: 'Accord',
+  webDir: 'dist',
+  server: {
+    androidScheme: 'https'
+  }
+};
+
+export default config;
+
+6. Android Configuration
+6.1 Required Permissions
+
+android/app/src/main/AndroidManifest.xml
+
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+6.2 User Permission
+
+On Android 8+:
+
+User must allow “Install unknown apps”
+
+Android prompts automatically on first install attempt
+
+7. Testing Checklist
+Backend Test
+
+Open in browser:
+
+https://app.codewithseth.co.ke/downloads/app-debug.apk
+
+
+✔ File downloads
+✔ Installer opens
+
+App Test
+
+Open app
+
+Trigger update check
+
+Tap Update
+
+Android download notification appears
+
+Installer prompt opens
+
+8. Common Failure Causes
+Issue	Result
+Using localhost	Network error
+Using fetch()	Silent install failure
+Missing headers	Download stalls
+Invalid SSL	APK rejected
+Wrong MIME type	Installer won’t open
