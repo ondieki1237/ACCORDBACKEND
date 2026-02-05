@@ -169,7 +169,7 @@ const visitSchema = new mongoose.Schema({
   visitPurpose: {
     type: String,
     required: true,
-    enum: ['demo', 'followup', 'installation', 'maintenance', 'consultation', 'sales', 'complaint', 'other']
+    enum: ['demo', 'followup', 'installation', 'maintenance', 'consultation', 'sales', 'complaint', 'other', 'telesales', 'quotation_followup', 'company_introduction', 'debt_collection']
   },
   visitOutcome: {
     type: String,
