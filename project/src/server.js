@@ -126,11 +126,12 @@ app.get('/app/update', (req, res) => {
 
   res.set('Cache-Control', 'no-cache');
   return res.json({
+    version: versionName,
+    downloadUrl: apkUrl,
+    releaseNotes: changelog,
+    // Legacy fields for backward compatibility
     versionCode,
-    versionName,
-    apkUrl,
-    forceUpdate,
-    changelog
+    forceUpdate
   });
 });
 
