@@ -219,8 +219,14 @@ router.put('/:id', authenticate, async (req, res) => {
     if (updateData.visitOutcome === '') {
       delete updateData.visitOutcome;
     }
+    if (updateData.visitPurpose === '') {
+      delete updateData.visitPurpose; // Keep existing value if empty string sent
+    }
     if (updateData.client && updateData.client.level === '') {
       delete updateData.client.level;
+    }
+    if (updateData.client && updateData.client.type === '') {
+      delete updateData.client.type;
     }
     if (updateData.startTime && updateData.endTime) {
       const start = new Date(updateData.startTime);
