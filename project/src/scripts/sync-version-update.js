@@ -8,8 +8,8 @@ import AppUpdate from '../models/AppUpdate.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, '../.env') });
+// Load environment variables from project root
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 /**
  * Automatically sync package.json version to AppUpdate collection
