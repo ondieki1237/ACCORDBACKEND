@@ -222,12 +222,31 @@ router.put('/:id', authenticate, async (req, res) => {
     if (updateData.visitPurpose === '') {
       delete updateData.visitPurpose; // Keep existing value if empty string sent
     }
-    if (updateData.client && updateData.client.level === '') {
-      delete updateData.client.level;
+    
+    // Handle client object - merge with existing to preserve fields not being updated
+    if (updateData.client) {
+      const existingClient = visit.client || {};
+      
+      // Remove empty strings from client update
+      if (updateData.client.level === '') {
+        delete updateData.client.level;
+      }
+      if (updateData.client.type === '') {
+        delete updateData.client.type;
+      }
+      
+      // Merge: existing values as base, then overlay with non-empty update values
+      updateData.client = {
+        name: existingClient.name,
+        type: existingClient.type,
+        level: existingClient.level,
+        location: existingClient.location,
+        ...Object.fromEntries(
+          Object.entries(updateData.client).filter(([_, v]) => v !== undefined && v !== '')
+        )
+      };
     }
-    if (updateData.client && updateData.client.type === '') {
-      delete updateData.client.type;
-    }
+    
     if (updateData.startTime && updateData.endTime) {
       const start = new Date(updateData.startTime);
       const end = new Date(updateData.endTime);
