@@ -134,11 +134,22 @@ router.get('/', authenticate, validatePagination, validateDateRange, async (req,
       sort: { date: -1 },
       populate: {
         path: 'userId',
-        select: 'firstName lastName employeeId region'
+        select: 'firstName lastName employeeId region _id'
       }
     };
 
     const visits = await Visit.paginate(query, options);
+
+    // Add 'user' alias for frontend compatibility (same as userId)
+    if (visits.docs) {
+      visits.docs = visits.docs.map(doc => {
+        const obj = doc.toObject();
+        if (obj.userId) {
+          obj.user = obj.userId;
+        }
+        return obj;
+      });
+    }
 
     res.json({
       success: true,

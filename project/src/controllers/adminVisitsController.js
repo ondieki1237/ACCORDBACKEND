@@ -86,10 +86,10 @@ export async function listAdminVisits(req, res) {
     const data = (aggResult[0] && aggResult[0].data) || [];
     const totalCount = (aggResult[0] && aggResult[0].totalCount[0] && aggResult[0].totalCount[0].count) || 0;
 
-    // Transform user -> userId projection
+    // Transform user -> userId projection and add user alias for frontend compatibility
     const transformed = data.map(v => {
       if (v.user) {
-        v.userId = {
+        const userInfo = {
           _id: v.user._id,
           firstName: v.user.firstName,
           lastName: v.user.lastName,
@@ -98,8 +98,9 @@ export async function listAdminVisits(req, res) {
           employeeId: v.user.employeeId,
           region: v.user.region
         };
+        v.userId = userInfo;
+        v.user = userInfo; // Also include as 'user' for frontend compatibility
       }
-      delete v.user;
       return v;
     });
 

@@ -124,10 +124,9 @@ export const deleteEngineeringRequest = async (req, res) => {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ success: false, message: 'Invalid id' });
 
-    const doc = await EngineeringRequest.findById(id);
+    const doc = await EngineeringRequest.findByIdAndDelete(id);
     if (!doc) return res.status(404).json({ success: false, message: 'Request not found' });
 
-    await doc.remove();
     res.json({ success: true, message: 'Request deleted' });
   } catch (error) {
     logger.error('Delete engineering request error:', error);
