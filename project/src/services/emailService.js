@@ -65,6 +65,29 @@ export const sendEmail = async ({ to, subject, template, data }) => {
           <p>Best regards,<br>Accord Medical Team</p>
         `;
         break;
+
+      case 'passwordResetCode':
+        html = `
+          <h2>ACCORD Password Reset Code</h2>
+          <p>Hello ${data.firstName || 'there'},</p>
+          <p>You requested to reset your password for your ACCORD account.</p>
+          <p>Your verification code is: <strong style="font-size:20px;letter-spacing:2px;">${data.code}</strong></p>
+          <p>This code will expire in 10 minutes.</p>
+          <p>If you didn't request this password reset, please ignore this email and your password will remain unchanged.</p>
+          <p>For security reasons, never share this code with anyone.</p>
+          <p>Best regards,<br>ACCORD Team</p>
+        `;
+        break;
+
+      case 'passwordResetConfirm':
+        html = `
+          <h2>Password Changed Successfully</h2>
+          <p>Hello ${data.firstName || 'there'},</p>
+          <p>Your ACCORD account password has been changed successfully.</p>
+          <p>If you did not make this change, please contact support immediately.</p>
+          <p>Best regards,<br>ACCORD Team</p>
+        `;
+        break;
         
       case 'dailyReport':
         html = `

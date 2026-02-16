@@ -4,6 +4,8 @@ import Visit from '../models/Visit.js';
 import Trail from '../models/Trail.js';
 import Report from '../models/Report.js';
 import Lead from '../models/Lead.js';
+import EngineeringService from '../models/EngineeringService.js';
+import EngineeringRequest from '../models/EngineeringRequest.js';
 import { sendEmail } from './emailService.js';
 import logger from '../utils/logger.js';
 import { sendMachinesDueReport } from './machineReports.js';
@@ -100,27 +102,52 @@ export const generateWeeklySummaries = async () => {
   }
 };
 
-// Engineers-only summary
+// Engineers-only summary (installations, maintenance/services, requests — not sales metrics)
 export const generateEngineerSummaries = async (weekStart, weekEnd, recipients = [], excelResult = null) => {
   try {
     const engineers = await User.find({ role: 'engineer', isActive: true }).select('firstName lastName email');
+    const dateRange = { $gte: weekStart, $lte: weekEnd };
     const rows = [];
     for (const eng of engineers) {
-      const visitsCount = await Visit.countDocuments({ userId: eng._id, date: { $gte: weekStart, $lte: weekEnd } });
-      const reportsCount = await Report.countDocuments({ userId: eng._id, createdAt: { $gte: weekStart, $lte: weekEnd } });
-      const leadsCount = await Lead.countDocuments({ createdBy: eng._id, createdAt: { $gte: weekStart, $lte: weekEnd } });
-      rows.push({ name: `${eng.firstName} ${eng.lastName}`, email: eng.email, visits: visitsCount, reports: reportsCount, leads: leadsCount });
+      const [visitsCount, installationVisits, maintenanceVisits, installationServices, maintenanceServices, requestsCount, reportsCount] = await Promise.all([
+        Visit.countDocuments({ userId: eng._id, date: dateRange }),
+        Visit.countDocuments({ userId: eng._id, date: dateRange, visitPurpose: 'installation' }),
+        Visit.countDocuments({ userId: eng._id, date: dateRange, visitPurpose: 'maintenance' }),
+        EngineeringService.countDocuments({
+          date: dateRange,
+          serviceType: 'installation',
+          $or: [{ userId: eng._id }, { 'engineerInCharge._id': eng._id }]
+        }),
+        EngineeringService.countDocuments({
+          date: dateRange,
+          serviceType: { $in: ['maintenance', 'service', 'repair', 'inspection'] },
+          $or: [{ userId: eng._id }, { 'engineerInCharge._id': eng._id }]
+        }),
+        EngineeringRequest.countDocuments({ assignedEngineer: eng._id, createdAt: dateRange }),
+        Report.countDocuments({ userId: eng._id, createdAt: dateRange })
+      ]);
+      const installations = installationVisits + installationServices;
+      const maintenanceAndServices = maintenanceVisits + maintenanceServices;
+      rows.push({
+        name: `${eng.firstName} ${eng.lastName}`,
+        email: eng.email,
+        visits: visitsCount,
+        installations,
+        maintenanceAndServices,
+        requests: requestsCount,
+        reports: reportsCount
+      });
     }
 
     const weekStartFormatted = weekStart.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     const weekEndFormatted = weekEnd.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    let html = `<div style="font-family: Arial, sans-serif; max-width:600px;"><h2>Engineers Weekly Summary</h2><p>Period: <strong>${weekStartFormatted}</strong> to <strong>${weekEndFormatted}</strong></p>`;
+    let html = `<div style="font-family: Arial, sans-serif; max-width:700px;"><h2>Engineers Weekly Summary</h2><p>Period: <strong>${weekStartFormatted}</strong> to <strong>${weekEndFormatted}</strong></p><p>Summary of site visits, installations, maintenance &amp; services, and engineering requests.</p>`;
     if (rows.length === 0) html += '<p>No engineer activity this week.</p>';
     else {
-      html += '<table style="width:100%;border-collapse:collapse;"><tr><th>Name</th><th>Email</th><th>Visits</th><th>Reports</th><th>Leads</th></tr>';
+      html += '<table style="width:100%;border-collapse:collapse;"><tr><th>Name</th><th>Email</th><th>Visits</th><th>Installations</th><th>Maintenance &amp; services</th><th>Requests</th><th>Reports</th></tr>';
       for (const r of rows) {
-        html += `<tr><td>${r.name}</td><td>${r.email}</td><td>${r.visits}</td><td>${r.reports}</td><td>${r.leads}</td></tr>`;
+        html += `<tr><td>${r.name}</td><td>${r.email}</td><td>${r.visits}</td><td>${r.installations}</td><td>${r.maintenanceAndServices}</td><td>${r.requests}</td><td>${r.reports}</td></tr>`;
       }
       html += '</table>';
     }

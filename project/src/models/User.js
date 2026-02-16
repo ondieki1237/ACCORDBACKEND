@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
-    minlength: 6
+    minlength: 4  // 4-8 allowed for password reset flow (PASSWORD_RESET.md); registration validates 6+
   },
   role: {
     type: String,

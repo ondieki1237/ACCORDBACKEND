@@ -1,336 +1,312 @@
-# Quick Reference: Backend API Updates
+# ACCORD Backend - Quick Reference Card
 
-## 🆕 New Admin Endpoints
+**File:** `PROJECT_FULL_UNDERSTANDING.md` (in workspace root)
 
-### Admin Reports Management
+---
+
+## 🚀 Quick Start (1 minute)
 
 ```bash
-# List all reports with pagination and filters
-GET /api/admin/reports?page=1&limit=20&status=pending&userId=xxx&startDate=2025-01-01&endDate=2025-12-31
-
-# Get single report details
-GET /api/admin/reports/:reportId
-
-# Update report status and add admin notes
-PUT /api/admin/reports/:reportId
-Body: {
-  "status": "approved",  // pending, reviewed, approved, rejected
-  "adminNotes": "Great work this week!"
-}
-
-# Get report statistics
-GET /api/admin/reports/stats/summary?startDate=2025-01-01&endDate=2025-12-31&userId=xxx
+cd /home/seth/Documents/deployed/ACCORDBACKEND/project
+npm run dev
+# Server runs at http://localhost:5000
 ```
 
-### Admin Quotations Management
+---
+
+## 🗂️ Where Everything Is
+
+| What | Where |
+|------|-------|
+| **Start here** | `/project/src/server.js` |
+| **Models (27)** | `/project/src/models/*.js` |
+| **Routes (80+)** | `/project/src/routes/*.js` |
+| **Controllers (20)** | `/project/src/controllers/*.js` |
+| **Auth/Middleware** | `/project/src/middleware/` |
+| **Email/Jobs** | `/project/src/services/` |
+| **Logging** | `/project/src/utils/logger.js` |
+| **Full Guide** | `PROJECT_FULL_UNDERSTANDING.md` |
+
+---
+
+## 📊 What's Running
+
+**Server:** Node.js Express on port 5000  
+**Database:** MongoDB (27 collections)  
+**Real-time:** Socket.IO (live updates)  
+**Auth:** JWT (access 15min + refresh 30day)  
+**Storage:** Cloudinary + Local uploads/  
+**Email:** Nodemailer SMTP  
+**Scheduling:** node-cron (daily/weekly)  
+
+---
+
+## 🔐 How to Test
 
 ```bash
-# List all quotations with pagination and filters
-GET /api/admin/quotations?page=1&limit=20&status=pending&urgency=high&userId=xxx&responded=false&search=hospital
+# Get JWT token (from login endpoint)
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "password"
+  }'
 
-# Get single quotation details
-GET /api/admin/quotations/:quotationId
-
-# Respond to quotation request (sends emails automatically)
-PUT /api/admin/quotations/:quotationId/respond
-Body: {
-  "response": "We can provide this equipment",
-  "quotationDocument": "https://cloudinary.com/...",
-  "estimatedCost": 250000,
-  "isAvailable": true,
-  "price": 250000,
-  "availableDate": "2025-02-15",
-  "notes": "Delivery within 2 weeks"
-}
-
-# Update quotation status
-PUT /api/admin/quotations/:quotationId
-Body: {
-  "status": "completed"  // pending, in_progress, responded, completed, rejected
-}
-
-# Get quotation statistics
-GET /api/admin/quotations/stats/summary?startDate=2025-01-01&endDate=2025-12-31&userId=xxx
+# Use token in requests
+curl -X GET http://localhost:5000/api/dashboard \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
 ---
 
-## 📝 Updated Schemas
+## 👥 User Roles
 
-### Report Status Values
-```javascript
-// OLD: ['pending', 'approved', 'rejected']
-// NEW: ['pending', 'reviewed', 'approved', 'rejected']
+| Role | Access |
+|------|--------|
+| **Admin** | Everything + user management |
+| **Manager** | Team oversight, report approval |
+| **Sales** | Visits, quotations, reports |
+| **Engineer** | Service assignments, tasks |
+
+---
+
+## 📋 Core Models (Key 9)
+
+1. **User** - People in system
+2. **Lead** - Sales opportunities
+3. **Visit** - Sales activities
+4. **Machine** - Equipment registry
+5. **EngineeringService** - Maintenance tasks
+6. **Report** - Weekly summaries
+7. **Request/Quotation** - Equipment quotes
+8. **Order** - Sales orders
+9. **Facility** - Healthcare locations
+
+---
+
+## 🔌 Main API Routes
+
+### Public
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+
+### Sales
+- `GET/POST /api/visits`
+- `POST /api/reports`
+- `GET /api/quotation/my`
+
+### Engineering
+- `GET /api/engineering-services/my`
+- `GET /api/machines`
+
+### Admin
+- `GET /api/admin/users`
+- `PUT /api/admin/reports/:id/approve`
+
+### Real-Time
+- `GET /api/dashboard`
+- Socket.IO events auto-emit
+
+---
+
+## 💾 Models Quick Lookup
+
+### User
+- email, password, role, department
+- Ref'd by: everything
+
+### Lead  
+- facilityName, equipmentOfInterest
+- Status: new → contacted → negotiation → won/lost
+
+### Visit
+- date, facility, contacts, visitPurpose
+- Creates: followUp actions
+
+### Machine
+- name, serialNumber, facility, status
+- Linked to: EngineeringService
+
+### EngineeringService
+- serviceType, engineerInCharge, status
+- Types: installation, maintenance, repair
+
+### Report
+- sections[], status, userId, weekStart
+- Status: pending → reviewed → approved
+
+### Request (Quotation)
+- hospital, equipmentRequired, urgency
+- Admin responds with price/document
+
+### Order
+- items, pricing, status
+- Integrated with checkout
+
+---
+
+## 🛡️ Security
+
+✅ JWT tokens with 15min expiry  
+✅ Role-based authorization  
+✅ Bcrypt password hashing  
+✅ Rate limiting (10 req/15min)  
+✅ Input validation  
+✅ CORS & Helmet enabled  
+
+---
+
+## 📧 Emails Sent By
+
+- User registration
+- Report submission (to admin)
+- Quotation request (to admin)
+- Daily reminder (9 AM)
+- Weekly summary (Monday)
+
+---
+
+## 🔄 Typical Flow
+
 ```
-
-### Quotation Status Values
-```javascript
-// OLD: ['pending', 'responded']
-// NEW: ['pending', 'in_progress', 'responded', 'completed', 'rejected']
-```
-
-### Visit Client Types
-```javascript
-// OLD: ['hospital', 'clinic', 'dispensary', 'pharmacy', 'laboratory', 'other']
-// NEW: ['hospital', 'clinic', 'pharmacy', 'lab', 'imaging_center', 'other']
-```
-
-### Visit Purpose Values
-```javascript
-// OLD: ['routine_visit', 'follow_up', 'demo', 'service', 'complaint', 'order', 'other']
-// NEW: ['demo', 'followup', 'installation', 'maintenance', 'consultation', 'sales', 'other']
-```
-
-### Visit Outcome Values
-```javascript
-// OLD: ['successful', 'partial', 'no_access', 'rescheduled', 'cancelled']
-// NEW: ['successful', 'pending', 'followup_required', 'no_interest']
-```
-
-### Contact Roles
-```javascript
-// OLD: ['doctor', 'nurse', 'lab_technician', 'pharmacist', 'administrator', 'procurement', 'other']
-// NEW: ['doctor', 'nurse', 'admin', 'procurement', 'it_manager', 'ceo', 'other']
+User Logs In
+    ↓
+Token Created + Stored
+    ↓
+Include Token in Requests
+    ↓
+Middleware Verifies Token
+    ↓
+Route Handler Processes
+    ↓
+Database Query
+    ↓
+Response Sent
+    ↓
+Socket.IO Notifies Others
 ```
 
 ---
 
-## 📧 Email Notifications
+## 📊 Pagination
 
-### Automatic Email Triggers
-
-1. **New Report Submitted**
-   - **Trigger:** Non-draft report created via `POST /api/reports`
-   - **Recipient:** Admin (from `ADMIN_EMAIL` env variable)
-   - **Template:** `newReport`
-   - **Contains:** Author, week range, report URL, PDF download link
-
-2. **New Quotation Requested**
-   - **Trigger:** Quotation created via `POST /api/quotation`
-   - **Recipient:** Admin
-   - **Template:** `newQuotation`
-   - **Contains:** Hospital, equipment, urgency, contact details, requester
-
-3. **Quotation Response Sent**
-   - **Trigger:** Admin responds via `PUT /api/admin/quotations/:id/respond`
-   - **Recipients:** 
-     - Sales rep who created the request
-     - Client (if contactEmail provided)
-   - **Template:** `quotationResponse`
-   - **Contains:** Response details, estimated cost, document link
+Most list endpoints use pagination:
+- Default: 10 items per page
+- Params: `?page=1&limit=20&sort=-createdAt`
 
 ---
 
-## 🔐 Access Control
+## 🚨 Common Errors
 
-### Admin/Manager Only Endpoints
-- All `/api/admin/reports/*` routes
-- All `/api/admin/quotations/*` routes
-
-### Authentication Required
-- All report endpoints (except download with proper permissions)
-- All quotation endpoints
-- All visit endpoints
-
----
-
-## ⚠️ Breaking Changes
-
-### Visit API
-- ⚠️ `client.type` enum values changed - update mobile app
-- ⚠️ `visitPurpose` enum values changed - update mobile app
-- ⚠️ `visitOutcome` enum values changed - update mobile app
-- ⚠️ `contacts.role` enum values changed - update mobile app
-
-**Migration:** Existing data with old enum values will still work, but new submissions must use updated values.
-
-### Quotation API
-- ⚠️ `contactEmail` is now optional (was required before)
-- ⚠️ New status values added - UI should handle all 5 statuses
-
-### Report API
-- ⚠️ New status value `'reviewed'` added - UI should handle all 4 statuses
+| Error | Meaning | Fix |
+|-------|---------|-----|
+| 401 | No/bad token | Check Authorization header |
+| 403 | Wrong role | Ensure user has required role |
+| 400 | Invalid input | Check request body fields |
+| 429 | Rate limited | Wait 15 minutes |
+| 500 | Server error | Check server logs |
 
 ---
 
-## 🧪 Testing Examples
-
-### Test Report Submission with Validation
+## 🔧 Development Commands
 
 ```bash
-# This should FAIL (missing required sections)
-POST /api/reports
-{
-  "weekStart": "2025-01-15",
-  "weekEnd": "2025-01-19",
-  "isDraft": false,
-  "content": {
-    "metadata": {
-      "author": "John Doe",
-      "submittedAt": "2025-01-19T17:30:00Z",
-      "weekRange": "1/15/2025 - 1/19/2025"
-    },
-    "sections": [
-      {
-        "id": "summary",
-        "title": "Weekly Summary",
-        "content": "This week I focused on..."
-      }
-      // Missing: visits, quotations, next-week sections
-    ]
-  }
-}
-
-Response: 400 Bad Request
-{
-  "success": false,
-  "message": "Required sections missing",
-  "errors": [
-    "Section 'visits' is required",
-    "Section 'quotations' is required",
-    "Section 'next-week' is required"
-  ]
-}
-```
-
-### Test Admin Quotation Response
-
-```bash
-# Admin responds to quotation
-PUT /api/admin/quotations/12345/respond
-Authorization: Bearer <admin-token>
-{
-  "response": "We can provide the X-Ray machine",
-  "estimatedCost": 2500000,
-  "quotationDocument": "https://cloudinary.com/quotations/quote-12345.pdf",
-  "availableDate": "2025-02-15",
-  "notes": "Includes installation and training"
-}
-
-Response: 200 OK
-{
-  "success": true,
-  "message": "Response sent successfully",
-  "data": {
-    "_id": "12345",
-    "status": "responded",
-    "responded": true,
-    "response": {
-      "message": "We can provide the X-Ray machine",
-      "estimatedCost": 2500000,
-      "documentUrl": "https://cloudinary.com/quotations/quote-12345.pdf",
-      "respondedBy": { ... },
-      "respondedAt": "2025-01-20T10:00:00Z"
-    }
-    // ... other fields
-  }
-}
-
-// Emails automatically sent to:
-// 1. Sales rep who created the request
-// 2. Client (if contactEmail was provided)
+npm run dev              # Start with auto-reload
+npm start               # Production start
+npm test                # Run tests
+npm run seed            # Seed database
+npm run create-admins   # Add admin user
 ```
 
 ---
 
-## 🌐 Environment Variables Checklist
+## 📚 Documentation Map
 
-```bash
-# Required for email notifications to work
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-EMAIL_FROM="ACCORD Medical <noreply@accordmedical.com>"
-
-# Required for admin notifications
-ADMIN_EMAIL=admin@accordmedical.com
-
-# Required for email links to work
-APP_URL=https://app.codewithseth.co.ke
-```
+- `PROJECT_FULL_UNDERSTANDING.md` ← **YOU ARE HERE**
+- `DOCUMENTATIONS/PROJECT_COMPREHENSIVE_ANALYSIS.md` - Deep dive
+- `DOCUMENTATIONS/PROJECT_ARCHITECTURE_DIAGRAMS.md` - Visuals
+- `DOCUMENTATIONS/QUICK_START_GUIDE.md` - Patterns
+- `DOCUMENTATIONS/BACKEND_API_DOCUMENTATION.md` - Endpoints
 
 ---
 
-## 📱 Mobile App Updates Needed
+## 🎯 Key Files to Read First
 
-### Update Enum Values in App
+1. `/project/src/server.js` (319 lines) - Entry point
+2. `/project/src/middleware/auth.js` - Authentication
+3. `/project/src/routes/auth.js` - Simple example route
+4. `/project/src/models/User.js` - Data structure
+5. `/project/src/controllers/userController.js` - Business logic
 
-**Visit Creation Form:**
+---
+
+## 💡 Common Tasks
+
+### Add New User Route
+1. Create model in `/models/YourModel.js`
+2. Create controller in `/controllers/yourController.js`
+3. Create route in `/routes/yourRoute.js`
+4. Import and mount in `/server.js`
+
+### Send an Email
 ```javascript
-// Update client type options
-const clientTypes = ['hospital', 'clinic', 'pharmacy', 'lab', 'imaging_center', 'other'];
-
-// Update visit purpose options
-const visitPurposes = ['demo', 'followup', 'installation', 'maintenance', 'consultation', 'sales', 'other'];
-
-// Update visit outcome options
-const visitOutcomes = ['successful', 'pending', 'followup_required', 'no_interest'];
-
-// Update contact role options
-const contactRoles = ['doctor', 'nurse', 'admin', 'procurement', 'it_manager', 'ceo', 'other'];
+import { sendEmail } from './services/emailService.js';
+await sendEmail('user@example.com', 'subject', 'html-body');
 ```
 
-**Quotation Status Display:**
+### Create Database Entry
 ```javascript
-// Update status badge colors
-const quotationStatusColors = {
-  'pending': 'orange',
-  'in_progress': 'blue',
-  'responded': 'green',
-  'completed': 'success',
-  'rejected': 'red'
-};
+const newItem = new YourModel({ field: value });
+await newItem.save();
 ```
 
-**Report Status Display:**
+### Query Database
 ```javascript
-// Update status badge colors
-const reportStatusColors = {
-  'pending': 'orange',
-  'reviewed': 'blue',
-  'approved': 'green',
-  'rejected': 'red'
-};
+const items = await YourModel.find({ userId });
+const item = await YourModel.findById(id);
 ```
 
 ---
 
-## ✅ Deployment Checklist
+## 🚀 Deployment
 
-- [ ] Update environment variables in production
-- [ ] Test email delivery (SMTP credentials)
-- [ ] Verify Cloudinary uploads work
-- [ ] Test all admin endpoints
-- [ ] Update mobile app with new enum values
-- [ ] Test email notifications (check spam folders)
-- [ ] Verify PDF generation works in production
-- [ ] Test admin report review flow
-- [ ] Test admin quotation response flow
-- [ ] Monitor logs for errors
+**Current:** `https://app.codewithseth.co.ke`
+
+**Deploy Script:** `deploy-to-production.sh` (in workspace root)
+
+**Environment:** MongoDB Atlas + Cloudinary + Nodemailer SMTP
 
 ---
 
-## 🐛 Troubleshooting
+## 📞 Quick Help
 
-### Emails Not Sending
-1. Check `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS` are set
-2. Verify SMTP credentials are correct
-3. Check server logs for email errors
-4. Test email service independently
+**How do I...?**
 
-### PDF Generation Fails
-1. Check `/tmp` directory permissions
-2. Verify Cloudinary credentials
-3. Check report content structure
-4. Look for errors in logs
-
-### Admin Endpoints Return 403
-1. Verify user has `admin` or `manager` role
-2. Check JWT token is valid
-3. Confirm `authorize` middleware is working
+| Q | A |
+|---|---|
+| Find a specific route | Search `/routes/` |
+| Understand a model | Read `/models/YourModel.js` |
+| See business logic | Check `/controllers/yourController.js` |
+| Add an email | Edit `/services/emailService.js` |
+| Schedule a job | Check `/services/scheduledJobs.js` |
+| Debug errors | Check `/project/logs/` |
 
 ---
 
-**Last Updated:** October 30, 2025  
-**Version:** 2.0.0
+## ✨ Project Stats
+
+- **27 Models** (database collections)
+- **80+ Routes** (API endpoints)
+- **20 Controllers** (business logic)
+- **5 Middleware** (security/validation)
+- **7 Services** (email, scheduling, PDF)
+- **15,000+ Lines** of code
+- **25+ Documentation** files
+
+---
+
+**Status:** ✅ Fully Implemented & Deployed
+
+**Last Updated:** February 3, 2026
+
+**For Full Details:** See `PROJECT_FULL_UNDERSTANDING.md`

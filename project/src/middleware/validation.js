@@ -86,3 +86,36 @@ export const validateDateRange = [
   query('endDate').optional().isISO8601().withMessage('Valid end date required'),
   validate
 ];
+
+// Password reset (6-digit code flow per PASSWORD_RESET.md) — returns doc-style { message, error }
+const passwordResetErrorMap = {
+  email: { message: 'Invalid email format', error: 'INVALID_EMAIL' },
+  code: { message: 'Code must be 6 digits', error: 'INVALID_CODE_FORMAT' },
+  newPassword: { message: 'Password must be between 4 and 8 characters', error: 'INVALID_PASSWORD_LENGTH' }
+};
+
+const validatePasswordResetFormat = (req, res, next) => {
+  const errors = validationResult(req);
+  if (errors.isEmpty()) return next();
+  const first = errors.array({ onlyFirstError: true })[0];
+  const mapped = passwordResetErrorMap[first.param] || { message: first.msg, error: 'VALIDATION_FAILED' };
+  return res.status(400).json({ success: false, message: mapped.message, error: mapped.error });
+};
+
+export const validatePasswordResetRequest = [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  validatePasswordResetFormat
+];
+
+export const validatePasswordResetVerify = [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('code').trim().isLength({ min: 6, max: 6 }).withMessage('Code must be 6 digits').isNumeric().withMessage('Code must be 6 digits'),
+  validatePasswordResetFormat
+];
+
+export const validatePasswordResetReset = [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('code').trim().isLength({ min: 6, max: 6 }).withMessage('Code must be 6 digits').isNumeric().withMessage('Code must be 6 digits'),
+  body('newPassword').isLength({ min: 4, max: 8 }).withMessage('Password must be between 4 and 8 characters'),
+  validatePasswordResetFormat
+];
