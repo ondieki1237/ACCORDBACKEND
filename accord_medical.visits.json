@@ -1,0 +1,1192 @@
+[{
+  "_id": {
+    "$oid": "6988e7552789e12547c33d8a"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1770579797425850",
+  "date": {
+    "$date": "2026-02-02T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-02-02T06:00:00.000Z"
+  },
+  "client": {
+    "name": "Maseno mission hospital",
+    "type": "hospital",
+    "level": "4",
+    "location": "Maseno-Kisumu"
+  },
+  "contacts": [
+    {
+      "name": "Jane",
+      "role": "procurement",
+      "phone": "+254751386939",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "6988e7552789e12547c33d8b"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "Distiller",
+      "notes": "not agreed on",
+      "_id": {
+        "$oid": "6988e7552789e12547c33d8c"
+      }
+    }
+  ],
+  "requestedEquipment": [
+    {
+      "name": "Distiller",
+      "quantity": 1,
+      "currency": "KES",
+      "expectedPurchasePeriod": "not_specified",
+      "urgency": "medium",
+      "decisionMakers": [],
+      "budgetApproved": false,
+      "_id": {
+        "$oid": "6988e7552789e12547c33d8d"
+      }
+    }
+  ],
+  "visitPurpose": "sales",
+  "visitOutcome": "successful",
+  "notes": "They are not into any major purchase as at now, I need to book an appointment with the new admin",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-02-08T19:43:17.431Z"
+  },
+  "createdAt": {
+    "$date": "2026-02-08T19:43:17.442Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-08T19:43:17.442Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d5f1e7688f3b154303761"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT176877545404826",
+  "date": {
+    "$date": "2026-01-18T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-18T06:00:00.000Z"
+  },
+  "client": {
+    "name": "St Luke medical centre",
+    "type": "hospital",
+    "level": "3",
+    "location": "Kisumu"
+  },
+  "visitPurpose": "demo",
+  "visitOutcome": "successful",
+  "notes": "visited to idwntify any gaps. none as at now. keep in touch for referrals",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "contacts": [],
+  "productsOfInterest": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T22:30:54.049Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T22:30:54.050Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T22:30:54.050Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d4cdd7688f3b15430335d"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768770781022383",
+  "date": {
+    "$date": "2026-01-16T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-16T06:00:00.000Z"
+  },
+  "client": {
+    "name": "St Georges medical centre",
+    "type": "clinic",
+    "level": "5",
+    "location": "Nyamasaria"
+  },
+  "contacts": [
+    {
+      "name": "Sylvia",
+      "role": "admin",
+      "phone": "+254 724 375459",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d4cdd7688f3b15430335e"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "radiant warmer",
+      "notes": "looking into purchasing a radiant warmer standard",
+      "_id": {
+        "$oid": "696d4cdd7688f3b15430335f"
+      }
+    }
+  ],
+  "visitPurpose": "followup",
+  "visitOutcome": "successful",
+  "notes": "Their director is based in kisii. Purchases only from one source. Will liase with Akinyi",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T21:13:01.026Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T21:13:01.030Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T21:13:01.030Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d4f107688f3b1543033ff"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768771344101422",
+  "date": {
+    "$date": "2026-01-16T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-16T06:00:00.000Z"
+  },
+  "client": {
+    "name": "Shifa Taqwa Hospital",
+    "type": "clinic",
+    "level": "3",
+    "location": "Mollem"
+  },
+  "contacts": [
+    {
+      "name": "Vincent",
+      "role": "admin",
+      "phone": "0796 608551",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d4f107688f3b154303400"
+      }
+    }
+  ],
+  "visitPurpose": "followup",
+  "visitOutcome": "successful",
+  "notes": "currently restricted to out patient only. Asked for a referral",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "productsOfInterest": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T21:22:24.102Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T21:22:24.105Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T21:22:24.105Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d51bb7688f3b1543034e8"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768772027467922",
+  "date": {
+    "$date": "2026-01-16T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-16T06:00:00.000Z"
+  },
+  "client": {
+    "name": "Grays medical centre",
+    "type": "hospital",
+    "level": "3",
+    "location": "Nyamasaria"
+  },
+  "contacts": [
+    {
+      "name": "Stevem",
+      "role": "doctor",
+      "phone": "0708 012694",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d51bb7688f3b1543034e9"
+      }
+    }
+  ],
+  "visitPurpose": "demo",
+  "visitOutcome": "successful",
+  "notes": "pass by next week the director will be aroundfor lab consumables conversation",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "productsOfInterest": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T21:33:47.468Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T21:33:47.471Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T21:33:47.471Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d5d2e7688f3b154303711"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768774958740330",
+  "date": {
+    "$date": "2026-01-16T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-16T06:00:00.000Z"
+  },
+  "client": {
+    "name": "St Luke Rabuor Medical centre",
+    "type": "hospital",
+    "level": "3",
+    "location": "Rabuor"
+  },
+  "contacts": [
+    {
+      "name": "Brian",
+      "role": "doctor",
+      "phone": "0729 450732",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d5d2e7688f3b154303712"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "visit",
+      "notes": "",
+      "_id": {
+        "$oid": "696d5d2e7688f3b154303713"
+      }
+    }
+  ],
+  "visitPurpose": "followup",
+  "visitOutcome": "successful",
+  "notes": "workflow is currently low. Keep intouch for future projects.",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T22:22:38.743Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T22:22:38.744Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T22:22:38.744Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d5e6f7688f3b154303739"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768775279819487",
+  "date": {
+    "$date": "2026-01-16T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-16T06:00:00.000Z"
+  },
+  "client": {
+    "name": "Blue Ray medical centre",
+    "type": "hospital",
+    "level": "5",
+    "location": "Nyamasaria"
+  },
+  "contacts": [
+    {
+      "name": "Lucy",
+      "role": "other",
+      "phone": "+254 746 447609",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d5e6f7688f3b15430373a"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "immunoassay analyzer",
+      "notes": "was an enquiry as they refer this tests",
+      "_id": {
+        "$oid": "696d5e6f7688f3b15430373b"
+      }
+    }
+  ],
+  "visitPurpose": "followup",
+  "visitOutcome": "successful",
+  "notes": "was just an enquiry, compare notes the end of the month if its a necessity",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T22:27:59.821Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T22:27:59.826Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T22:27:59.826Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d549d7688f3b15430354e"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768772765209508",
+  "date": {
+    "$date": "2026-01-14T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-14T06:00:00.000Z"
+  },
+  "client": {
+    "name": "Disciples of Mercy Medical centre",
+    "type": "hospital",
+    "level": "3",
+    "location": "Mamboleo"
+  },
+  "contacts": [
+    {
+      "name": "Gerald",
+      "role": "doctor",
+      "phone": "+254792542844",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d549d7688f3b15430354f"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "fullhaem",
+      "notes": "their machine is out of service",
+      "_id": {
+        "$oid": "696d549d7688f3b154303550"
+      }
+    }
+  ],
+  "visitPurpose": "demo",
+  "visitOutcome": "successful",
+  "notes": "need to have a meeting with management on this",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T21:46:05.211Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T21:46:05.213Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T21:46:05.213Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d56147688f3b154303570"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768773140699882",
+  "date": {
+    "$date": "2026-01-14T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-14T06:00:00.000Z"
+  },
+  "client": {
+    "name": "Mary Rosa medical centre",
+    "type": "hospital",
+    "level": "3",
+    "location": "Kisumu"
+  },
+  "contacts": [
+    {
+      "name": "Dr Odera",
+      "role": "admin",
+      "phone": "+254720459117",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d56147688f3b154303571"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "Theatre",
+      "notes": "setting up a theatre",
+      "_id": {
+        "$oid": "696d56147688f3b154303572"
+      }
+    }
+  ],
+  "visitPurpose": "followup",
+  "visitOutcome": "successful",
+  "notes": "settled on the items needed. Comparing notes on monday for down payment",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T21:52:20.701Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T21:52:20.703Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T21:52:20.703Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d58067688f3b154303592"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768773638556746",
+  "date": {
+    "$date": "2026-01-14T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-14T06:00:00.000Z"
+  },
+  "client": {
+    "name": "Star Annex hospital",
+    "type": "hospital",
+    "level": "4",
+    "location": "kisumu "
+  },
+  "contacts": [
+    {
+      "name": "Collins Odera",
+      "role": "admin",
+      "phone": "0721 550049",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d58067688f3b154303593"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "biosafety cabinet",
+      "notes": "user training",
+      "_id": {
+        "$oid": "696d58067688f3b154303594"
+      }
+    }
+  ],
+  "visitPurpose": "other",
+  "visitOutcome": "successful",
+  "notes": "training was done but the key to the cabinet wasnt there. once its available uv bulb will be fixed",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T22:00:38.559Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T22:00:38.564Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T22:00:38.564Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d42197688f3b154303048"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768768025656484",
+  "date": {
+    "$date": "2026-01-13T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-13T06:00:00.000Z"
+  },
+  "client": {
+    "name": "Dawafront Healthcare",
+    "type": "hospital",
+    "level": "3",
+    "location": "kisumu"
+  },
+  "contacts": [
+    {
+      "name": "Dr Eugene",
+      "role": "ceo",
+      "phone": "+254 748 036897",
+      "email": "dawafronthealthcare@gmail.com",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d42197688f3b154303049"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "debt collection",
+      "notes": "Will be getting feedback end of the month",
+      "_id": {
+        "$oid": "696d42197688f3b15430304a"
+      }
+    }
+  ],
+  "visitPurpose": "consultation",
+  "visitOutcome": "successful",
+  "notes": "",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T20:27:05.658Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T20:27:05.660Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T20:27:05.660Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d45587688f3b1543030b3"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768768856980450",
+  "date": {
+    "$date": "2026-01-13T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-13T06:00:00.000Z"
+  },
+  "client": {
+    "name": "Mt Sinai Hospital",
+    "type": "hospital",
+    "level": "3",
+    "location": "Mamboleo"
+  },
+  "contacts": [
+    {
+      "name": "Caleb",
+      "role": "admin",
+      "phone": "0721 213702",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d45587688f3b1543030b4"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "Was to refer me to a prospect",
+      "notes": "referred to Maisha Medical Chiga that are upgrading to a leve 4",
+      "_id": {
+        "$oid": "696d45587688f3b1543030b5"
+      }
+    }
+  ],
+  "visitPurpose": "followup",
+  "visitOutcome": "successful",
+  "notes": "",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T20:40:56.981Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T20:40:56.983Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T20:40:56.983Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d460d7688f3b1543030c5"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768769037985284",
+  "date": {
+    "$date": "2026-01-13T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-13T06:00:00.000Z"
+  },
+  "client": {
+    "name": "Blue Peak Medical Centre",
+    "type": "clinic",
+    "level": "not_applicable",
+    "location": "Mamboleo"
+  },
+  "contacts": [
+    {
+      "name": "Sandra",
+      "role": "admin",
+      "phone": "0713 990717",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d460d7688f3b1543030c6"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "visit",
+      "notes": "Nothing much as at now. keep in tluch",
+      "_id": {
+        "$oid": "696d460d7688f3b1543030c7"
+      }
+    }
+  ],
+  "visitPurpose": "followup",
+  "visitOutcome": "successful",
+  "notes": "",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T20:43:57.987Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T20:43:57.988Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T20:43:57.988Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d46cc7688f3b1543030d9"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768769228182980",
+  "date": {
+    "$date": "2026-01-13T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-13T06:00:00.000Z"
+  },
+  "client": {
+    "name": "Consolata Hospital",
+    "type": "hospital",
+    "level": "3",
+    "location": "Mamboleo"
+  },
+  "contacts": [
+    {
+      "name": "Evans",
+      "role": "other",
+      "phone": "0718 238722",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d46cc7688f3b1543030da"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "consumables",
+      "notes": "They procure on credit, their consumption is also not high",
+      "_id": {
+        "$oid": "696d46cc7688f3b1543030db"
+      }
+    }
+  ],
+  "visitPurpose": "followup",
+  "visitOutcome": "successful",
+  "notes": "",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T20:47:08.184Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T20:47:08.186Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T20:47:08.186Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d47aa7688f3b1543030ef"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768769450863769",
+  "date": {
+    "$date": "2026-01-13T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-13T06:00:00.000Z"
+  },
+  "client": {
+    "name": "Our Lady of Perpetual Medical Centre",
+    "type": "hospital",
+    "level": "3",
+    "location": "Kisumu"
+  },
+  "contacts": [
+    {
+      "name": "Edward",
+      "role": "procurement",
+      "phone": "0728 359088",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d47aa7688f3b1543030f0"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "finding out their purchase plan",
+      "notes": "As at now they havent budgeted for any major purchase",
+      "_id": {
+        "$oid": "696d47aa7688f3b1543030f1"
+      }
+    }
+  ],
+  "visitPurpose": "followup",
+  "visitOutcome": "successful",
+  "notes": "Lack of an office in kisumu hinders us getting bhsiness from them",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T20:50:50.865Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T20:50:50.866Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T20:50:50.866Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d49147688f3b154303107"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768769812988836",
+  "date": {
+    "$date": "2026-01-13T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-13T06:00:00.000Z"
+  },
+  "client": {
+    "name": "St Elizabeth medical centre",
+    "type": "hospital",
+    "level": "3",
+    "location": "Chiga"
+  },
+  "contacts": [
+    {
+      "name": "Claire",
+      "role": "other",
+      "phone": "0729 599207",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d49147688f3b154303108"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "revisit",
+      "notes": "",
+      "_id": {
+        "$oid": "696d49147688f3b154303109"
+      }
+    }
+  ],
+  "visitPurpose": "followup",
+  "visitOutcome": "successful",
+  "notes": "currently paying debts from previous purchases. keep intouch incase of any project.",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T20:56:52.992Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T20:56:52.994Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T20:56:52.994Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d4a607688f3b15430315b"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768770144059159",
+  "date": {
+    "$date": "2026-01-13T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-13T06:00:00.000Z"
+  },
+  "client": {
+    "name": "Maisha Medical  centre",
+    "type": "hospital",
+    "level": "3",
+    "location": "Chiga"
+  },
+  "contacts": [
+    {
+      "name": "Mr Geoffrey",
+      "role": "admin",
+      "phone": "0725 077399",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d4a607688f3b15430315c"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "upgrading to level 4",
+      "notes": "project meant for early next quarter.",
+      "_id": {
+        "$oid": "696d4a607688f3b15430315d"
+      }
+    }
+  ],
+  "visitPurpose": "followup",
+  "visitOutcome": "successful",
+  "notes": "",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T21:02:24.062Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T21:02:24.063Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T21:02:24.063Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d43617688f3b15430305f"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768768353418244",
+  "date": {
+    "$date": "2026-01-12T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-12T06:00:00.000Z"
+  },
+  "client": {
+    "name": "Meeting up with Winnie and comparing notes",
+    "type": "other",
+    "level": "not_applicable",
+    "location": "kisumu"
+  },
+  "contacts": [
+    {
+      "name": "Winnie Onsunga",
+      "role": "other",
+      "phone": "+254743330691",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d43617688f3b154303060"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "comparing regions and client catch up.",
+      "notes": "shared with Hr on our agreement",
+      "_id": {
+        "$oid": "696d43617688f3b154303061"
+      }
+    }
+  ],
+  "visitPurpose": "other",
+  "visitOutcome": "successful",
+  "notes": "",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T20:32:33.421Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T20:32:33.422Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T20:32:33.422Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696d44b97688f3b15430306b"
+  },
+  "userId": {
+    "$oid": "69661e60b5a681b7cf333cca"
+  },
+  "visitId": "VISIT1768768697610933",
+  "date": {
+    "$date": "2026-01-12T06:00:00.000Z"
+  },
+  "startTime": {
+    "$date": "2026-01-12T06:00:00.000Z"
+  },
+  "client": {
+    "name": "St Charles Ebuyangu",
+    "type": "hospital",
+    "level": "3",
+    "location": "CBD"
+  },
+  "contacts": [
+    {
+      "name": "Brother",
+      "role": "admin",
+      "phone": "",
+      "email": "",
+      "followUpRequired": false,
+      "priority": "medium",
+      "_id": {
+        "$oid": "696d44b97688f3b15430306c"
+      }
+    }
+  ],
+  "productsOfInterest": [
+    {
+      "name": "Asking for contacts for mission hospitals that i might habe missed out on in Western region",
+      "notes": "shared some contacts thay i reached out to including medical coordinator for mission hospitals kakamega.",
+      "_id": {
+        "$oid": "696d44b97688f3b15430306d"
+      }
+    }
+  ],
+  "visitPurpose": "consultation",
+  "visitOutcome": "successful",
+  "notes": "",
+  "tags": [],
+  "isFollowUpRequired": false,
+  "followUpVisits": [],
+  "existingEquipment": [],
+  "requestedEquipment": [],
+  "attachments": [],
+  "photos": [],
+  "followUpActions": [],
+  "syncedAt": {
+    "$date": "2026-01-18T20:38:17.612Z"
+  },
+  "createdAt": {
+    "$date": "2026-01-18T20:38:17.613Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-18T20:38:17.613Z"
+  },
+  "__v": 0
+}]
