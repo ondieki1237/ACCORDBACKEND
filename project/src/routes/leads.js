@@ -17,13 +17,13 @@ router.post('/seed-test', authenticate, async (req, res) => {
         location: 'Nairobi',
         contactPerson: {
           name: `Contact ${i}`,
-          phone: `+25471234567${i}`,
-          email: `contact${i}@test.org`
+          phone: `+25471234567${i}`
         },
-        equipmentOfInterest: {
-          name: `Equipment ${i}`,
-          category: 'Medical Imaging'
-        },
+        hospitalLevel: 'Level 5',
+        equipmentName: `Equipment ${i}`,
+        budget: '1000000',
+        expectedPurchaseDate: new Date(),
+        competitorAnalysis: '',
         leadStatus: 'new',
         leadSource: 'field-visit',
         createdBy: req.user._id
@@ -47,8 +47,8 @@ router.post('/', authenticate, async (req, res) => {
     // Basic validation
     if (!data.facilityName) return res.status(400).json({ success: false, error: 'facilityName is required' });
     if (!data.contactPerson || !data.contactPerson.name) return res.status(400).json({ success: false, error: 'contactPerson.name is required' });
-    if (!data.contactPerson.phone && !data.contactPerson.email) return res.status(400).json({ success: false, error: 'contactPerson.phone or contactPerson.email is required' });
-    if (!data.equipmentOfInterest || !data.equipmentOfInterest.name) return res.status(400).json({ success: false, error: 'equipmentOfInterest.name is required' });
+    if (!data.contactPerson.phone) return res.status(400).json({ success: false, error: 'contactPerson.phone is required' });
+    if (!data.equipmentName) return res.status(400).json({ success: false, error: 'equipmentName is required' });
 
     const lead = new Lead(data);
     await lead.save();

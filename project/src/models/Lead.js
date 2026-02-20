@@ -6,40 +6,22 @@ const leadSchema = new mongoose.Schema({
   facilityType: { type: String, trim: true },
   location: { type: String, required: true, trim: true },
 
+
   contactPerson: {
     name: { type: String, required: true, trim: true },
     role: { type: String, trim: true },
-    phone: { type: String, trim: true },
-    email: { type: String, lowercase: true, trim: true }
+    phone: { type: String, trim: true }
   },
 
-  facilityDetails: {
-    hospitalLevel: { type: String, trim: true },
-    currentEquipment: { type: String, trim: true }
-  },
+  hospitalLevel: { type: String, trim: true },
 
-  equipmentOfInterest: {
-    name: { type: String, required: true, trim: true },
-    category: { type: String, trim: true },
-    quantity: { type: Number, default: 1, min: 1 }
-  },
+  equipmentName: { type: String, required: true, trim: true },
 
-  budget: {
-    amount: { type: String, trim: true },
-    currency: { type: String, default: 'KES', trim: true }
-  },
+  budget: { type: String, trim: true }, // e.g. 'KSH 10000'
 
-  timeline: {
-    expectedPurchaseDate: { type: Date },
-    urgency: { type: String, trim: true }
-  },
+  expectedPurchaseDate: { type: Date },
 
-  competitorAnalysis: { type: String, trim: true },
-
-  additionalInfo: {
-    painPoints: { type: String, trim: true },
-    notes: { type: String, trim: true }
-  },
+  competitorAnalysis: { type: String, trim: true }, // (Optional)
 
   leadSource: {
     type: String,

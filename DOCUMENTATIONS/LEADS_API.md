@@ -58,28 +58,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         "phone": "+254712345678",
         "email": "jane.smith@hospital.com"
       },
-      "facilityDetails": {
-        "hospitalLevel": "level-5",
-        "currentEquipment": "GE Ultrasound System, Siemens X-Ray"
-      },
-      "equipmentOfInterest": {
-        "name": "GE Vivid E95 Ultrasound System",
-        "category": "imaging",
-        "quantity": 2
-      },
-      "budget": {
-        "amount": "5000000",
-        "currency": "KES"
-      },
-      "timeline": {
-        "expectedPurchaseDate": "2025-12-15",
-        "urgency": "3 months"
-      },
+      "hospitalLevel": "level-5",
+      "equipmentName": "GE Vivid E95 Ultrasound System",
+      "budget": "5000000",
+      "expectedPurchaseDate": "2025-12-15",
       "competitorAnalysis": "Considering Philips and Siemens. Philips offers better pricing but longer delivery. We can offer faster delivery and better after-sales support.",
-      "additionalInfo": {
-        "painPoints": "Need better image quality for cardiology department",
-        "notes": "Follow up in 2 weeks. Director will be back from conference."
-      },
       "leadSource": "field-visit",
       "leadStatus": "new",
       "createdBy": "user_id_123",
@@ -183,28 +166,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
     "phone": "+254712345678",
     "email": "jane.smith@hospital.com"
   },
-  "facilityDetails": {
-    "hospitalLevel": "level-5",
-    "currentEquipment": "GE Ultrasound System, Siemens X-Ray"
-  },
-  "equipmentOfInterest": {
-    "name": "GE Vivid E95 Ultrasound System",
-    "category": "imaging",
-    "quantity": 2
-  },
-  "budget": {
-    "amount": "5000000",
-    "currency": "KES"
-  },
-  "timeline": {
-    "expectedPurchaseDate": "2025-12-15",
-    "urgency": "3 months"
-  },
+  "hospitalLevel": "level-5",
+  "equipmentName": "GE Vivid E95 Ultrasound System",
+  "budget": "5000000",
+  "expectedPurchaseDate": "2025-12-15",
   "competitorAnalysis": "Considering Philips and Siemens. Philips offers better pricing but longer delivery. We can offer faster delivery and better after-sales support.",
-  "additionalInfo": {
-    "painPoints": "Need better image quality for cardiology department",
-    "notes": "Follow up in 2 weeks. Director will be back from conference."
-  },
   "leadSource": "field-visit",
   "leadStatus": "new",
   "createdAt": "2025-11-15T10:30:00.000Z"

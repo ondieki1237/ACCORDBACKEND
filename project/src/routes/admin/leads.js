@@ -9,11 +9,10 @@ const router = express.Router();
 // Admin: list all leads with filters and pagination
 router.get('/', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
-    const { page = 1, limit = 20, facilityType, leadStatus, urgency, startDate, endDate, search } = req.query;
+    const { page = 1, limit = 20, facilityType, leadStatus, startDate, endDate, search } = req.query;
     const query = {};
     if (facilityType) query.facilityType = facilityType;
     if (leadStatus) query.leadStatus = leadStatus;
-    if (urgency) query['timeline.urgency'] = urgency;
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) query.createdAt.$gte = new Date(startDate);
@@ -93,11 +92,10 @@ router.get('/check', authenticate, authorize('admin', 'manager'), async (req, re
 // Admin diagnostic: return count of leads matching filters (useful to verify DB contents)
 router.get('/count', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
-    const { facilityType, leadStatus, urgency, startDate, endDate, search } = req.query;
+    const { facilityType, leadStatus, startDate, endDate, search } = req.query;
     const query = {};
     if (facilityType) query.facilityType = facilityType;
     if (leadStatus) query.leadStatus = leadStatus;
-    if (urgency) query['timeline.urgency'] = urgency;
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) query.createdAt.$gte = new Date(startDate);
@@ -118,11 +116,10 @@ router.get('/count', authenticate, authorize('admin', 'manager'), async (req, re
 // Admin diagnostic: return up to 100 raw lead documents matching filters (no pagination)
 router.get('/raw', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
-    const { facilityType, leadStatus, urgency, startDate, endDate, search, limit = 100 } = req.query;
+    const { facilityType, leadStatus, startDate, endDate, search, limit = 100 } = req.query;
     const query = {};
     if (facilityType) query.facilityType = facilityType;
     if (leadStatus) query.leadStatus = leadStatus;
-    if (urgency) query['timeline.urgency'] = urgency;
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) query.createdAt.$gte = new Date(startDate);

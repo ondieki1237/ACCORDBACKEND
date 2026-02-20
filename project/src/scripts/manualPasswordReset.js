@@ -14,7 +14,7 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const resetPassword = async () => {
     try {
-        const email = 'omenyalucy65@gmail.com';
+        const email = 'jemutaimercy583@gmail.com';
         // Generate a secure random password or use a fixed one for initial login
         const newPassword = 'Accord' + Math.random().toString(36).slice(-6) + '!';
 

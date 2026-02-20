@@ -14,6 +14,31 @@ export const generateWeeklyReportExcel = (data) => {
         const workbook = XLSX.utils.book_new();
 
         // Sheet 1: Summary
+        // Aggregate top demanded product per region
+        const regionProductMap = {};
+        for (const userData of usersData) {
+            const region = userData.user.region || 'Unknown';
+            for (const visit of userData.visits) {
+                if (visit.productsOfInterest && visit.productsOfInterest.length > 0) {
+                    for (const product of visit.productsOfInterest) {
+                        const key = region + '|' + (product.name || 'Unknown');
+                        regionProductMap[key] = (regionProductMap[key] || 0) + 1;
+                    }
+                }
+            }
+        }
+        // Find top product per region
+        const topProductsByRegion = {};
+        for (const key in regionProductMap) {
+            const [region, product] = key.split('|');
+            if (!topProductsByRegion[region] || regionProductMap[key] > topProductsByRegion[region].count) {
+                topProductsByRegion[region] = { product, count: regionProductMap[key] };
+            }
+        }
+
+        // Collect improvement feedback (assuming userData.user.improvementFeedback exists)
+        const improvementFeedback = usersData.map(u => [u.user.employeeId, `${u.user.firstName} ${u.user.lastName}`, u.user.improvementFeedback || '']).filter(row => row[2]);
+
         const summaryData = [
             ['Weekly Activity Report'],
             [''],
@@ -23,7 +48,15 @@ export const generateWeeklyReportExcel = (data) => {
             ['Total Users', usersData.length],
             ['Total Visits', usersData.reduce((sum, u) => sum + u.visits.length, 0)],
             ['Total Reports', usersData.reduce((sum, u) => sum + u.reports.length, 0)],
-            ['Total Leads', usersData.reduce((sum, u) => sum + u.leads.length, 0)]
+            // No Total Leads
+            [''],
+            ['Top Demanded Product in your region'],
+            ['Region', 'Product', 'Count'],
+            ...Object.entries(topProductsByRegion).map(([region, obj]) => [region, obj.product, obj.count]),
+            [''],
+            ['What you would love to be improved the coming week'],
+            ['Employee ID', 'Name', 'Feedback'],
+            ...improvementFeedback
         ];
         const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
         XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
