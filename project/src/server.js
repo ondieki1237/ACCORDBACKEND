@@ -1,3 +1,4 @@
+import plannerApprovalRoutes from './routes/plannerApproval.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -17,6 +18,7 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/user.js';
 import trailRoutes from './routes/trails.js';
 import visitRoutes from './routes/visits.js';
+
 import dashboardRoutes from './routes/dashboard.js';
 import equipmentRoutes from './routes/equipment.js';
 import orderRoutes from './routes/orders.js';
@@ -68,6 +70,17 @@ import Visit from './models/Visit.js';
 import XLSX from 'xlsx';
 
 const app = express();
+// CORS must be registered before any routes or middleware
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
+app.options('*', cors());
+// Register planner approval routes after app is initialized
+app.use('/api/planner-approval', express.json(), express.urlencoded({ extended: true }), plannerApprovalRoutes);
+
+
+// (app is already declared at the top)
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
@@ -79,12 +92,10 @@ const io = new Server(httpServer, {
 // Connect to MongoDB
 connectDB();
 
-// Middleware
+// Other middleware (after body parser)
 app.use(helmet());
 app.use(compression());
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/', generalLimiter);
 
 // CORS configuration: whitelist important client origins but allow non-browser requests
@@ -117,19 +128,19 @@ const downloadPath = path.join(__dirname, '../../downloads');
 app.get('/downloads/:filename', (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(downloadPath, filename);
-  
+
   // Check if file exists
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ success: false, message: 'File not found' });
   }
-  
+
   // Set headers for APK files (required for Android)
   if (filename.endsWith('.apk')) {
     res.setHeader('Content-Type', 'application/vnd.android.package-archive');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Accept-Ranges', 'bytes');
   }
-  
+
   res.sendFile(filePath);
 });
 

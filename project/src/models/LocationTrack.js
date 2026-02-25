@@ -7,7 +7,8 @@ const locationPointSchema = new mongoose.Schema({
   timestamp: { type: Date, required: true },
   speed: { type: Number },
   heading: { type: Number },
-  altitude: { type: Number }
+  altitude: { type: Number },
+  locationName: { type: String } // Human-readable location
 }, { _id: false });
 
 const deviceInfoSchema = new mongoose.Schema({

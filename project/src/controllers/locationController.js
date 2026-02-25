@@ -1,6 +1,7 @@
 import LocationTrack from '../models/LocationTrack.js';
 import User from '../models/User.js';
 import logger from '../utils/logger.js';
+import { reverseGeocode } from '../utils/reverseGeocode.js';
 
 // Track location data (supports single or batch/offline upload)
 export const trackLocation = async (req, res, next) => {
@@ -36,15 +37,22 @@ export const trackLocation = async (req, res, next) => {
       });
     }
 
-    // Convert timestamp (ms) to Date objects
-    const rawLocations = locations.map(loc => ({
-      latitude: loc.latitude,
-      longitude: loc.longitude,
-      accuracy: loc.accuracy,
-      timestamp: new Date(loc.timestamp),
-      speed: loc.speed,
-      heading: loc.heading,
-      altitude: loc.altitude
+    // Convert timestamp (ms) to Date objects and add human-readable location
+    const rawLocations = await Promise.all(locations.map(async (loc) => {
+      let locationName = 'Unknown location';
+      if (typeof loc.latitude === 'number' && typeof loc.longitude === 'number') {
+        locationName = await reverseGeocode(loc.latitude, loc.longitude);
+      }
+      return {
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        accuracy: loc.accuracy,
+        timestamp: new Date(loc.timestamp),
+        speed: loc.speed,
+        heading: loc.heading,
+        altitude: loc.altitude,
+        locationName
+      };
     }));
 
     // --- Compression settings ---
@@ -194,9 +202,18 @@ export const getMyLocationHistory = async (req, res, next) => {
 
     const total = await LocationTrack.countDocuments(q);
 
+    // Ensure each location point includes locationName if available
+    const tracksWithLocationName = tracks.map(track => ({
+      ...track,
+      locations: track.locations.map(loc => ({
+        ...loc,
+        locationName: loc.locationName || null
+      }))
+    }));
+
     res.json({ 
       success: true, 
-      data: tracks, 
+      data: tracksWithLocationName, 
       meta: { 
         page: Number(page), 
         limit: Number(limit), 

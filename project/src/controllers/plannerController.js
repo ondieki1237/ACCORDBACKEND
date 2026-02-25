@@ -1,5 +1,6 @@
 import Planner from '../models/Planner.js';
 import User from '../models/User.js';
+import PlannerApproval from '../models/PlannerApproval.js';
 import logger from '../utils/logger.js';
 
 // Create a planner for the authenticated user
@@ -131,7 +132,20 @@ export const adminGetAllPlanners = async (req, res, next) => {
       }) : []
     }));
 
-    res.json({ success: true, data: cleanedAdmin, meta: { page: pageNum, limit: lim, totalDocs: total, totalPages: Math.ceil(total / lim) } });
+    // Fetch approvals for the retrieved planners
+    const plannerIds = cleanedAdmin.map(p => p._id);
+    const approvals = await PlannerApproval.find({ plannerId: { $in: plannerIds } }).lean();
+
+    // Attach approvals to the cleaned admin planners
+    const adminPlannersWithApproval = cleanedAdmin.map(p => {
+      const approval = approvals.find(a => String(a.plannerId) === String(p._id));
+      return {
+        ...p,
+        approval: approval || null
+      };
+    });
+
+    res.json({ success: true, data: adminPlannersWithApproval, meta: { page: pageNum, limit: lim, totalDocs: total, totalPages: Math.ceil(total / lim) } });
   } catch (err) {
     logger.error('adminGetAllPlanners error:', err);
     next(err);
@@ -163,6 +177,10 @@ export const adminGetPlannerById = async (req, res, next) => {
         return name !== 'saturday' && name !== 'sunday';
       }) : []
     };
+
+    // Attach approval
+    const approval = await PlannerApproval.findOne({ plannerId: planner._id }).lean();
+    cleaned.approval = approval || null;
 
     res.json({ success: true, data: cleaned });
   } catch (err) {
