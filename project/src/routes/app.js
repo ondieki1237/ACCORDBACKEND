@@ -3,23 +3,31 @@ import logger from '../utils/logger.js';
 
 const router = express.Router();
 
-// Current app version configuration
+// Current app version configuration - reads from environment
+const currentVersion = process.env.VERSION_NAME || '1.2.6';
+const versionCode = Number(process.env.VERSION_CODE) || 126;
+const appHost = process.env.APP_HOST || 'https://app.codewithseth.co.ke';
+const apkPath = process.env.APK_PATH || '/downloads/accord-medical.apk';
+const changelog = process.env.CHANGELOG || 'Bug fixes and improvements';
+const forceUpdate = process.env.FORCE_UPDATE === 'true';
+const minSupported = process.env.MIN_SUPPORTED_VERSION || '1.0.0';
+
 const APP_VERSION_CONFIG = {
   android: {
-    version: '1.0.0',
-    buildNumber: 1,
-    downloadUrl: 'https://app.codewithseth.co.ke/downloads/accord-medical-v1.0.0.apk',
-    changelog: 'Initial release',
-    forceUpdate: false,
-    minSupportedVersion: '1.0.0'
+    version: currentVersion,
+    buildNumber: versionCode,
+    downloadUrl: `${appHost}${apkPath}`,
+    changelog: changelog,
+    forceUpdate: forceUpdate,
+    minSupportedVersion: minSupported
   },
   ios: {
-    version: '1.0.0',
-    buildNumber: 1,
+    version: currentVersion,
+    buildNumber: versionCode,
     downloadUrl: 'https://apps.apple.com/app/accord-medical/id123456789',
-    changelog: 'Initial release',
-    forceUpdate: false,
-    minSupportedVersion: '1.0.0'
+    changelog: changelog,
+    forceUpdate: forceUpdate,
+    minSupportedVersion: minSupported
   }
 };
 
