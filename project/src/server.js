@@ -1,4 +1,5 @@
 import plannerApprovalRoutes from './routes/plannerApproval.js';
+import plannerSummaryRoutes from './routes/plannerSummary.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -65,6 +66,7 @@ import documentCategoriesRoutes from './routes/documentCategories.js';
 import manufacturersRoutes from './routes/manufacturers.js';
 import appUpdatesRoutes from './routes/appUpdates.js';
 import debugRoutes from './routes/debug.js';
+import adminMarketInsightsRoutes from './routes/adminMarketInsights.js';
 import User from './models/User.js';
 import Visit from './models/Visit.js';
 import XLSX from 'xlsx';
@@ -76,8 +78,7 @@ app.use(cors({
   credentials: true
 }));
 app.options('*', cors());
-// Register planner approval routes after app is initialized
-app.use('/api/planner-approval', express.json(), express.urlencoded({ extended: true }), plannerApprovalRoutes);
+
 
 
 // (app is already declared at the top)
@@ -91,6 +92,10 @@ const io = new Server(httpServer, {
 
 // Connect to MongoDB
 connectDB();
+
+// Body parsers
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Other middleware (after body parser)
 app.use(helmet());
@@ -197,9 +202,11 @@ app.use('/api/admin/users', adminUsersRoutes);
 app.use('/api/admin/analytics', adminAnalyticsRoutes);
 app.use('/api/admin/reports', adminReportsRoutes);
 app.use('/api/admin/quotations', adminQuotationsRoutes);
+app.use('/api/admin/market-insights', adminMarketInsightsRoutes);
 app.use('/api/engineering-services', engineeringServicesRoutes);
 app.use('/api/engineering-pricing', engineeringPricingRoutes);
 app.use('/api/planner', plannerRoutes);
+app.use('/api/planner-approval', plannerApprovalRoutes);
 app.use('/api/admin/planners', adminPlannersRoutes);
 app.use('/api/location', locationRoutes);
 app.use('/api/admin/location', adminLocationRoutes);

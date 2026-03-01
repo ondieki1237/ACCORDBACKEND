@@ -35,13 +35,15 @@ const leadSchema = new mongoose.Schema({
     default: 'new'
   },
   // History of status changes so we can track timeline of the conversation
+
   statusHistory: [{
     from: { type: String, trim: true },
     to: { type: String, trim: true },
-    changedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    changedAt: { type: Date, default: Date.now },
-    note: { type: String, trim: true }
+    date: { type: Date, default: Date.now }
   }],
+
+  // Track if this lead was created from a visit
+  createdFromVisit: { type: mongoose.Schema.Types.ObjectId, ref: 'Visit' },
 
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true }
 }, {

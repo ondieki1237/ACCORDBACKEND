@@ -1,3 +1,4 @@
+
 import express from 'express';
 import mongoose from 'mongoose';
 import Visit from '../models/Visit.js';
@@ -6,8 +7,14 @@ import Machine from '../models/Machine.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validateVisit, validatePagination, validateDateRange } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
+import { convertVisitToLead } from '../controllers/visitLeadController.js';
+
 
 const router = express.Router();
+// @route   POST /api/visits/:visitId/convert-to-lead
+// @desc    Convert a visit to a lead (prompt for expectedPurchaseDate)
+// @access  Private
+router.post('/:visitId/convert-to-lead', authenticate, convertVisitToLead);
 
 // @route   POST /api/visits
 // @desc    Create new visit

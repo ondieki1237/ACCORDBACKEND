@@ -1,6 +1,6 @@
 import express from 'express';
 import { optionalAuth, authenticate } from '../middleware/auth.js';
-import { createPlanner, getMyPlanners } from '../controllers/plannerController.js';
+import { createPlanner, getMyPlanners, updateMyPlanner, deleteMyPlanner } from '../controllers/plannerController.js';
 
 const router = express.Router();
 
@@ -14,5 +14,11 @@ router.get('/', authenticate, getMyPlanners);
 
 // Alias route for frontend compatibility
 router.get('/my', authenticate, getMyPlanners);
+
+// Update a planner (only if not reviewed)
+router.put('/:id', authenticate, updateMyPlanner);
+
+// Delete a planner (only if not reviewed)
+router.delete('/:id', authenticate, deleteMyPlanner);
 
 export default router;

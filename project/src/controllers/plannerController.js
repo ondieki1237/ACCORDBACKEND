@@ -74,7 +74,20 @@ export const getMyPlanners = async (req, res, next) => {
 
     const total = await Planner.countDocuments({ userId });
 
-    res.json({ success: true, data: cleaned, meta: { page: Number(page), limit: Number(limit), totalDocs: total } });
+    // Fetch approvals for the retrieved planners
+    const plannerIds = cleaned.map(p => p._id);
+    const approvals = await PlannerApproval.find({ plannerId: { $in: plannerIds } }).lean();
+
+    // Attach approvals to the cleaned planners
+    const plannersWithApproval = cleaned.map(p => {
+      const approval = approvals.find(a => String(a.plannerId) === String(p._id));
+      return {
+        ...p,
+        approval: approval || null
+      };
+    });
+
+    res.json({ success: true, data: plannersWithApproval, meta: { page: Number(page), limit: Number(limit), totalDocs: total } });
   } catch (err) {
     logger.error('getMyPlanners error:', err);
     next(err);
@@ -185,6 +198,75 @@ export const adminGetPlannerById = async (req, res, next) => {
     res.json({ success: true, data: cleaned });
   } catch (err) {
     logger.error('adminGetPlannerById error:', err);
+    next(err);
+  }
+};
+
+// Update a planner for the authenticated user
+export const updateMyPlanner = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const { id } = req.params;
+    const { weekCreatedAt, days, notes } = req.body;
+
+    const planner = await Planner.findOne({ _id: id, userId });
+
+    if (!planner) {
+      return res.status(404).json({ success: false, message: 'Planner not found or unauthorized' });
+    }
+
+    // Check if it's already approved
+    const approval = await PlannerApproval.findOne({ plannerId: id });
+    if (approval && (approval.status === 'approved' || approval.status === 'disapproved')) {
+      return res.status(403).json({ success: false, message: 'Cannot edit a planner that has already been reviewed' });
+    }
+
+    if (weekCreatedAt) planner.weekCreatedAt = new Date(weekCreatedAt);
+    if (days) {
+      planner.days = Array.isArray(days)
+        ? days.filter(d => {
+          if (!d || !d.day) return false;
+          const name = String(d.day).trim().toLowerCase();
+          return name !== 'saturday' && name !== 'sunday';
+        })
+        : [];
+    }
+    if (notes !== undefined) planner.notes = notes;
+
+    await planner.save();
+    res.json({ success: true, message: 'Planner updated successfully', data: planner });
+  } catch (err) {
+    logger.error('updateMyPlanner error:', err);
+    next(err);
+  }
+};
+
+// Delete a planner for the authenticated user
+export const deleteMyPlanner = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const { id } = req.params;
+
+    const planner = await Planner.findOne({ _id: id, userId });
+
+    if (!planner) {
+      return res.status(404).json({ success: false, message: 'Planner not found or unauthorized' });
+    }
+
+    // Check if it's already approved
+    const approval = await PlannerApproval.findOne({ plannerId: id });
+    if (approval && (approval.status === 'approved' || approval.status === 'disapproved')) {
+      return res.status(403).json({ success: false, message: 'Cannot delete a planner that has already been reviewed' });
+    }
+
+    await Planner.deleteOne({ _id: id });
+    if (approval) {
+      await PlannerApproval.deleteOne({ plannerId: id });
+    }
+
+    res.json({ success: true, message: 'Planner deleted successfully' });
+  } catch (err) {
+    logger.error('deleteMyPlanner error:', err);
     next(err);
   }
 };
