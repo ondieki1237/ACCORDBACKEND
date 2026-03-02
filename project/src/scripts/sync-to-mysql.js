@@ -64,6 +64,12 @@ function inferMySQLSchema(collectionName, sampleDocs) {
   fields.set('is_deleted', 'TINYINT(1) DEFAULT 0');
   fields.set('deleted_at', 'DATETIME DEFAULT NULL');
   
+  // Add flattened fields for visits collection
+  if (collectionName === 'visits') {
+    fields.set('products_of_interest', 'TEXT'); // Comma-separated product names
+    fields.set('contact_names', 'TEXT'); // Comma-separated contact names
+  }
+  
   // Analyze sample documents to infer schema
   for (const doc of sampleDocs) {
     for (const [key, value] of Object.entries(doc)) {
@@ -106,6 +112,23 @@ function flattenDocument(doc, prefix = '') {
     
     if (key === '_id') {
       result.mongo_id = value.toString();
+    } else if (key === 'productsOfInterest' && Array.isArray(value)) {
+      // Special handling: flatten productsOfInterest array to comma-separated names
+      const productNames = value
+        .map(p => p && p.name ? p.name.trim() : '')
+        .filter(n => n && n.toLowerCase() !== 'none' && n.toLowerCase() !== 'nil' && n.toLowerCase() !== 'n/a')
+        .join(', ');
+      result.products_of_interest = productNames || null;
+      // Also keep JSON for reference
+      result.productsOfInterest = sanitizeForMySQL(value);
+    } else if (key === 'contacts' && Array.isArray(value)) {
+      // Special handling: flatten contacts to a readable string
+      const contactNames = value
+        .map(c => c && c.name ? `${c.name}${c.role ? ' (' + c.role + ')' : ''}` : '')
+        .filter(n => n)
+        .join(', ');
+      result.contact_names = contactNames || null;
+      result.contacts = sanitizeForMySQL(value);
     } else if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
       Object.assign(result, flattenDocument(value, newKey));
     } else {
