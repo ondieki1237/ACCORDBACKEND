@@ -2,6 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 import PasswordResetToken from '../models/PasswordResetToken.js';
 import { authenticate } from '../middleware/auth.js';
@@ -128,10 +129,24 @@ router.post('/register', validateRegistration, async (req, res) => {
 router.post('/login', validateLogin, async (req, res) => {
   try {
     const { email, password } = req.body;
+    
+    logger.info(`Login attempt for email: ${email}`);
 
-    const user = await User.findOne({ email, isActive: true });
+    const user = await User.findOne({ email: email.toLowerCase(), isActive: true });
 
-    if (!user || !(await user.comparePassword(password))) {
+    if (!user) {
+      logger.warn(`Login failed: User not found for email ${email}`);
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    const passwordMatch = await user.comparePassword(password);
+    logger.info(`Password comparison for ${email}: ${passwordMatch ? 'MATCH' : 'NO MATCH'}`);
+    
+    if (!passwordMatch) {
+      logger.warn(`Login failed: Password mismatch for user ${email}`);
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
@@ -347,12 +362,14 @@ router.post('/password-reset/request', validatePasswordResetRequest, async (req,
 
     const tokenDoc = await PasswordResetToken.create({
       userId: user._id,
-      email,
+      email: email.toLowerCase(), // Ensure email is lowercase in token
       codeHash,
       expiresAt,
       verified: false,
       attempts: 0
     });
+
+    logger.info(`Password reset token created for ${email}, code hash stored`);
 
     const isDevOrLogCode = process.env.NODE_ENV === 'development' || process.env.PASSWORD_RESET_DEV_LOG_CODE === 'true';
     let emailActuallySent = true;
@@ -445,9 +462,18 @@ router.post('/password-reset/verify', validatePasswordResetVerify, async (req, r
     }
 
     token.verified = true;
-    await token.save();
+    try {
+      await token.save();
+      logger.info(`Password reset code verified for ${email}`);
+    } catch (saveErr) {
+      logger.error(`Failed to mark code as verified for ${email}:`, saveErr);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to verify code',
+        error: 'VERIFY_SAVE_FAILED'
+      });
+    }
 
-    logger.info(`Password reset code verified for ${email}`);
     return res.status(200).json({
       success: true,
       message: 'Code verified successfully',
@@ -466,7 +492,9 @@ router.post('/password-reset/reset', validatePasswordResetReset, async (req, res
   try {
     const email = req.body.email?.trim().toLowerCase();
     const code = String(req.body.code).trim();
-    const newPassword = req.body.newPassword;
+    const newPassword = String(req.body.newPassword).trim();
+
+    logger.info(`Password reset attempt for ${email}`);
 
     const token = await PasswordResetToken.findOne({
       email,
@@ -476,6 +504,7 @@ router.post('/password-reset/reset', validatePasswordResetReset, async (req, res
     }).sort({ createdAt: -1 });
 
     if (!token) {
+      logger.warn(`Password reset failed for ${email}: No valid token found`);
       return res.status(404).json({
         success: false,
         message: 'No password reset request found for this email',
@@ -509,12 +538,49 @@ router.post('/password-reset/reset', validatePasswordResetReset, async (req, res
       });
     }
 
-    user.password = newPassword;
-    user.refreshTokens = [];
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
-    user.lastPasswordChangeAt = new Date();
-    await user.save();
+    // Hash password directly before saving to prevent double-hashing
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+    logger.info(`Hashing new password for ${email}`);
+
+    // Update user document directly in MongoDB, bypassing Mongoose hooks
+    try {
+      const db = mongoose.connection.db;
+      const usersCollection = db.collection('users');
+      
+      const updateResult = await usersCollection.updateOne(
+        { _id: new mongoose.Types.ObjectId(token.userId) },
+        {
+          $set: {
+            password: hashedPassword,
+            refreshTokens: [],
+            resetPasswordToken: null,
+            resetPasswordExpire: null,
+            lastPasswordChangeAt: new Date(),
+            updatedAt: new Date()
+          }
+        }
+      );
+      
+      if (updateResult.matchedCount === 0) {
+        logger.error(`Failed to update user ${email}: Not found in database`);
+        return res.status(404).json({
+          success: false,
+          message: 'User not found',
+          error: 'USER_NOT_FOUND'
+        });
+      }
+      
+      logger.info(`✅ Password successfully updated for ${email} using direct DB update`);
+    } catch (updateErr) {
+      logger.error(`Failed to update password for ${email}:`, updateErr.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update password',
+        error: 'UPDATE_FAILED'
+      });
+    }
 
     token.usedAt = new Date();
     await token.save();

@@ -26,7 +26,7 @@ export const validateRegistration = [
 
 export const validateLogin = [
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
-  body('password').notEmpty().withMessage('Password is required'),
+  body('password').notEmpty().trim().withMessage('Password is required'),
   validate
 ];
 
@@ -116,6 +116,6 @@ export const validatePasswordResetVerify = [
 export const validatePasswordResetReset = [
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('code').trim().isLength({ min: 6, max: 6 }).withMessage('Code must be 6 digits').isNumeric().withMessage('Code must be 6 digits'),
-  body('newPassword').isLength({ min: 4, max: 8 }).withMessage('Password must be between 4 and 8 characters'),
+  body('newPassword').trim().isLength({ min: 4, max: 8 }).withMessage('Password must be between 4 and 8 characters'),
   validatePasswordResetFormat
 ];
