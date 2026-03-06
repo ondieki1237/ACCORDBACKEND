@@ -4,6 +4,7 @@ import Visit from '../models/Visit.js';
 import Trail from '../models/Trail.js';
 import Report from '../models/Report.js';
 import Lead from '../models/Lead.js';
+import Planner from '../models/Planner.js';
 import EngineeringService from '../models/EngineeringService.js';
 import EngineeringRequest from '../models/EngineeringRequest.js';
 import { sendEmail } from './emailService.js';
@@ -164,6 +165,233 @@ export const generateEngineerSummaries = async (weekStart, weekEnd, recipients =
   }
 };
 
+/**
+ * Send weekly report reminders to sales team members who haven't submitted
+ * Runs every Friday at 5 PM (EAT)
+ */
+export const sendWeeklyReportReminders = async () => {
+  try {
+    logger.info('Starting weekly report reminder job');
+
+    // Get current week (Monday to Sunday)
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 5 = Friday
+    
+    // Calculate week start (Monday) and end (Sunday)
+    const weekEnd = new Date(today);
+    weekEnd.setDate(today.getDate() + (6 - dayOfWeek)); // Sunday of current week
+    weekEnd.setHours(23, 59, 59, 999);
+    
+    const weekStart = new Date(weekEnd);
+    weekStart.setDate(weekEnd.getDate() - 6); // Monday of current week
+    weekStart.setHours(0, 0, 0, 0);
+
+    logger.info(`Checking for weekly reports from ${weekStart.toDateString()} to ${weekEnd.toDateString()}`);
+
+    // Get all active non-admin users
+    const users = await User.find({
+      isActive: true,
+      role: { $nin: ['admin'] } // Exclude admins
+    }).select('_id email firstName lastName');
+
+    if (!users.length) {
+      logger.info('No active non-admin users found');
+      return;
+    }
+
+    logger.info(`Found ${users.length} active non-admin users`);
+
+    // Check each user for submitted reports
+    const usersWithoutReports = [];
+
+    for (const user of users) {
+      const existingReport = await Report.findOne({
+        userId: user._id,
+        weekStart: { $gte: weekStart, $lte: weekEnd },
+        isDraft: false // Only count submitted reports
+      });
+
+      if (!existingReport) {
+        usersWithoutReports.push(user);
+      }
+    }
+
+    logger.info(`${usersWithoutReports.length} users haven't submitted weekly reports`);
+
+    // Send reminders to users without reports
+    for (const user of usersWithoutReports) {
+      try {
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
+              <h2 style="color: #333;">📋 Weekly Report Reminder</h2>
+              <p style="color: #555; font-size: 16px;">
+                Hi <strong>${user.firstName}</strong>,
+              </p>
+              <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                It's Friday and you have not recorded your <strong>weekly report</strong> yet. 
+                Kindly submit your weekly report today before end of business.
+              </p>
+              <div style="background-color: #e3f2fd; padding: 15px; border-left: 4px solid #2196F3; margin: 20px 0; border-radius: 3px;">
+                <p style="color: #1565c0; margin: 0;"><strong>⏰ Quick Reminder:</strong></p>
+                <p style="color: #1565c0; margin: 5px 0 0 0;">Week: Monday - Sunday</p>
+                <p style="color: #1565c0; margin: 5px 0 0 0;">Deadline: End of today</p>
+              </div>
+              <p style="color: #555; font-size: 14px;">
+                Please access the app and submit your report with details of:
+              </p>
+              <ul style="color: #555; font-size: 14px;">
+                <li>Visits made and outcomes</li>
+                <li>Quotations generated</li>
+                <li>New leads captured</li>
+                <li>Challenges faced</li>
+                <li>Plans for next week</li>
+              </ul>
+              <p style="color: #555; font-size: 14px; margin-top: 20px;">
+                Thank you for your diligence in keeping the team updated.
+              </p>
+              <hr style="border: none; border-top: 1px solid #ecf0f1; margin: 20px 0;">
+              <p style="color: #95a5a6; font-size: 12px;">
+                ACCORD Medical - Field Sales Tracking System<br>
+                <a href="https://app.codewithseth.co.ke" style="color: #3498db;">app.codewithseth.co.ke</a>
+              </p>
+            </div>
+          </div>
+        `;
+
+        await sendEmail({
+          to: user.email,
+          subject: '📋 Weekly Report Reminder - Please Submit Today',
+          template: 'custom',
+          data: { rawHtml: html }
+        });
+
+        logger.info(`Weekly report reminder sent to ${user.email}`);
+      } catch (err) {
+        logger.error(`Error sending weekly report reminder to ${user.email}:`, err);
+      }
+    }
+
+    logger.info('Weekly report reminder job completed');
+  } catch (error) {
+    logger.error('Error in sendWeeklyReportReminders:', error);
+  }
+};
+
+/**
+ * Send weekly planner reminders to sales team members who haven't filled their planners
+ * Runs every Sunday at 5 PM (EAT)
+ */
+export const sendWeeklyPlannerReminders = async () => {
+  try {
+    logger.info('Starting weekly planner reminder job');
+
+    // Get current week's Monday for planner matching
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday
+    
+    // Calculate this week's Monday
+    const weekMonday = new Date(today);
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Adjust to get Monday
+    weekMonday.setDate(today.getDate() + diff);
+    weekMonday.setHours(0, 0, 0, 0);
+
+    // Sunday of current week
+    const weekSunday = new Date(weekMonday);
+    weekSunday.setDate(weekMonday.getDate() + 6);
+    weekSunday.setHours(23, 59, 59, 999);
+
+    logger.info(`Checking for weekly planners from ${weekMonday.toDateString()} to ${weekSunday.toDateString()}`);
+
+    // Get all active non-admin users
+    const users = await User.find({
+      isActive: true,
+      role: { $nin: ['admin'] } // Exclude admins
+    }).select('_id email firstName lastName');
+
+    if (!users.length) {
+      logger.info('No active non-admin users found');
+      return;
+    }
+
+    logger.info(`Found ${users.length} active non-admin users`);
+
+    // Check each user for submitted planners
+    const usersWithoutPlanners = [];
+
+    for (const user of users) {
+      const existingPlanner = await Planner.findOne({
+        userId: user._id,
+        weekCreatedAt: { $gte: weekMonday, $lte: weekSunday }
+      });
+
+      if (!existingPlanner) {
+        usersWithoutPlanners.push(user);
+      }
+    }
+
+    logger.info(`${usersWithoutPlanners.length} users haven't filled their weekly planners`);
+
+    // Send reminders to users without planners
+    for (const user of usersWithoutPlanners) {
+      try {
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
+              <h2 style="color: #333;">📅 Weekly Planner Reminder</h2>
+              <p style="color: #555; font-size: 16px;">
+                Hi <strong>${user.firstName}</strong>,
+              </p>
+              <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                It's Sunday evening and you have not filled your <strong>weekly planner</strong> yet. 
+                Kindly complete your planner now to plan your week ahead.
+              </p>
+              <div style="background-color: #f3e5f5; padding: 15px; border-left: 4px solid #9c27b0; margin: 20px 0; border-radius: 3px;">
+                <p style="color: #6a1b9a; margin: 0;"><strong>⏰ Important:</strong></p>
+                <p style="color: #6a1b9a; margin: 5px 0 0 0;">Fill your planner for the coming week</p>
+                <p style="color: #6a1b9a; margin: 5px 0 0 0;">This helps us track your activities and plan resources</p>
+              </div>
+              <p style="color: #555; font-size: 14px;">
+                Your weekly planner should include:
+              </p>
+              <ul style="color: #555; font-size: 14px;">
+                <li>Daily locations and travel plans</li>
+                <li>Scheduled visits and meetings</li>
+                <li>Expected prospects and outcomes</li>
+                <li>Travel allowance estimates</li>
+                <li>Transportation arrangements</li>
+              </ul>
+              <p style="color: #555; font-size: 14px; margin-top: 20px;">
+                Planning ahead ensures smooth operations and better resource allocation.
+              </p>
+              <hr style="border: none; border-top: 1px solid #ecf0f1; margin: 20px 0;">
+              <p style="color: #95a5a6; font-size: 12px;">
+                ACCORD Medical - Field Sales Tracking System<br>
+                <a href="https://app.codewithseth.co.ke" style="color: #3498db;">app.codewithseth.co.ke</a>
+              </p>
+            </div>
+          </div>
+        `;
+
+        await sendEmail({
+          to: user.email,
+          subject: '📅 Weekly Planner Reminder - Please Fill Your Planner',
+          template: 'custom',
+          data: { rawHtml: html }
+        });
+
+        logger.info(`Weekly planner reminder sent to ${user.email}`);
+      } catch (err) {
+        logger.error(`Error sending weekly planner reminder to ${user.email}:`, err);
+      }
+    }
+
+    logger.info('Weekly planner reminder job completed');
+  } catch (error) {
+    logger.error('Error in sendWeeklyPlannerReminders:', error);
+  }
+};
+
 export const initializeScheduledJobs = () => {
   // Daily report at 6 PM
   cron.schedule('0 18 * * *', async () => {
@@ -212,6 +440,26 @@ export const initializeScheduledJobs = () => {
       await generateMonthlySalesSummaries();
     } catch (err) {
       logger.error('Monthly sales summaries job error:', err);
+    }
+  });
+
+  // Weekly report reminders: Every Friday at 5 PM EAT (17:00)
+  cron.schedule('0 17 * * 5', async () => {
+    logger.info('Running weekly report reminder job');
+    try {
+      await sendWeeklyReportReminders();
+    } catch (err) {
+      logger.error('Weekly report reminder job error:', err);
+    }
+  });
+
+  // Weekly planner reminders: Every Sunday at 5 PM EAT (17:00)
+  cron.schedule('0 17 * * 0', async () => {
+    logger.info('Running weekly planner reminder job');
+    try {
+      await sendWeeklyPlannerReminders();
+    } catch (err) {
+      logger.error('Weekly planner reminder job error:', err);
     }
   });
 };
