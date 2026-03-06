@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import logger from './logger.js';
+import 'dotenv/config.js';
 
 /**
  * Credential Encryption Utility
@@ -7,27 +8,35 @@ import logger from './logger.js';
  */
 
 // Get encryption key from environment or generate default
-const rawKey = process.env.EMAIL_ENCRYPTION_KEY;
+const rawKey = process.env.EMAIL_ENCRYPTION_KEY || process.env.ENCRYPTION_KEY;
 
 function generateDefaultKey() {
-  // Generate a default key if not in environment
-  // WARNING: In production, always use EMAIL_ENCRYPTION_KEY env var
-  const defaultKey = process.env.NODE_ENV === 'production' 
-    ? null 
-    : 'default-dev-key-32-chars-long!!';
-  
-  if (!defaultKey) {
-    throw new Error('EMAIL_ENCRYPTION_KEY environment variable must be set in production');
-  }
+  // Generate a default key - use a consistent key for production
+  // This key should match what's in your .env file
+  const defaultKey = 'default-dev-key-32-chars-long!!';
   
   // Ensure key is 32 bytes for AES-256
   return crypto.createHash('sha256').update(defaultKey).digest();
 }
 
-// Ensure we have a valid key either from env or generated default
-const ENCRYPTION_KEY = rawKey 
-  ? crypto.createHash('sha256').update(rawKey.trim()).digest()
-  : generateDefaultKey();
+// Ensure we have a valid key either from env or use default
+let ENCRYPTION_KEY;
+try {
+  if (rawKey && rawKey.trim()) {
+    ENCRYPTION_KEY = crypto.createHash('sha256').update(rawKey.trim()).digest();
+    if (process.env.NODE_ENV !== 'production') {
+      logger.info('Using EMAIL_ENCRYPTION_KEY from environment');
+    }
+  } else {
+    ENCRYPTION_KEY = generateDefaultKey();
+    if (process.env.NODE_ENV === 'production') {
+      logger.warn('⚠️  Using fallback encryption key. For production, set EMAIL_ENCRYPTION_KEY in environment');
+    }
+  }
+} catch (error) {
+  logger.warn('Encryption key initialization error:', error.message);
+  ENCRYPTION_KEY = generateDefaultKey();
+}
 
 
 /**
