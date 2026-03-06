@@ -7,7 +7,7 @@ import logger from './logger.js';
  */
 
 // Get encryption key from environment or generate default
-const ENCRYPTION_KEY = process.env.EMAIL_ENCRYPTION_KEY || generateDefaultKey();
+const rawKey = process.env.EMAIL_ENCRYPTION_KEY;
 
 function generateDefaultKey() {
   // Generate a default key if not in environment
@@ -23,6 +23,12 @@ function generateDefaultKey() {
   // Ensure key is 32 bytes for AES-256
   return crypto.createHash('sha256').update(defaultKey).digest();
 }
+
+// Ensure we have a valid key either from env or generated default
+const ENCRYPTION_KEY = rawKey 
+  ? crypto.createHash('sha256').update(rawKey.trim()).digest()
+  : generateDefaultKey();
+
 
 /**
  * Encrypt a password
