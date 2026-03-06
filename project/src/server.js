@@ -74,12 +74,7 @@ import Visit from './models/Visit.js';
 import XLSX from 'xlsx';
 
 const app = express();
-// CORS must be registered before any routes or middleware
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
-app.options('*', cors());
+// CORS setup will be done after environment setup below
 
 
 
@@ -107,6 +102,14 @@ app.use('/api/', generalLimiter);
 
 // CORS configuration: whitelist important client origins but allow non-browser requests
 const allowedOrigins = [
+  // Localhost development
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:4500',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  'http://127.0.0.1:4500',
+  // Production
   process.env.CLIENT_URL,
   process.env.ALLOWED_CLIENT_ORIGINS, // optional comma-separated list
   'https://v0-client-service-portal.vercel.app'
@@ -117,8 +120,27 @@ const allowedOrigins = [
 
 // Allow all origins and reflect the request origin (prevents CORS rejections)
 app.use(cors({
-  origin: true,
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl requests)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // Allow localhost and whitelisted origins
+    if (origin.includes('localhost') || origin.includes('127.0.0.1') || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // For development, allow all origins
+    if (process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+    
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.options('*', cors());
