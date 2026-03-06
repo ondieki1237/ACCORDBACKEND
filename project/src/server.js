@@ -112,7 +112,8 @@ const allowedOrigins = [
   // Production
   process.env.CLIENT_URL,
   process.env.ALLOWED_CLIENT_ORIGINS, // optional comma-separated list
-  'https://v0-client-service-portal.vercel.app'
+  'https://v0-client-service-portal.vercel.app',
+  'https://adminaccord.vercel.app'
 ]
   .filter(Boolean)
   .reduce((acc, item) => acc.concat(item.split(',').map(s => s.trim())), [])
