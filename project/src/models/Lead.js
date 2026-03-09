@@ -39,7 +39,9 @@ const leadSchema = new mongoose.Schema({
   statusHistory: [{
     from: { type: String, trim: true },
     to: { type: String, trim: true },
-    date: { type: Date, default: Date.now }
+    date: { type: Date, default: Date.now },
+    changedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    notes: { type: String, trim: true }
   }],
 
   // Track if this lead was created from a visit

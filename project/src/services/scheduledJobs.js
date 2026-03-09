@@ -1,4 +1,5 @@
 import cron from 'node-cron';
+import mysql from 'mysql2/promise';
 import User from '../models/User.js';
 import Visit from '../models/Visit.js';
 import Trail from '../models/Trail.js';
@@ -34,6 +35,14 @@ const sendEmailWithAttachment = async ({ to, subject, html, attachments = [] }) 
 
   return transporter.sendMail(mailOptions);
 };
+
+// Helper function to convert MongoDB ObjectId to a numeric ID for MySQL
+function objectIdToNumeric(objectId) {
+  const idString = objectId.toString();
+  // Convert first 15 hex characters to a number (fits safely in BIGINT)
+  const numericId = parseInt(idString.slice(0, 15), 16);
+  return numericId || Date.now();
+}
 
 // Weekly summaries (admin email + excel attachment)
 export const generateWeeklySummaries = async () => {
@@ -392,6 +401,134 @@ export const sendWeeklyPlannerReminders = async () => {
   }
 };
 
+/**
+ * Sync all MongoDB data to MySQL daily
+ * Exports users, visits, reports, planners, and leads
+ * Runs every day at 2 AM
+ */
+export const syncMongoDBToMySQL = async () => {
+  let connection;
+  try {
+    logger.info('Starting MongoDB to MySQL sync');
+
+    // Connect to MySQL
+    connection = await mysql.createConnection({
+      host: process.env.MYSQL_HOST,
+      user: process.env.MYSQL_USER,
+      password: process.env.MYSQL_PASSWORD,
+      database: process.env.MYSQL_DATABASE,
+      port: Number(process.env.MYSQL_PORT || 3306)
+    });
+
+    logger.info('Connected to MySQL for sync');
+
+    // Sync users
+    const users = await User.find({}).lean();
+    for (const user of users) {
+      await connection.execute(`
+        INSERT INTO users (id, first_name, last_name, email, phone, employee_id, password, role, is_active, region, territory, designation, created_at, updated_at, mongo_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE 
+          first_name = VALUES(first_name), last_name = VALUES(last_name), phone = VALUES(phone), 
+          role = VALUES(role), is_active = VALUES(is_active), region = VALUES(region), 
+          territory = VALUES(territory), designation = VALUES(designation), updated_at = VALUES(updated_at)
+      `, [
+        objectIdToNumeric(user._id),
+        user.firstName || '', user.lastName || '', user.email?.toLowerCase() || '', user.phone || '',
+        user.employeeId || '', user.password || '', user.role || 'user', user.isActive ? 1 : 0,
+        user.region || '', user.territory || '', user.designation || '',
+        user.createdAt || new Date(), user.updatedAt || new Date(), user._id.toString()
+      ]);
+    }
+    logger.info(`Synced ${users.length} users to MySQL`);
+
+    // Sync visits
+    const visits = await Visit.find({}).lean();
+    for (const visit of visits) {
+      if (!visit.userId) continue;
+      const userId = objectIdToNumeric(visit.userId);
+      await connection.execute(`
+        INSERT INTO visits (id, user_id, visit_date, client_name, client_type, location, purpose, outcome, notes, created_at, mongo_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE 
+          client_name = VALUES(client_name), outcome = VALUES(outcome), notes = VALUES(notes)
+      `, [
+        objectIdToNumeric(visit._id), userId, visit.date || new Date(),
+        visit.client?.name || '', visit.client?.type || '', visit.client?.location || '',
+        visit.visitPurpose || '', visit.visitOutcome || '', visit.notes || '',
+        visit.createdAt || new Date(), visit._id.toString()
+      ]);
+    }
+    logger.info(`Synced ${visits.length} visits to MySQL`);
+
+    // Sync reports
+    const reports = await Report.find({}).lean();
+    for (const report of reports) {
+      if (!report.userId) continue;
+      const userId = objectIdToNumeric(report.userId);
+      await connection.execute(`
+        INSERT INTO reports (id, user_id, week_start, week_end, week_range, content, status, is_draft, created_at, updated_at, mongo_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE 
+          content = VALUES(content), status = VALUES(status), is_draft = VALUES(is_draft), updated_at = VALUES(updated_at)
+      `, [
+        objectIdToNumeric(report._id), userId,
+        report.weekStart || new Date(), report.weekEnd || new Date(), report.weekRange || '',
+        JSON.stringify(report.content || report.sections || {}), report.status || 'pending',
+        report.isDraft ? 1 : 0, report.createdAt || new Date(), report.updatedAt || new Date(),
+        report._id.toString()
+      ]);
+    }
+    logger.info(`Synced ${reports.length} reports to MySQL`);
+
+    // Sync planners
+    const planners = await Planner.find({}).lean();
+    for (const planner of planners) {
+      if (!planner.userId) continue;
+      const userId = objectIdToNumeric(planner.userId);
+      await connection.execute(`
+        INSERT INTO planners (id, user_id, week_created_at, days, notes, created_at, updated_at, mongo_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE 
+          days = VALUES(days), notes = VALUES(notes), updated_at = VALUES(updated_at)
+      `, [
+        objectIdToNumeric(planner._id), userId,
+        planner.weekCreatedAt || new Date(), JSON.stringify(planner.days || []),
+        planner.notes || '', planner.createdAt || new Date(),
+        planner.updatedAt || new Date(), planner._id.toString()
+      ]);
+    }
+    logger.info(`Synced ${planners.length} planners to MySQL`);
+
+    // Sync leads
+    const leads = await Lead.find({}).lean();
+    for (const lead of leads) {
+      if (!lead.userId) continue;
+      const userId = objectIdToNumeric(lead.userId);
+      await connection.execute(`
+        INSERT INTO leads (id, user_id, contact_name, contact_email, facility_name, location, status, created_at, updated_at, mongo_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE 
+          contact_name = VALUES(contact_name), contact_email = VALUES(contact_email), status = VALUES(status), updated_at = VALUES(updated_at)
+      `, [
+        objectIdToNumeric(lead._id), userId,
+        lead.contactName || lead.name || '', lead.contactEmail || lead.email || '',
+        lead.facilityName || '', lead.location || '', lead.status || 'new',
+        lead.createdAt || new Date(), lead.updatedAt || new Date(), lead._id.toString()
+      ]);
+    }
+    logger.info(`Synced ${leads.length} leads to MySQL`);
+
+    logger.info('MongoDB to MySQL sync completed successfully');
+  } catch (error) {
+    logger.error('Error syncing MongoDB to MySQL:', error);
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
+  }
+};
+
 export const initializeScheduledJobs = () => {
   // Daily report at 6 PM
   cron.schedule('0 18 * * *', async () => {
@@ -460,6 +597,16 @@ export const initializeScheduledJobs = () => {
       await sendWeeklyPlannerReminders();
     } catch (err) {
       logger.error('Weekly planner reminder job error:', err);
+    }
+  });
+
+  // MongoDB to MySQL sync: Every day at 2 AM (02:00)
+  cron.schedule('0 2 * * *', async () => {
+    logger.info('Running MongoDB to MySQL sync job');
+    try {
+      await syncMongoDBToMySQL();
+    } catch (err) {
+      logger.error('MongoDB to MySQL sync job error:', err);
     }
   });
 };

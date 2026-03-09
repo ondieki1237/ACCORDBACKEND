@@ -252,8 +252,8 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
         from: lead.leadStatus,
         to: req.body.leadStatus,
         changedBy: req.user._id,
-        changedAt: new Date(),
-        note: req.body.statusChangeNote || undefined
+        date: new Date(),
+        notes: req.body.statusChangeNote || undefined
       });
     }
 
