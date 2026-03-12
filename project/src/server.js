@@ -58,6 +58,8 @@ import analyticsRoutes from './routes/analytics.js';
 import ordersCheckoutRoutes from './routes/ordersCheckout.js';
 import callLogsRoutes from './routes/callLogs.js';
 import adminCallLogsRoutes from './routes/admin/callLogs.js';
+import telesalesRoutes from './routes/telesales.js';
+import adminTelesalesRoutes from './routes/admin/telesales.js';
 import machineDocumentsRoutes from './routes/machineDocuments.js';
 import engineeringRequestsRoutes from './routes/engineeringRequests.js';
 import adminEngineeringRequestsRoutes from './routes/admin/engineeringRequests.js';
@@ -275,6 +277,10 @@ app.use('/sales/documents', salesDocumentsRoutes);
 // Call logs endpoints
 app.use('/api/call-logs', callLogsRoutes);
 app.use('/api/admin/call-logs', adminCallLogsRoutes);
+
+// Telesales endpoints
+app.use('/api/telesales', telesalesRoutes);
+app.use('/api/admin/telesales', adminTelesalesRoutes);
 
 // Machine documents (Google Drive uploads)
 app.use('/api/machine-documents', machineDocumentsRoutes);

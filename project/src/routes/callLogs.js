@@ -7,7 +7,9 @@ import {
   deleteCallLog,
   getCallStatistics,
   getUpcomingFollowUps,
-  getFolderTree
+  getFolderTree,
+  getTelesalesCallHistory,
+  getTelesalesSummary
 } from '../controllers/callLogController.js';
 import { authenticate } from '../middleware/auth.js';
 
@@ -21,6 +23,10 @@ router.get('/folder-tree', getFolderTree);
 
 // Get statistics
 router.get('/statistics', getCallStatistics);
+
+// Telesales specific endpoints
+router.get('/telesales/history', getTelesalesCallHistory);
+router.get('/telesales/summary', getTelesalesSummary);
 
 // Get upcoming follow-ups
 router.get('/follow-ups', getUpcomingFollowUps);

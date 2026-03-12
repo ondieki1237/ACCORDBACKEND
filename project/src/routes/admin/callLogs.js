@@ -5,7 +5,9 @@ import {
   updateCallLog,
   deleteCallLog,
   getCallStatistics,
-  getFolderTree
+  getFolderTree,
+  getTelesalesCallHistory,
+  getTelesalesSummary
 } from '../../controllers/callLogController.js';
 import { authenticate, authorize } from '../../middleware/auth.js';
 
@@ -23,6 +25,10 @@ router.get('/', getCallLogs);
 
 // Get statistics
 router.get('/statistics', getCallStatistics);
+
+// Telesales specific endpoints (admin can see all)
+router.get('/telesales/history', getTelesalesCallHistory);
+router.get('/telesales/summary', getTelesalesSummary);
 
 // Get specific call log
 router.get('/:id', getCallLogById);

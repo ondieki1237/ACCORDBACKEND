@@ -2,16 +2,52 @@ import mongoose from 'mongoose';
 import mongoosePaginate from 'mongoose-paginate-v2';
 
 const callLogSchema = new mongoose.Schema({
-  // Client Information
   clientName: {
     type: String,
     required: [true, 'Client name is required'],
-    trim: true
+    trim: true,
+    index: true
   },
   clientPhone: {
     type: String,
     required: [true, 'Client phone number is required'],
     trim: true
+  },
+  
+  // Facility Information (Telesales specific)
+  facilityName: {
+    type: String,
+    trim: true,
+    index: true
+  },
+  facilityLocation: {
+    type: String,
+    trim: true
+  },
+  
+  // Contact Person Details (Telesales specific)
+  contactPerson: {
+    name: {
+      type: String,
+      trim: true
+    },
+    role: {
+      type: String,
+      trim: true
+    },
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true
+    },
+    phone: {
+      type: String,
+      trim: true
+    },
+    department: {
+      type: String,
+      trim: true
+    }
   },
   
   // Call Details
@@ -36,6 +72,15 @@ const callLogSchema = new mongoose.Schema({
     min: 0
   },
   
+  // Call Type (Telesales specific)
+  callType: {
+    type: String,
+    enum: ['product_inquiry', 'service_inquiry', 'machine_inquiry', 'follow_up', 'general'],
+    default: 'general',
+    trim: true,
+    index: true
+  },
+
   // Call Outcome
   callOutcome: {
     type: String,
@@ -61,6 +106,37 @@ const callLogSchema = new mongoose.Schema({
     type: String,
     trim: true,
     default: ''
+  },
+  
+  // Telesales specific fields for different call types
+  productInterest: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  expectedPurchaseDate: {
+    type: Date,
+    default: null
+  },
+  machineModel: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  machineSerialNumber: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  serviceAccepted: {
+    type: Boolean,
+    default: null
+  },
+  serviceRequestType: {
+    type: String,
+    enum: ['maintenance', 'repair', 'installation', 'upgrade', 'other'],
+    default: null,
+    trim: true
   },
   
   // Metadata for organization
@@ -117,7 +193,9 @@ callLogSchema.index({ year: 1, month: 1, week: 1 });
 callLogSchema.index({ callDate: -1 });
 callLogSchema.index({ createdBy: 1, callDate: -1 });
 callLogSchema.index({ clientPhone: 1, callDate: -1 });
+callLogSchema.index({ facilityName: 1, callDate: -1 });
 callLogSchema.index({ callOutcome: 1, followUpDate: 1 });
+callLogSchema.index({ callType: 1, callDate: -1 });
 
 // Text index for searching
 callLogSchema.index({ clientName: 'text', callNotes: 'text' });
