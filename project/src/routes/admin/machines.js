@@ -1,11 +1,169 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import Machine from '../../models/Machine.js';
+import Facility from '../../models/Facility.js';
 import { authenticate, authorize } from '../../middleware/auth.js';
 import logger from '../../utils/logger.js';
 import { updateMachine, getMachineUpdateHistory, bulkUpdateMachines } from '../../controllers/machineController.js';
 
 const router = express.Router();
+
+// Install machine at facility (create/update facility + create machine)
+router.post('/install', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const {
+      facilityName,
+      location,
+      contactPerson,
+      phoneNumber,
+      role,
+      machineInstalled,
+      machineName,
+      serialNumber,
+      manufacturer
+    } = req.body;
+
+    // Validate required facility fields
+    if (!facilityName || !facilityName.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Facility name is required'
+      });
+    }
+
+    if (!contactPerson || !contactPerson.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contact person name is required'
+      });
+    }
+
+    if (!phoneNumber || !phoneNumber.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number is required'
+      });
+    }
+
+    // Validate machine fields if installing
+    if (machineInstalled && machineInstalled !== 'false') {
+      if (!machineName || !machineName.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Machine name is required when machine is installed'
+        });
+      }
+
+      if (!serialNumber || !serialNumber.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Serial number is required when machine is installed'
+        });
+      }
+    }
+
+    // Create or find facility
+    let facility = await Facility.findOne({
+      'properties.name': new RegExp(`^${facilityName}$`, 'i')
+    });
+
+    if (!facility) {
+      // Create new facility
+      facility = new Facility({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [0, 0]
+        },
+        properties: {
+          name: facilityName.trim(),
+          location: location?.trim() || '',
+          amenity: 'clinic',
+          healthcare: 'clinic'
+        }
+      });
+      await facility.save();
+      logger.info('Facility created during machine installation', { facilityId: facility._id });
+    }
+
+    // Update facility with contact person if not already there
+    if (!facility.properties.contactPerson) {
+      facility.properties.contactPerson = {
+        name: contactPerson.trim(),
+        phone: phoneNumber.trim(),
+        role: role?.trim() || 'Contact'
+      };
+      await facility.save();
+    }
+
+    let machine = null;
+
+    // Create machine if installed
+    if (machineInstalled && machineInstalled !== 'false') {
+      machine = new Machine({
+        serialNumber: serialNumber.trim(),
+        model: machineName.trim(),
+        manufacturer: manufacturer?.trim() || 'Unknown',
+        facility: {
+          name: facilityName.trim(),
+          location: location?.trim() || ''
+        },
+        contactPerson: {
+          name: contactPerson.trim(),
+          phone: phoneNumber.trim(),
+          role: role?.trim() || 'Contact'
+        },
+        status: 'active',
+        metadata: {
+          createdBy: req.user._id
+        }
+      });
+
+      await machine.save();
+      logger.info('Machine installed at facility', {
+        machineId: machine._id,
+        facilityId: facility._id,
+        serialNumber: serialNumber.trim(),
+        userId: req.user._id
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: machine 
+        ? 'Machine installed successfully'
+        : 'Facility registered successfully (no machine installed)',
+      data: {
+        facility,
+        machine: machine || null
+      }
+    });
+  } catch (error) {
+    logger.error('Machine installation error:', {
+      message: error.message,
+      stack: error.stack,
+      body: req.body,
+      userId: req.user?._id
+    });
+
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        details: messages
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to install machine',
+      error: error.message
+    });
+  }
+});
+
+
 
 // Admin: bulk create machines (accepts array of machine objects)
 router.post('/bulk', authenticate, authorize('admin', 'manager'), async (req, res) => {

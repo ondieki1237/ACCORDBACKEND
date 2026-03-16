@@ -12,7 +12,7 @@ import logger from '../utils/logger.js';
 export const updateMachine = async (req, res, options = {}) => {
   try {
     const { id } = req.params;
-    const updates = { ...req.body };
+    let updates = { ...req.body };
 
     // Validate machine ID
     if (!mongoose.isValidObjectId(id)) {
@@ -31,18 +31,38 @@ export const updateMachine = async (req, res, options = {}) => {
     if (updates.createdAt) delete updates.createdAt;
     if (updates.updatedAt) delete updates.updatedAt;
 
-    // Validate required fields if they're being updated
-    if (updates.model === '') {
-      return res.status(400).json({
-        success: false,
-        message: 'Model name cannot be empty'
-      });
-    }
+    // Filter out empty strings and undefined values - only keep fields with actual values
+    Object.keys(updates).forEach(field => {
+      const value = updates[field];
+      
+      // Skip empty strings, null, or undefined values
+      if (value === '' || value === null || value === undefined) {
+        delete updates[field];
+      }
+    });
 
-    if (updates.manufacturer === '') {
-      return res.status(400).json({
-        success: false,
-        message: 'Manufacturer cannot be empty'
+    // If no valid fields to update after filtering, return success with no changes
+    if (Object.keys(updates).length === 0) {
+      // Fetch the machine to return current data
+      const machine = await Machine.findById(id);
+      if (!machine) {
+        return res.status(404).json({
+          success: false,
+          message: 'Machine not found'
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: 'No valid fields provided to update',
+        data: {
+          machine,
+          audit: {
+            changedFields: [],
+            changedCount: 0,
+            timestamp: new Date()
+          }
+        }
       });
     }
 
@@ -236,19 +256,40 @@ export const bulkUpdateMachines = async (req, res) => {
           continue;
         }
 
+        // Filter out empty strings, null, and undefined values
+        const cleanedUpdates = {};
+        Object.keys(updates).forEach(field => {
+          const value = updates[field];
+          
+          // Skip empty strings, null, undefined, and system fields
+          if (field !== 'metadata' && field !== 'createdAt' && field !== 'updatedAt' &&
+              value !== '' && value !== null && value !== undefined) {
+            cleanedUpdates[field] = value;
+          }
+        });
+
+        // Skip if no valid updates after filtering
+        if (Object.keys(cleanedUpdates).length === 0) {
+          results.push({
+            id,
+            success: true,
+            changedFields: [],
+            message: 'No valid fields to update'
+          });
+          continue;
+        }
+
         // Capture changed fields
         const previousValues = {};
         const changedFields = [];
 
-        Object.keys(updates).forEach(field => {
-          if (field !== 'metadata' && field !== 'createdAt' && field !== 'updatedAt') {
-            const oldValue = JSON.stringify(existingMachine[field]);
-            const newValue = JSON.stringify(updates[field]);
-            
-            if (oldValue !== newValue) {
-              previousValues[field] = existingMachine[field];
-              changedFields.push(field);
-            }
+        Object.keys(cleanedUpdates).forEach(field => {
+          const oldValue = JSON.stringify(existingMachine[field]);
+          const newValue = JSON.stringify(cleanedUpdates[field]);
+          
+          if (oldValue !== newValue) {
+            previousValues[field] = existingMachine[field];
+            changedFields.push(field);
           }
         });
 
@@ -256,7 +297,7 @@ export const bulkUpdateMachines = async (req, res) => {
           // Update machine
           const updated = await Machine.findByIdAndUpdate(
             id,
-            { $set: updates },
+            { $set: cleanedUpdates },
             { new: true, runValidators: true }
           );
 
@@ -266,7 +307,7 @@ export const bulkUpdateMachines = async (req, res) => {
             updatedBy: req.user._id,
             previousValues,
             newValues: changedFields.reduce((obj, field) => {
-              obj[field] = updates[field];
+              obj[field] = cleanedUpdates[field];
               return obj;
             }, {}),
             changedFields,
