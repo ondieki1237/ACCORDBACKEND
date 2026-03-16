@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import Machine from '../../models/Machine.js';
 import { authenticate, authorize } from '../../middleware/auth.js';
 import logger from '../../utils/logger.js';
+import { updateMachine, getMachineUpdateHistory, bulkUpdateMachines } from '../../controllers/machineController.js';
 
 const router = express.Router();
 
@@ -154,17 +155,13 @@ router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
 });
 
 // Admin: update machine
-router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  try {
-    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ success: false, error: 'Invalid machine id' });
-    const machine = await Machine.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true, runValidators: true });
-    if (!machine) return res.status(404).json({ success: false, error: 'Machine not found' });
-    res.json({ success: true, message: 'Machine updated', data: machine });
-  } catch (err) {
-    logger.error('Admin update machine error:', err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+router.put('/:id', authenticate, authorize('admin', 'manager'), updateMachine);
+
+// Admin: get machine update history
+router.get('/:id/history', authenticate, authorize('admin', 'manager'), getMachineUpdateHistory);
+
+// Admin: bulk update machines
+router.put('/', authenticate, authorize('admin', 'manager'), bulkUpdateMachines);
 
 // Admin: delete machine
 router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {

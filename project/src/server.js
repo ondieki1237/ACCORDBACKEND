@@ -13,6 +13,7 @@ import fs from 'fs';
 import 'dotenv/config';
 
 import connectDB from './config/database.js';
+import { initializeTeraBox } from './config/terabox.js';
 import logger from './utils/logger.js';
 import errorHandler from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.js';
@@ -90,6 +91,12 @@ const io = new Server(httpServer, {
 // Connect to MongoDB
 connectDB();
 
+// Initialize TeraBox for document uploads (optional, non-blocking)
+// This will attempt to initialize in background without blocking server startup
+initializeTeraBox().catch(err => {
+  logger.warn('TeraBox not configured, using Google Drive for uploads');
+});
+
 // Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -152,7 +159,8 @@ app.use(cors({
     'Accept',
     'Origin',
     'Access-Control-Request-Method',
-    'Access-Control-Request-Headers'
+    'Access-Control-Request-Headers',
+    'X-Document-Type'
   ]
 }));
 

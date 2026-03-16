@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import Machine from '../models/Machine.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import logger from '../utils/logger.js';
+import { updateMachine, getMachineUpdateHistory, bulkUpdateMachines } from '../controllers/machineController.js';
 import { getServicesByMachine } from '../controllers/engineeringServiceController.js';
 
 const router = express.Router();
@@ -185,18 +186,13 @@ router.get('/:id/services', authenticate, async (req, res, next) => {
 });
 
 // Update machine
-router.put('/:id', authenticate, async (req, res) => {
-  try {
-    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ success: false, error: 'Invalid machine id' });
-    const updates = { ...req.body };
-    const machine = await Machine.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true, runValidators: true });
-    if (!machine) return res.status(404).json({ success: false, error: 'Machine not found' });
-    res.json({ success: true, message: 'Machine updated', data: machine });
-  } catch (err) {
-    logger.error('Update machine error:', err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+router.put('/:id', authenticate, updateMachine);
+
+// Get machine update history
+router.get('/:id/history', authenticate, getMachineUpdateHistory);
+
+// Bulk update machines
+router.put('/', authenticate, bulkUpdateMachines);
 
 // Delete machine (admin only)
 router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
