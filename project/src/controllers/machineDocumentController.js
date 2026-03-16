@@ -14,25 +14,52 @@ export const uploadMachineDocument = async (req, res) => {
   try {
     // If body.type === 'link' then create a link record without touching Drive or TeraBox
     if (req.body && req.body.type === 'link') {
-      const { title, linkUrl, categoryId, manufacturerId } = req.body;
-      if (!title || !linkUrl) return res.status(400).json({ success: false, message: 'title and linkUrl are required for link documents' });
+      const { title, linkUrl, categoryId, manufacturerId, machineId } = req.body;
+      
+      if (!title || !linkUrl) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'title and linkUrl are required for link documents' 
+        });
+      }
 
-      // optional: validate category/manufacturer existence
-      const category = categoryId ? await DocumentCategory.findById(categoryId) : null;
-      const manufacturer = manufacturerId ? await Manufacturer.findById(manufacturerId) : null;
+      try {
+        // optional: validate category/manufacturer existence
+        const category = categoryId ? await DocumentCategory.findById(categoryId) : null;
+        const manufacturer = manufacturerId ? await Manufacturer.findById(manufacturerId) : null;
 
-      const doc = new MachineDocument({
-        title,
-        type: 'link',
-        linkUrl,
-        categoryId: category ? category._id : undefined,
-        manufacturerId: manufacturer ? manufacturer._id : undefined,
-        uploadedBy: req.user._id,
-        storageProvider: 'none'
-      });
+        const doc = new MachineDocument({
+          title,
+          type: 'link',
+          linkUrl,
+          ...(machineId && { machineId }),
+          ...(category && { categoryId: category._id }),
+          ...(manufacturer && { manufacturerId: manufacturer._id }),
+          uploadedBy: req.user._id,
+          storageProvider: 'none'
+        });
 
-      await doc.save();
-      return res.status(201).json({ success: true, data: doc });
+        await doc.save();
+        
+        logger.info('Link document created successfully', {
+          docId: doc._id,
+          title,
+          userId: req.user._id
+        });
+
+        return res.status(201).json({ 
+          success: true, 
+          message: 'Link document created',
+          data: doc 
+        });
+      } catch (linkError) {
+        logger.error('Link document creation error:', linkError);
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Failed to create link document',
+          error: linkError.message 
+        });
+      }
     }
 
     // Otherwise expect a file upload
@@ -96,10 +123,33 @@ export const uploadMachineDocument = async (req, res) => {
     });
 
     await doc.save();
-    return res.status(201).json({ success: true, data: doc, storageProvider });
+    
+    logger.info('Document uploaded successfully', {
+      docId: doc._id,
+      fileName,
+      provider: storageProvider,
+      userId: req.user._id
+    });
+
+    return res.status(201).json({ 
+      success: true, 
+      message: 'Document uploaded successfully',
+      data: doc, 
+      storageProvider 
+    });
   } catch (error) {
-    logger.error('Machine document upload error:', error && error.stack ? error.stack : error);
-    return res.status(500).json({ success: false, message: 'Upload failed', error: error.message });
+    logger.error('Machine document upload error:', {
+      message: error.message,
+      stack: error.stack,
+      body: req.body,
+      userId: req.user?._id
+    });
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Upload failed', 
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 

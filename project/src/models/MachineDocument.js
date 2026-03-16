@@ -19,7 +19,7 @@ const machineDocumentSchema = new mongoose.Schema({
   teraboxUploadType: { type: String, enum: ['chunked', 'rapid'] },
   
   // Storage provider indicator
-  storageProvider: { type: String, enum: ['google_drive', 'terabox'], default: 'google_drive' },
+  storageProvider: { type: String, enum: ['google_drive', 'terabox', 'none'], default: 'google_drive' },
   
   // Document metadata
   categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'DocumentCategory' },
