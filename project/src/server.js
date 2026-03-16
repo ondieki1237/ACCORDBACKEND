@@ -313,19 +313,28 @@ app.use('/api/analytics', analyticsRoutes);
 // Export endpoint: GET /sales/export?format=xlsx&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
 app.get('/sales/export', async (req, res) => {
   try {
-    const { format = 'xlsx', startDate, endDate } = req.query;
+    const { format = 'xlsx', startDate, endDate, role } = req.query;
     const start = startDate ? new Date(startDate) : new Date(new Date().getFullYear(), 0, 1);
     const end = endDate ? new Date(endDate) : new Date(new Date().getFullYear(), 11, 31, 23, 59, 59, 999);
 
-    const salesUsers = await User.find({ role: 'sales', isActive: true }).lean();
-    const userIds = salesUsers.map(u => u._id);
-    const visits = await Visit.find({ userId: { $in: userIds }, date: { $gte: start, $lte: end } }).lean();
+    // Build user filter: if role is specified, filter by that role, otherwise get all active users
+    const userQuery = { isActive: true };
+    if (role) {
+      userQuery.role = role;
+    }
+
+    const allUsers = await User.find(userQuery).lean();
+    const userIds = allUsers.map(u => u._id);
+    const visits = await Visit.find({ userId: { $in: userIds }, date: { $gte: start, $lte: end } })
+      .populate('client')
+      .populate('userId')
+      .lean();
 
     // Group visits by user
     const visitsByUser = {};
-    for (const user of salesUsers) visitsByUser[user._id.toString()] = { user, visits: [] };
+    for (const user of allUsers) visitsByUser[user._id.toString()] = { user, visits: [] };
     for (const v of visits) {
-      const uid = v.userId.toString();
+      const uid = v.userId._id.toString();
       if (visitsByUser[uid]) visitsByUser[uid].visits.push(v);
     }
 
@@ -364,7 +373,8 @@ app.get('/sales/export', async (req, res) => {
     }
 
     const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-    const filename = `sales-export-${start.toISOString().split('T')[0]}-to-${end.toISOString().split('T')[0]}.xlsx`;
+    const roleLabel = role ? `-${role}` : '';
+    const filename = `sales-export${roleLabel}-${start.toISOString().split('T')[0]}-to-${end.toISOString().split('T')[0]}.xlsx`;
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     return res.send(buffer);
