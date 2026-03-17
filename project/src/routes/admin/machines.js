@@ -9,19 +9,26 @@ import { updateMachine, getMachineUpdateHistory, bulkUpdateMachines } from '../.
 const router = express.Router();
 
 // Install machine at facility (create/update facility + create machine)
-router.post('/install', authenticate, authorize('admin', 'manager'), async (req, res) => {
+router.post('/', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
+    // Handle both flat and nested payload structures
     const {
-      facilityName,
-      location,
-      contactPerson,
-      phoneNumber,
-      role,
+      facilityName: flatFacilityName,
+      location: flatLocation,
+      phoneNumber: flatPhoneNumber,
+      role: flatRole,
       machineInstalled,
       machineName,
       serialNumber,
       manufacturer
     } = req.body;
+
+    // Extract values from either flat or nested structure
+    const facilityName = flatFacilityName || req.body.facility?.name;
+    const location = flatLocation || req.body.facility?.location;
+    const contactPersonName = (typeof req.body.contactPerson === 'string' ? req.body.contactPerson : req.body.contactPerson?.name);
+    const phoneNumber = flatPhoneNumber || req.body.contactPerson?.phone;
+    const role = flatRole || req.body.contactPerson?.role;
 
     // Validate required facility fields
     if (!facilityName || !facilityName.trim()) {
@@ -31,7 +38,7 @@ router.post('/install', authenticate, authorize('admin', 'manager'), async (req,
       });
     }
 
-    if (!contactPerson || !contactPerson.trim()) {
+    if (!contactPersonName || !contactPersonName.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Contact person name is required'
@@ -86,15 +93,13 @@ router.post('/install', authenticate, authorize('admin', 'manager'), async (req,
       logger.info('Facility created during machine installation', { facilityId: facility._id });
     }
 
-    // Update facility with contact person if not already there
-    if (!facility.properties.contactPerson) {
-      facility.properties.contactPerson = {
-        name: contactPerson.trim(),
-        phone: phoneNumber.trim(),
-        role: role?.trim() || 'Contact'
-      };
-      await facility.save();
-    }
+    // Update facility with contact person
+    facility.properties.contactPerson = {
+      name: contactPersonName.trim(),
+      phone: phoneNumber.trim(),
+      role: role?.trim() || 'Contact'
+    };
+    await facility.save();
 
     let machine = null;
 
@@ -109,7 +114,7 @@ router.post('/install', authenticate, authorize('admin', 'manager'), async (req,
           location: location?.trim() || ''
         },
         contactPerson: {
-          name: contactPerson.trim(),
+          name: contactPersonName.trim(),
           phone: phoneNumber.trim(),
           role: role?.trim() || 'Contact'
         },
@@ -243,40 +248,6 @@ router.post('/bulk', authenticate, authorize('admin', 'manager'), async (req, re
       });
     }
     
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Admin: create a single machine
-router.post('/', authenticate, authorize('admin', 'manager'), async (req, res) => {
-  try {
-    const payload = { ...req.body };
-
-    // Basic validation
-    const missing = [];
-    if (!payload.model) missing.push('model');
-    if (!payload.manufacturer) missing.push('manufacturer');
-    if (!payload.facility || !payload.facility.name) missing.push('facility.name');
-
-    if (missing.length > 0) {
-      return res.status(400).json({ success: false, error: `Missing required fields: ${missing.join(', ')}` });
-    }
-
-    payload.metadata = payload.metadata || {};
-    payload.metadata.createdBy = req.user._id;
-
-    const machine = new Machine(payload);
-    await machine.save();
-
-    // Populate createdBy for response
-    await machine.populate('metadata.createdBy', 'firstName lastName email');
-
-    res.status(201).json({ success: true, message: 'Machine created', data: machine });
-  } catch (err) {
-    logger.error('Admin create machine error:', err);
-    if (err.code === 11000) {
-      return res.status(400).json({ success: false, error: 'Duplicate key error', details: err.keyValue });
-    }
     res.status(500).json({ success: false, error: err.message });
   }
 });

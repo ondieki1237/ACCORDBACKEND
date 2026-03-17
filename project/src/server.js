@@ -51,6 +51,7 @@ import leadsRoutes from './routes/leads.js';
 import adminLeadsRoutes from './routes/admin/leads.js';
 import machinesRoutes from './routes/machines.js';
 import adminMachinesRoutes from './routes/admin/machines.js';
+import adminClientsRoutes from './routes/admin/clients.js';
 import adminMapRoutes from './routes/admin/map.js';
 import facilitiesRoutes from './routes/facilities.js';
 import consumablesRoutes from './routes/consumables.js';
@@ -265,6 +266,8 @@ app.use('/api/admin/leads', adminLeadsRoutes);
 // Machines endpoints (engineers & admin)
 app.use('/api/machines', machinesRoutes);
 app.use('/api/admin/machines', adminMachinesRoutes);
+// Clients endpoints (admin only - clients without machines)
+app.use('/api/admin/clients', adminClientsRoutes);
 // Map visualization endpoints (admin)
 app.use('/api/admin/map', adminMapRoutes);
 // Facilities (search + admin create)
