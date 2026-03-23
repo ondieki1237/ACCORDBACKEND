@@ -10,7 +10,6 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import User from '../src/models/User.js';
-import bcrypt from 'bcrypt';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,6 +35,8 @@ async function main() {
       phone: '+254700000000',
       role: 'admin',
       employeeId: 'ADM-EVANCE-001',
+      region: 'National',
+      department: 'management',
       isActive: true
     };
 
@@ -62,12 +63,7 @@ async function main() {
         console.log('✅ User role updated to admin');
       }
     } else {
-      // Hash password
-      console.log('🔐 Hashing password...');
-      const hashedPassword = await bcrypt.hash(userData.password, 10);
-      userData.password = hashedPassword;
-
-      // Create user
+      // Create user (DO NOT hash password - Mongoose pre-save hook will handle it)
       console.log('👤 Creating admin user...');
       const user = new User(userData);
       await user.save();

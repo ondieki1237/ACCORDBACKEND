@@ -32,6 +32,7 @@ import quotationRoutes from './routes/quotation.js';
 import salesRoutes from './routes/sales.js';
 import { initializeScheduledJobs } from './services/scheduledJobs.js';
 import kmhfrRoutes from './routes/kmhfr.js';
+import kmhfrV2Routes from './routes/kmhfr-v2.js';
 import followUpRoutes from './routes/follow-ups.js';
 import followUpVisitRoutes from './routes/follow-up-visits.js';
 import communicationsRoutes from './routes/communications.js';
@@ -240,7 +241,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/admin/visits', adminVisitRoutes);
 app.use('/api/quotation', quotationRoutes);
 app.use('/api/sales', salesRoutes);
-app.use('/api', kmhfrRoutes);
+app.use('/api/kmhfr', kmhfrRoutes);
+app.use('/api/kmhfr/v2', kmhfrV2Routes); // New robust implementation
 app.use('/api/follow-ups', followUpRoutes);
 app.use('/api/communications', communicationsRoutes);
 app.use('/api/follow-up-visits', followUpVisitRoutes);
