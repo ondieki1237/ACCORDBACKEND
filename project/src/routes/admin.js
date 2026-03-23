@@ -7,7 +7,7 @@ const router = express.Router();
 // @route   GET /api/admin/stats
 // @desc    Get admin stats
 // @access  Private (admin only)
-router.get('/stats', authenticate, authorize('admin'), async (req, res) => {
+router.get('/stats', authenticate, authorize('admin', 'supervisor'), async (req, res) => {
   try {
     // Dummy data
     res.json({ success: true, data: { users: 100, visits: 200, orders: 50 } });

@@ -212,7 +212,7 @@ router.get('/my-trails', authenticate, async (req, res) => {
 // @route   GET /api/dashboard/all-trails
 // @desc    Get all trails (admin only)
 // @access  Private (Admin)
-router.get('/all-trails', authenticate, authorize('admin'), async (req, res) => {
+router.get('/all-trails', authenticate, authorize('admin', 'supervisor'), async (req, res) => {
   try {
     const trails = await Trail.find({})
       .populate('userId', 'firstName lastName employeeId region')

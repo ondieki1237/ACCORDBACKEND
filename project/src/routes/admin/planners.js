@@ -5,9 +5,9 @@ import { adminGetAllPlanners, adminGetPlannerById } from '../../controllers/plan
 const router = express.Router();
 
 // Admin: fetch all planners (supports pagination and optional filters)
-router.get('/', authenticate, authorize('admin'), adminGetAllPlanners);
+router.get('/', authenticate, authorize('admin', 'supervisor'), adminGetAllPlanners);
 
 // Admin: fetch a single planner by ID
-router.get('/:id', authenticate, authorize('admin'), adminGetPlannerById);
+router.get('/:id', authenticate, authorize('admin', 'supervisor'), adminGetPlannerById);
 
 export default router;

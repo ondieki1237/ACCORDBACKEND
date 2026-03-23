@@ -5,9 +5,9 @@ import { getMarketInsights, getProductInsights, getMarketSummary, exportMarketIn
 const router = express.Router();
 
 // Only admin can access market insights
-router.get('/visits', authenticate, authorize('admin'), getMarketInsights);
-router.get('/products', authenticate, authorize('admin'), getProductInsights);
-router.get('/summary', authenticate, authorize('admin'), getMarketSummary);
-router.get('/export/visits', authenticate, authorize('admin'), exportMarketInsights);
+router.get('/visits', authenticate, authorize('admin', 'supervisor'), getMarketInsights);
+router.get('/products', authenticate, authorize('admin', 'supervisor'), getProductInsights);
+router.get('/summary', authenticate, authorize('admin', 'supervisor'), getMarketSummary);
+router.get('/export/visits', authenticate, authorize('admin', 'supervisor'), exportMarketInsights);
 
 export default router;
